@@ -137,7 +137,43 @@
             margin-bottom: 30px;
         }
 
-        @media (max-width: 768px) {
+        @media (max-width: 991px) {
+            #main-header {
+                height: auto;
+                padding: 10px 0;
+            }
+
+            .header-content {
+                flex-wrap: wrap;
+            }
+
+            nav {
+                width: 100%;
+                display: none;
+                padding-top: 20px;
+            }
+
+            nav.open {
+                display: block;
+            }
+
+            nav ul {
+                flex-direction: column;
+                gap: 10px;
+                text-align: center;
+            }
+
+            .menu-toggle {
+                display: block !important;
+                cursor: pointer;
+                font-size: 30px;
+                color: #182d56;
+            }
+
+            .section {
+                padding: 40px 0;
+            }
+
             .section-title {
                 font-size: 28px;
             }
@@ -145,6 +181,10 @@
             .content-box {
                 padding: 30px;
             }
+        }
+
+        .menu-toggle {
+            display: none;
         }
     </style>
 </head>
@@ -154,9 +194,12 @@
     <header id="main-header">
         <div class="container header-content">
             <a href="index.html">
-                <img src="wp-content/uploads/2024/10/logo.png" alt="Partido Nacional Libertario" id="logo">
+                <img src="wp-content/uploads/2026/pnl-del-biobio.png" alt="Partido Nacional Libertario" id="logo">
             </a>
-            <nav>
+            <div class="menu-toggle" onclick="toggleMenu()">
+                <span class="material-symbols-outlined">menu</span>
+            </div>
+            <nav id="main-nav">
                 <ul>
                     <li><a href="../pnl-nacional/nacionallibertario.cl/index.html" class="btn-back-main">VOLVER AL SITIO
                             NACIONAL</a></li>
@@ -201,6 +244,12 @@
         </div>
     </footer>
 
+    <script>
+        function toggleMenu() {
+            const nav = document.getElementById('main-nav');
+            nav.classList.toggle('open');
+        }
+    </script>
 </body>
 
 </html>

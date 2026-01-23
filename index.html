@@ -297,14 +297,76 @@
             text-align: center;
         }
 
-        @media (max-width: 768px) {
-            .info-grid {
-                grid-template-columns: 1fr;
+        @media (max-width: 991px) {
+            #main-header {
+                height: auto;
+                padding: 10px 0;
+            }
+
+            .header-content {
+                flex-wrap: wrap;
+            }
+
+            nav {
+                width: 100%;
+                display: none;
+                /* Hidden by default on mobile */
+                padding-top: 20px;
+            }
+
+            nav.open {
+                display: block;
+            }
+
+            nav ul {
+                flex-direction: column;
+                gap: 10px;
+                text-align: center;
+            }
+
+            .menu-toggle {
+                display: block !important;
+                cursor: pointer;
+                font-size: 30px;
+                color: #182d56;
+            }
+
+            .section {
+                padding: 40px 0;
             }
 
             .section-title {
                 font-size: 28px;
             }
+
+            .info-grid {
+                grid-template-columns: 1fr;
+                gap: 30px;
+                text-align: center;
+            }
+
+            .info-text img {
+                margin: 0 auto 30px auto !important;
+            }
+
+            .interaction-btns {
+                flex-direction: column;
+                padding: 0 20px;
+            }
+
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .info-image {
+                order: -1;
+                /* Image first on mobile */
+            }
+        }
+
+        .menu-toggle {
+            display: none;
         }
     </style>
 </head>
@@ -317,7 +379,10 @@
                 <img src="wp-content/uploads/2026/pnl-del-biobio.png" alt="Partido Nacional Libertario Biobío"
                     id="logo">
             </a>
-            <nav>
+            <div class="menu-toggle" onclick="toggleMenu()">
+                <span class="material-symbols-outlined">menu</span>
+            </div>
+            <nav id="main-nav">
                 <ul>
                     <li><a href="../pnl-nacional/nacionallibertario.cl/index.html" class="btn-back-main">VOLVER AL SITIO
                             NACIONAL</a></li>
@@ -439,6 +504,11 @@
             e.preventDefault();
             alert('Sede regional en modo de pruebas. El acceso estará disponible próximamente.');
             closeLogin();
+        }
+
+        function toggleMenu() {
+            const nav = document.getElementById('main-nav');
+            nav.classList.toggle('open');
         }
 
         window.onclick = function (event) {
