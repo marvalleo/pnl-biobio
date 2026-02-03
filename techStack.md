@@ -10,3 +10,4 @@
 - Git / GitHub
 - Google Fonts & Font Awesome
 - Material Symbols Outlined
+- **Supabase** (Seleccionado como Backend para Auth y DB)
