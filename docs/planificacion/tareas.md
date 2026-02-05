@@ -1,0 +1,26 @@
+# Tareas de Implementación - Foros y Cursos PNL Biobío
+
+- [x] Fase 1: Planificación y Análisis de Documentación [/]
+    - [x] Extraer y analizar requerimientos de los 7 documentos Word
+    - [x] Definir estrategia PWA y branding "Soberanía Digital"
+    - [x] Diseñar esquema de base de datos refinado (RUT, Votación, Biblioteca)
+- [ ] Fase 2: Configuración de Infraestructura y Auth (Semanas 1-2)
+    - [ ] Configurar proyecto en Supabase y esquema SQL
+    - [ ] Implementar Registro/Login con validación de RUT
+    - [ ] Crear Service Worker básico para soporte PWA y Offline
+- [ ] Fase 3: Repositorio y Biblioteca de la Libertad (Semana 2)
+    - [ ] Implementar interfaz de visualización de documentos (PDF/Text)
+    - [ ] Asegurar persistencia offline para documentos críticos
+- [ ] Fase 4: Participación y Motor de Votación (Semanas 3-4)
+    - [ ] Crear sistema de encuestas binarias con anonimato por hash
+    - [ ] Implementar Dashboard de resultados en tiempo real
+- [ ] Fase 5: Comunidad y Círculos de Debate (Semanas 4-5)
+    - [ ] Implementar foros temáticos y territoriales
+    - [ ] Sistema de notificaciones push para hitos críticos
+- [ ] Fase 6: Academia y Lanzamiento Beta (Semanas 5-6)
+    - [ ] Implementar visualización de cursos y seguimiento de progreso
+    - [ ] Realizar marcha blanca con 20 militantes de control
+    - [ ] Deployment final en subdominio regional
+    - [ ] Verificar acceso restringido a miembros
+    - [ ] Pruebas de usabilidad en móvil
+    - [ ] Despliegue final 
