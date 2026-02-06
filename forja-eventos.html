@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eventos - Forja Libertaria</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --pnl-blue: #0f172a;
+            --pnl-gold: #fba931;
+        }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background-color: #f3f4f6;
+            color: var(--pnl-blue);
+        }
+
+        .nav-link {
+            cursor: pointer;
+            position: relative;
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.05em;
+            transition: all 0.3s;
+        }
+
+        .nav-link:hover {
+            color: var(--pnl-gold);
+        }
+
+        .nav-link.active::after {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 3px;
+            bottom: -4px;
+            left: 0;
+            background-color: var(--pnl-gold);
+        }
+
+        .badge {
+            font-size: 0.65rem;
+            font-weight: 900;
+            padding: 4px 10px;
+            border-radius: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .badge-presencial {
+            background-color: #e2e8f0;
+            color: #0f172a;
+        }
+
+        .badge-online {
+            background-color: #fef3c7;
+            color: #d97706;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- NAVEGACIÓN -->
+    <nav class="bg-white shadow-md sticky top-0 z-50 border-b-4 border-[#fba931]">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-20">
+                <div class="flex items-center">
+                    <img src="https://pnl-biobio.netlify.app/wp-content/uploads/2026/pnl-del-biobio01.png"
+                        alt="PNL Biobío" class="h-16">
+                </div>
+
+                <div class="flex items-center space-x-4 md:space-x-8">
+                    <a href="forja-academia.html" class="nav-link text-[#0f172a]">Academia</a>
+                    <a href="forja-eventos.html" class="nav-link text-[#0f172a] active">Eventos</a>
+                    <a href="index.html"
+                        class="text-[9px] font-black uppercase bg-gray-100 px-3 py-2 rounded-lg hover:bg-gray-200 transition-colors">Salir</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- CONTENIDO PRINCIPAL -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="mb-8 flex items-end justify-between">
+            <div>
+                <h2 class="text-3xl font-900 uppercase">Calendario</h2>
+                <p class="text-gray-400 font-bold text-sm uppercase">Próximos Encuentros Regionales</p>
+            </div>
+        </div>
+
+        <div class="grid gap-6">
+            <!-- Evento Presencial -->
+            <div
+                class="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 flex flex-col md:flex-row gap-6 relative">
+                <div class="absolute top-4 right-4"><span class="badge badge-presencial">Presencial</span></div>
+                <div class="md:w-48 h-36 bg-[#0f172a] rounded-2xl overflow-hidden shrink-0">
+                    <img src="https://images.unsplash.com/photo-1540317580384-e5d43616b9aa?auto=format&fit=crop&q=80&w=300"
+                        class="w-full h-full object-cover">
+                </div>
+                <div class="flex-1">
+                    <h3 class="text-xl font-900 uppercase mb-2">Estrategias de Campaña Local</h3>
+                    <div class="flex items-center gap-2 text-[11px] font-bold text-[#0f172a] uppercase mb-4">
+                        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                            <circle cx="12" cy="10" r="3" />
+                        </svg>
+                        Sede Biobío, Concepción — 15 Feb, 18:30 hrs
+                    </div>
+                    <button
+                        class="bg-[#0f172a] text-white px-6 py-3 rounded-xl font-900 text-[10px] uppercase tracking-widest hover:bg-[#fba931] hover:text-[#0f172a] transition-colors">Reservar
+                        mi Cupo</button>
+                </div>
+            </div>
+
+            <!-- Evento Online -->
+            <div
+                class="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 flex flex-col md:flex-row gap-6 relative">
+                <div class="absolute top-4 right-4"><span class="badge badge-online">Online</span></div>
+                <div class="md:w-48 h-36 bg-[#fba931] rounded-2xl overflow-hidden shrink-0">
+                    <img src="https://images.unsplash.com/photo-1588196749597-9ff075ee6b5b?auto=format&fit=crop&q=80&w=300"
+                        class="w-full h-full object-cover opacity-80">
+                </div>
+                <div class="flex-1">
+                    <h3 class="text-xl font-900 uppercase mb-2">Webinar: Ética y Propiedad</h3>
+                    <div class="flex items-center gap-2 text-[11px] font-bold text-[#fba931] uppercase mb-4">
+                        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="m22 8-6 4 6 4V8Z" />
+                            <rect width="14" height="12" x="2" y="6" rx="2" ry="2" />
+                        </svg>
+                        Vía Google Meet — 22 Feb, 20:00 hrs
+                    </div>
+                    <button
+                        class="bg-[#fba931] text-[#0f172a] px-6 py-3 rounded-xl font-900 text-[10px] uppercase tracking-widest shadow-lg">Obtener
+                        Enlace de Acceso</button>
+                </div>
+            </div>
+
+            <!-- Evento Presencial 2 -->
+            <div
+                class="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 flex flex-col md:flex-row gap-6 relative">
+                <div class="absolute top-4 right-4"><span class="badge badge-presencial">Presencial</span></div>
+                <div class="md:w-48 h-36 bg-[#0f172a] rounded-2xl overflow-hidden shrink-0">
+                    <img src="https://images.unsplash.com/photo-1523580494863-6f3031224c94?auto=format&fit=crop&q=80&w=300"
+                        class="w-full h-full object-cover">
+                </div>
+                <div class="flex-1">
+                    <h3 class="text-xl font-900 uppercase mb-2">Taller: Comunicación Política</h3>
+                    <div class="flex items-center gap-2 text-[11px] font-bold text-[#0f172a] uppercase mb-4">
+                        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                            <circle cx="12" cy="10" r="3" />
+                        </svg>
+                        Sede Biobío, Concepción — 28 Feb, 19:00 hrs
+                    </div>
+                    <button
+                        class="bg-[#0f172a] text-white px-6 py-3 rounded-xl font-900 text-[10px] uppercase tracking-widest hover:bg-[#fba931] hover:text-[#0f172a] transition-colors">Reservar
+                        mi Cupo</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="bg-white border-t border-gray-200 py-6 mt-20 text-center">
+        <p class="text-[9px] font-black text-gray-300 uppercase tracking-[0.3em]">Forja Biobío — Sistema Interno de
+            Capacitación</p>
+    </footer>
+
+</body>
+
+</html>

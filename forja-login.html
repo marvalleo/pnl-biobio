@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acceso - Forja Libertaria</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --pnl-blue: #0f172a;
+            --pnl-gold: #fba931;
+        }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background-color: var(--pnl-blue);
+            color: var(--pnl-blue);
+        }
+
+        /* Animación de error (Shake) */
+        @keyframes shake {
+
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+
+            25% {
+                transform: translateX(-5px);
+            }
+
+            75% {
+                transform: translateX(5px);
+            }
+        }
+
+        .error-shake {
+            animation: shake 0.3s ease-in-out;
+            border-color: #ef4444 !important;
+        }
+    </style>
+</head>
+
+<body class="min-h-screen flex items-center justify-center p-4">
+
+    <div class="max-w-md w-full bg-white rounded-3xl p-8 shadow-2xl text-center border-t-8 border-[#fba931] mx-auto">
+        <img src="https://pnl-biobio.netlify.app/wp-content/uploads/2026/pnl-del-biobio01.png" alt="Logo PNL"
+            class="h-20 mx-auto mb-6">
+        <h1 class="text-2xl font-900 uppercase mb-2 tracking-tighter">Acceso Academia</h1>
+        <p class="text-gray-400 text-[10px] font-bold uppercase tracking-widest mb-8">Espacio Privado - Sede Biobío</p>
+
+        <div id="login-container" class="space-y-4 text-left">
+            <!-- Alerta de Error -->
+            <div id="error-message" class="hidden bg-red-50 border-l-4 border-red-500 p-4 mb-4 rounded-lg">
+                <p class="text-red-700 text-[10px] font-black uppercase tracking-wider">Error: Credenciales Incorrectas
+                </p>
+            </div>
+
+            <div>
+                <label class="text-[10px] font-black uppercase text-gray-400 ml-1">Usuario / RUT</label>
+                <input type="text" id="user-input" placeholder="Ej: 12.345.678-9"
+                    class="w-full bg-gray-50 border border-gray-100 p-4 rounded-xl focus:ring-2 focus:ring-[#fba931] outline-none transition-all">
+            </div>
+            <div>
+                <label class="text-[10px] font-black uppercase text-gray-400 ml-1">Contraseña</label>
+                <input type="password" id="pass-input" placeholder="••••••••"
+                    class="w-full bg-gray-50 border border-gray-100 p-4 rounded-xl focus:ring-2 focus:ring-[#fba931] outline-none transition-all">
+            </div>
+            <button onclick="handleLogin()"
+                class="w-full bg-[#fba931] text-[#0f172a] py-4 rounded-xl font-900 uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-all shadow-lg">
+                Ingresar a la Forja
+            </button>
+
+            <!-- Botón Volver -->
+            <a href="index.html"
+                class="block w-full text-center bg-gray-100 text-gray-600 py-4 rounded-xl font-900 text-[10px] uppercase tracking-widest hover:bg-gray-200 transition-all">
+                ← Volver a la Página Principal
+            </a>
+        </div>
+        <p class="mt-6 text-[10px] font-bold text-gray-400 uppercase">¿Problemas de acceso? Contacta a Soporte Regional
+        </p>
+    </div>
+
+    <script>
+        // Cargar credenciales guardadas al cargar la página
+        window.addEventListener('DOMContentLoaded', function () {
+            const savedUser = localStorage.getItem('forja_username');
+            if (savedUser) {
+                document.getElementById('user-input').value = savedUser;
+            }
+        });
+
+        function handleLogin() {
+            const user = document.getElementById('user-input').value;
+            const pass = document.getElementById('pass-input').value;
+            const errorMsg = document.getElementById('error-message');
+            const loginContainer = document.getElementById('login-container');
+
+            // Credenciales de Demostración (Hardcoded)
+            // Usuario: pnl.biobio | Contraseña: forja2026
+            if (user === "pnl.biobio" && pass === "forja2026") {
+                errorMsg.classList.add('hidden');
+
+                // Guardar usuario en localStorage
+                localStorage.setItem('forja_username', user);
+
+                // Redirigir a la academia
+                window.location.href = "forja-academia.html";
+            } else {
+                // UI de Error
+                errorMsg.classList.remove('hidden');
+                loginContainer.classList.add('error-shake');
+                setTimeout(() => {
+                    loginContainer.classList.remove('error-shake');
+                }, 500);
+            }
+        }
+
+        // Permitir login con Enter
+        document.getElementById('pass-input').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') handleLogin();
+        });
+    </script>
+</body>
+
+</html>
