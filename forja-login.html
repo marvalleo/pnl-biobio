@@ -93,22 +93,33 @@
             }
         });
 
+        // Definición de Usuarios y Roles
+        const USERS = {
+            'user': { pass: '123', role: 'normal', redirect: 'forja-academia.html' },
+            'pnl.biobio': { pass: 'forja2026', role: 'normal', redirect: 'forja-academia.html' }, // Usuario legacy
+            'admin': { pass: '123', role: 'super_admin', redirect: 'admin-dashboard.html' },
+            'admin.foros': { pass: '123', role: 'admin_foros', redirect: 'admin-foros.html' },
+            'admin.votos': { pass: '123', role: 'admin_votos', redirect: 'admin-votos.html' },
+            'admin.forja': { pass: '123', role: 'admin_forja', redirect: 'admin-forja.html' }
+        };
+
         function handleLogin() {
-            const user = document.getElementById('user-input').value;
-            const pass = document.getElementById('pass-input').value;
+            const userInput = document.getElementById('user-input').value.trim();
+            const passInput = document.getElementById('pass-input').value.trim();
             const errorMsg = document.getElementById('error-message');
             const loginContainer = document.getElementById('login-container');
 
-            // Credenciales de Demostración (Hardcoded)
-            // Usuario: pnl.biobio | Contraseña: forja2026
-            if (user === "pnl.biobio" && pass === "forja2026") {
+            const userAccount = USERS[userInput];
+
+            if (userAccount && userAccount.pass === passInput) {
                 errorMsg.classList.add('hidden');
 
-                // Guardar usuario en localStorage
-                localStorage.setItem('forja_username', user);
+                // Guardar datos de sesión
+                localStorage.setItem('forja_username', userInput);
+                localStorage.setItem('pnl_user_role', userAccount.role);
 
-                // Redirigir a la academia
-                window.location.href = "forja-academia.html";
+                // Redirección basada en rol
+                window.location.href = userAccount.redirect;
             } else {
                 // UI de Error
                 errorMsg.classList.remove('hidden');
@@ -125,5 +136,3 @@
         });
     </script>
 </body>
-
-</html>

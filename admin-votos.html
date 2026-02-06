@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Votos - Gestión de Votaciones</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+    <style>
+        :root {
+            --pnl-blue: #0f172a;
+            --pnl-gold: #fba931;
+        }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background-color: #f3f4f6;
+            color: var(--pnl-blue);
+        }
+    </style>
+    <script>
+        window.addEventListener('DOMContentLoaded', () => {
+            const role = localStorage.getItem('pnl_user_role');
+            if (role !== 'super_admin' && role !== 'admin_votos') {
+                alert('Acceso no autorizado');
+                window.location.href = 'forja-login.html';
+            }
+        });
+        function logout() { localStorage.clear(); window.location.href = 'index.html'; }
+    </script>
+</head>
+
+<body class="min-h-screen">
+    <nav
+        class="bg-white shadow-md border-b-4 border-[#fba931] px-6 py-4 flex justify-between items-center sticky top-0 z-50">
+        <div class="flex items-center gap-3">
+            <a href="admin-dashboard.html" class="flex items-center gap-2 hover:opacity-80">
+                <span class="material-symbols-outlined">arrow_back</span>
+                <span class="font-black text-lg uppercase">Admin Votos</span>
+            </a>
+        </div>
+        <button onclick="logout()"
+            class="text-[10px] font-bold uppercase bg-gray-100 px-4 py-2 rounded-lg hover:bg-gray-200">Cerrar
+            Sesión</button>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-6 py-10">
+        <div class="flex justify-between items-center mb-8">
+            <h1 class="text-3xl font-900 uppercase">Panel de Votaciones</h1>
+            <button
+                class="bg-[#0f172a] text-white px-6 py-3 rounded-xl font-900 text-xs uppercase tracking-widest shadow-lg hover:bg-gray-800 flex items-center gap-2">
+                <span class="material-symbols-outlined">add_circle</span> Nueva Votación
+            </button>
+        </div>
+
+        <div class="grid gap-6">
+            <!-- Votación Activa -->
+            <div
+                class="bg-white p-6 rounded-3xl shadow-sm border-l-8 border-green-500 flex justify-between items-center">
+                <div>
+                    <span
+                        class="bg-green-100 text-green-700 font-bold px-3 py-1 rounded-full text-[10px] uppercase mb-2 inline-block">Urna
+                        Abierta</span>
+                    <h2 class="text-xl font-900 uppercase">Elección de Directiva Juvenil</h2>
+                    <p class="text-sm text-gray-400 mt-1">Cierra en: 4 horas 23 minutos</p>
+                </div>
+                <div class="flex gap-3">
+                    <button
+                        class="bg-gray-100 text-gray-600 px-4 py-2 rounded-lg font-bold text-xs uppercase hover:bg-gray-200">Ver
+                        Resultados</button>
+                    <button
+                        class="bg-red-50 text-red-600 px-4 py-2 rounded-lg font-bold text-xs uppercase hover:bg-red-100 border border-red-100">Cerrar
+                        Urna</button>
+                </div>
+            </div>
+
+            <!-- Votación Cerrada -->
+            <div
+                class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex justify-between items-center opacity-75">
+                <div>
+                    <span
+                        class="bg-gray-100 text-gray-500 font-bold px-3 py-1 rounded-full text-[10px] uppercase mb-2 inline-block">Cerrada</span>
+                    <h2 class="text-xl font-900 uppercase text-gray-500">Aprobación Presupuesto 2026</h2>
+                    <p class="text-sm text-gray-400 mt-1">Finalizada el 15 Ene 2026</p>
+                </div>
+                <div>
+                    <button
+                        class="bg-[#fba931] text-[#0f172a] px-4 py-2 rounded-lg font-bold text-xs uppercase shadow-sm">Ver
+                        Acta</button>
+                </div>
+            </div>
+        </div>
+    </main>
+</body>
+
+</html>

@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - PNL Biobío</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+    <style>
+        :root {
+            --pnl-blue: #0f172a;
+            --pnl-gold: #fba931;
+        }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background-color: #f3f4f6;
+            color: var(--pnl-blue);
+        }
+    </style>
+    <script>
+        // Protección de Ruta
+        window.addEventListener('DOMContentLoaded', () => {
+            const role = localStorage.getItem('pnl_user_role');
+            if (role !== 'super_admin') {
+                alert('Acceso no autorizado');
+                window.location.href = 'forja-login.html';
+            }
+        });
+
+        function logout() {
+            localStorage.clear();
+            window.location.href = 'index.html';
+        }
+    </script>
+</head>
+
+<body class="min-h-screen">
+    <nav class="bg-white shadow-md border-b-4 border-[#fba931] px-6 py-4 flex justify-between items-center">
+        <div class="flex items-center gap-3">
+            <img src="https://pnl-biobio.netlify.app/wp-content/uploads/2026/pnl-del-biobio01.png" alt="PNL"
+                class="h-10">
+            <span class="font-black text-xl uppercase tracking-tighter">Panel Central</span>
+        </div>
+        <button onclick="logout()"
+            class="text-[10px] font-bold uppercase bg-gray-100 px-4 py-2 rounded-lg hover:bg-gray-200">Cerrar
+            Sesión</button>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-6 py-10">
+        <h1 class="text-3xl font-900 uppercase mb-8">Gestión Regional</h1>
+
+        <div class="grid md:grid-cols-3 gap-6">
+            <!-- Módulo Forja -->
+            <a href="admin-forja.html"
+                class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 hover:shadow-xl transition-all group">
+                <div
+                    class="w-14 h-14 bg-blue-50 rounded-2xl flex items-center justify-center mb-6 text-[#0f172a] group-hover:bg-[#0f172a] group-hover:text-white transition-colors">
+                    <span class="material-symbols-outlined text-3xl">school</span>
+                </div>
+                <h2 class="text-xl font-900 uppercase mb-2">Academia Forja</h2>
+                <p class="text-sm text-gray-500 font-medium">Gestionar cursos, lecciones y malla curricular.</p>
+            </a>
+
+            <!-- Módulo Votos -->
+            <a href="admin-votos.html"
+                class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 hover:shadow-xl transition-all group">
+                <div
+                    class="w-14 h-14 bg-blue-50 rounded-2xl flex items-center justify-center mb-6 text-[#0f172a] group-hover:bg-[#0f172a] group-hover:text-white transition-colors">
+                    <span class="material-symbols-outlined text-3xl">how_to_vote</span>
+                </div>
+                <h2 class="text-xl font-900 uppercase mb-2">Votaciones</h2>
+                <p class="text-sm text-gray-500 font-medium">Crear comicios, cerrar urnas y ver resultados.</p>
+            </a>
+
+            <!-- Módulo Foros -->
+            <a href="admin-foros.html"
+                class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 hover:shadow-xl transition-all group">
+                <div
+                    class="w-14 h-14 bg-blue-50 rounded-2xl flex items-center justify-center mb-6 text-[#0f172a] group-hover:bg-[#0f172a] group-hover:text-white transition-colors">
+                    <span class="material-symbols-outlined text-3xl">forum</span>
+                </div>
+                <h2 class="text-xl font-900 uppercase mb-2">Foros Internos</h2>
+                <p class="text-sm text-gray-500 font-medium">Moderación de discusiones y usuarios.</p>
+            </a>
+        </div>
+    </main>
+</body>
+
+</html>
