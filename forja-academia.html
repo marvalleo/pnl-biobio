@@ -44,8 +44,12 @@
             background-color: var(--pnl-gold);
         }
     </style>
+    <!-- Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
     <script>
-        function logout() {
+        async function logout() {
+            await supabaseClient.auth.signOut();
             localStorage.removeItem('pnl_user_role');
             window.location.href = 'index.html';
         }
@@ -70,63 +74,88 @@
         </div>
     </nav>
 
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div class="mb-10">
-            <h2 class="text-2xl font-900 uppercase border-l-8 border-[#fba931] pl-4">Cursos de Formación</h2>
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-16">
+        <div class="mb-12">
+            <h2 class="text-4xl font-900 uppercase border-l-8 border-[#fba931] pl-6 tracking-tighter">Cursos Disponibles
+            </h2>
+            <p class="text-gray-400 font-bold uppercase text-xs mt-2 tracking-widest pl-8">Malla Curricular de Formación
+                Libertaria</p>
         </div>
-        <div id="courses-grid" class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div id="courses-grid" class="grid md:grid-cols-2 lg:grid-cols-3 gap-10">
             <!-- Renderizado dinámico por JS -->
-            <div class="col-span-full text-center py-20 text-gray-400">
-                <p>Cargando cursos...</p>
+            <div class="col-span-full text-center py-20">
+                <div
+                    class="inline-block w-12 h-12 border-4 border-gray-200 border-t-[#fba931] rounded-full animate-spin mb-4">
+                </div>
+                <p class="text-gray-400 font-black uppercase text-xs">Conectando con la Academia...</p>
             </div>
         </div>
     </main>
 
     <script>
-        window.addEventListener('DOMContentLoaded', () => {
+        window.addEventListener('DOMContentLoaded', async () => {
             const role = localStorage.getItem('pnl_user_role');
             if (role !== 'normal' && role !== 'super_admin' && role !== 'admin_forja') {
-                // Si no hay rol, redirigir
                 if (!role) window.location.href = 'forja-login.html';
             }
 
             const grid = document.getElementById('courses-grid');
-            const courses = JSON.parse(localStorage.getItem('pnl_courses')) || [];
 
-            // Filtrar solo los publicados
-            const publishedCourses = courses.filter(c => c.status === 'Publicado');
+            try {
+                const { data: courses, error } = await supabaseClient
+                    .from('courses')
+                    .select('*')
+                    .eq('status', 'Publicado')
+                    .order('created_at', { ascending: false });
 
-            if (publishedCourses.length === 0) {
-                grid.innerHTML = `
-                    <div class="col-span-full text-center py-20">
-                        <p class="text-gray-400 font-bold uppercase">No hay cursos disponibles aún.</p>
-                    </div>
-                `;
-                return;
-            }
+                if (error) throw error;
 
-            grid.innerHTML = publishedCourses.map(course => `
-                <div onclick="goToCourse(${course.id})" class="bg-white rounded-3xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-xl transition-all cursor-pointer group">
-                    <div class="h-48 bg-[#0f172a] relative overflow-hidden">
-                        <img src="${course.image}" class="w-full h-full object-cover opacity-60 group-hover:scale-110 transition-transform duration-700">
-                        <div class="absolute inset-0 flex items-center justify-center">
-                            <div class="w-12 h-12 bg-[#fba931] rounded-full flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
-                                <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24" class="ml-1">
-                                    <path d="M8 5v14l11-7z" />
-                                </svg>
+                if (courses.length === 0) {
+                    grid.innerHTML = `
+                        <div class="col-span-full text-center py-20 bg-white rounded-3xl border border-dashed">
+                            <p class="text-gray-400 font-bold uppercase">No hay cursos disponibles en este momento.</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                grid.innerHTML = courses.map(course => `
+                    <div onclick="goToCourse('${course.id}')" class="bg-white rounded-[2rem] overflow-hidden shadow-sm border border-gray-100 hover:shadow-2xl hover:-translate-y-2 transition-all cursor-pointer group">
+                        <div class="h-56 bg-[#0f172a] relative overflow-hidden">
+                            <img src="${course.image_url || 'https://images.unsplash.com/photo-1517048676732-d65bc937f952?auto=format&fit=crop&q=80&w=600'}" class="w-full h-full object-cover opacity-50 group-hover:scale-110 transition-transform duration-700">
+                            <div class="absolute inset-0 flex items-center justify-center">
+                                <div class="w-14 h-14 bg-[#fba931] rounded-full flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                                    <svg width="24" height="24" fill="#0f172a" viewBox="0 0 24 24" class="ml-1">
+                                        <path d="M8 5v14l11-7z" />
+                                    </svg>
+                                </div>
+                            </div>
+                            <div class="absolute bottom-4 left-6">
+                                <span class="bg-white/10 backdrop-blur-md text-white text-[9px] font-black px-3 py-1 rounded-full uppercase tracking-widest border border-white/20">
+                                    ${course.level}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="p-8">
+                            <h3 class="font-900 text-xl uppercase mb-4 leading-tight group-hover:text-[#fba931] transition-colors line-clamp-2">${course.title}</h3>
+                            <div class="w-full bg-gray-100 h-2 rounded-full overflow-hidden">
+                                <div class="bg-[#fba931] h-full w-[0%] rounded-full"></div>
+                            </div>
+                            <div class="flex justify-between items-center mt-3">
+                                <p class="text-[10px] font-black text-gray-400 uppercase">0% Completado</p>
+                                <span class="material-symbols-outlined text-gray-200 group-hover:text-[#fba931] transition-colors">arrow_forward</span>
                             </div>
                         </div>
                     </div>
-                    <div class="p-6">
-                        <span class="text-[10px] font-black text-[#fba931] uppercase tracking-widest">${course.level}</span>
-                        <h3 class="font-800 text-lg my-2 uppercase line-clamp-1">${course.title}</h3>
-                        <div class="w-full bg-gray-100 h-2 rounded-full mt-4">
-                            <div class="bg-[#fba931] h-full w-[0%] rounded-full"></div>
-                        </div>
-                        <p class="text-[10px] font-bold text-gray-400 mt-2 uppercase">0% Completado</p>
+                `).join('');
+            } catch (err) {
+                console.error(err);
+                grid.innerHTML = `
+                    <div class="col-span-full text-center py-20 text-red-500 font-black uppercase">
+                        Error al cargar la malla curricular.
                     </div>
-                </div>
-            `).join('');
+                `;
+            }
         });
 
         function goToCourse(id) {

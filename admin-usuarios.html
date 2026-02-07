@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Militantes - PNL Biobío</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+    <script src="supabase-config.js"></script>
+    <style>
+        :root {
+            --pnl-blue: #0f172a;
+            --pnl-gold: #fba931;
+        }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background-color: #f8fafc;
+            color: var(--pnl-blue);
+        }
+    </style>
+</head>
+
+<body class="min-h-screen">
+    <nav class="bg-white shadow-sm border-b px-6 py-4 flex justify-between items-center">
+        <div class="flex items-center gap-3">
+            <a href="admin-dashboard.html" class="flex items-center gap-2 hover:opacity-75 transition-opacity">
+                <span class="material-symbols-outlined">arrow_back</span>
+                <span class="font-900 uppercase tracking-tighter">Panel Central</span>
+            </a>
+        </div>
+        <div class="flex items-center gap-4">
+            <span class="text-[10px] font-bold uppercase text-gray-400">Super Admin Mode</span>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-6 py-10">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+            <div>
+                <h1 class="text-3xl font-900 uppercase">Gestión de Militantes</h1>
+                <p class="text-gray-500 font-medium">Control total de la base de datos de usuarios y roles.</p>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="document.getElementById('excel-input').click()"
+                    class="bg-white border border-gray-200 px-6 py-3 rounded-xl font-800 text-xs uppercase tracking-widest flex items-center gap-2 hover:bg-gray-50 transition-all">
+                    <span class="material-symbols-outlined text-lg">upload_file</span> Importar Excel
+                </button>
+                <input type="file" id="excel-input" class="hidden" accept=".xlsx, .xls"
+                    onchange="handleExcelImport(event)">
+                <button onclick="openModal()"
+                    class="bg-[#fba931] text-[#0f172a] px-6 py-3 rounded-xl font-800 text-xs uppercase tracking-widest flex items-center gap-2 hover:brightness-110 transition-all shadow-lg">
+                    <span class="material-symbols-outlined text-lg">person_add</span> Nuevo Militante
+                </button>
+            </div>
+        </div>
+
+        <div class="bg-blue-50 border border-blue-100 p-4 rounded-2xl mb-8 flex items-center gap-4">
+            <span class="material-symbols-outlined text-blue-500">info</span>
+            <p class="text-[10px] font-bold text-blue-700 uppercase tracking-widest">
+                Tip: El Excel de importación debe tener los encabezados: <span
+                    class="bg-white px-2 py-0.5 rounded border">Nombre</span>, <span
+                    class="bg-white px-2 py-0.5 rounded border">RUT</span>, <span
+                    class="bg-white px-2 py-0.5 rounded border">Email</span>, <span
+                    class="bg-white px-2 py-0.5 rounded border">Telefono</span>, <span
+                    class="bg-white px-2 py-0.5 rounded border">Rol</span>.
+            </p>
+        </div>
+
+        <!-- Tabla de Usuarios -->
+        <div class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
+            <table class="w-full text-left border-collapse">
+                <thead class="bg-gray-50 border-b border-gray-100">
+                    <tr>
+                        <th class="px-6 py-4 text-[10px] font-black uppercase text-gray-400">Nombre</th>
+                        <th class="px-6 py-4 text-[10px] font-black uppercase text-gray-400">RUT</th>
+                        <th class="px-6 py-4 text-[10px] font-black uppercase text-gray-400">Email</th>
+                        <th class="px-6 py-4 text-[10px] font-black uppercase text-gray-400">Rol</th>
+                        <th class="px-6 py-4 text-[10px] font-black uppercase text-gray-400">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="users-table-body">
+                    <tr>
+                        <td colspan="5" class="px-6 py-10 text-center text-gray-400 italic">Cargando militantes...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <!-- Modal Nuevo/Editar Usuaro -->
+    <div id="user-modal"
+        class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-lg rounded-3xl p-8 shadow-2xl">
+            <h2 id="modal-title" class="text-2xl font-900 uppercase mb-6 flex items-center gap-2">
+                <span class="material-symbols-outlined">person_add</span> Nuevo Militante
+            </h2>
+            <form id="user-form" onsubmit="saveUser(event)" class="space-y-4">
+                <input type="hidden" id="user-id">
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="col-span-2">
+                        <label class="text-[10px] font-black uppercase text-gray-400">Nombre Completo</label>
+                        <input type="text" id="full_name" required
+                            class="w-full bg-gray-50 border p-4 rounded-xl focus:ring-2 focus:ring-[#fba931] outline-none">
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-black uppercase text-gray-400">RUT</label>
+                        <input type="text" id="rut" required
+                            class="w-full bg-gray-50 border p-4 rounded-xl focus:ring-2 focus:ring-[#fba931] outline-none">
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-black uppercase text-gray-400">Teléfono</label>
+                        <input type="text" id="phone_number"
+                            class="w-full bg-gray-50 border p-4 rounded-xl focus:ring-2 focus:ring-[#fba931] outline-none">
+                    </div>
+                    <div class="col-span-2">
+                        <label class="text-[10px] font-black uppercase text-gray-400">Email (Obligatorio para
+                            login)</label>
+                        <input type="email" id="email" required
+                            class="w-full bg-gray-50 border p-4 rounded-xl focus:ring-2 focus:ring-[#fba931] outline-none">
+                    </div>
+                    <div class="col-span-2">
+                        <label class="text-[10px] font-black uppercase text-gray-400">Rol asignado</label>
+                        <select id="role"
+                            class="w-full bg-gray-50 border p-4 rounded-xl focus:ring-2 focus:ring-[#fba931] outline-none appearance-none font-bold">
+                            <option value="normal">Militante Normal</option>
+                            <option value="admin_forja">Admin Academia (Forja)</option>
+                            <option value="admin_votos">Admin Votaciones</option>
+                            <option value="admin_foros">Admin Foros</option>
+                            <option value="super_admin">Super Administrador</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="flex gap-4 pt-4">
+                    <button type="button" onclick="closeModal()"
+                        class="flex-1 bg-gray-100 py-4 rounded-xl font-900 uppercase text-xs">Cancelar</button>
+                    <button type="submit"
+                        class="flex-1 bg-[#fba931] py-4 rounded-xl font-900 uppercase text-xs shadow-lg">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const tableBody = document.getElementById('users-table-body');
+        const modal = document.getElementById('user-modal');
+
+        // Renderizar la tabla
+        async function loadUsers() {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('profiles')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+
+                if (error) throw error;
+
+                if (data.length === 0) {
+                    tableBody.innerHTML = `<tr><td colspan="5" class="px-6 py-10 text-center text-gray-400">No hay militantes registrados.</td></tr>`;
+                    return;
+                }
+
+                tableBody.innerHTML = data.map(user => `
+                    <tr class="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
+                        <td class="px-6 py-4 font-bold uppercase text-sm">${user.full_name}</td>
+                        <td class="px-6 py-4 text-xs font-medium text-gray-500">${user.rut}</td>
+                        <td class="px-6 py-4 text-xs text-gray-500">${user.email}</td>
+                        <td class="px-6 py-4 text-[10px]">
+                            <span class="px-2 py-1 rounded-full font-black uppercase tracking-tighter ${getRoleClass(user.role)}">
+                                ${user.role}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4">
+                            <button onclick='editUser(${JSON.stringify(user)})' class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"><span class="material-symbols-outlined">edit</span></button>
+                            <button onclick="deleteUser('${user.id}')" class="p-2 text-red-600 hover:bg-red-50 rounded-lg"><span class="material-symbols-outlined">delete</span></button>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (err) {
+                console.error(err);
+                tableBody.innerHTML = `<tr><td colspan="5" class="px-6 py-10 text-center text-red-500 font-bold uppercase text-xs">Error al cargar datos.</td></tr>`;
+            }
+        }
+
+        function getRoleClass(role) {
+            switch (role) {
+                case 'super_admin': return 'bg-purple-100 text-purple-700';
+                case 'admin_forja': return 'bg-orange-100 text-orange-700';
+                case 'normal': return 'bg-blue-100 text-blue-700';
+                default: return 'bg-gray-100 text-gray-700';
+            }
+        }
+
+        function openModal() {
+            document.getElementById('user-form').reset();
+            document.getElementById('user-id').value = '';
+            document.getElementById('modal-title').innerHTML = '<span class="material-symbols-outlined">person_add</span> Nuevo Militante';
+            modal.classList.remove('hidden');
+        }
+
+        function closeModal() { modal.classList.add('hidden'); }
+
+        async function saveUser(e) {
+            e.preventDefault();
+            const id = document.getElementById('user-id').value;
+            const formData = {
+                full_name: document.getElementById('full_name').value,
+                rut: document.getElementById('rut').value,
+                email: document.getElementById('email').value,
+                phone_number: document.getElementById('phone_number').value,
+                role: document.getElementById('role').value
+            };
+
+            try {
+                let res;
+                if (id) {
+                    res = await supabaseClient.from('profiles').update(formData).eq('id', id);
+                } else {
+                    // Nota: En un sistema real, crear el Auth User requiere API de Admin o Edge Functions.
+                    // Para el MVP, creamos el perfil y asumimos que el usuario se registrará con ese email.
+                    // O podemos usar auth.admin.createUser si tenemos la service_key (no recomendado en frontend).
+                    // Mostraremos un aviso si es necesario.
+                    formData.id = crypto.randomUUID(); // Placeholder UUID si estamos creando perfil puro
+                    res = await supabaseClient.from('profiles').insert([formData]);
+                }
+
+                if (res.error) throw res.error;
+                alert('Usuario guardado correctamente.');
+                closeModal();
+                loadUsers();
+            } catch (err) {
+                alert('Error: ' + err.message);
+            }
+        }
+
+        async function deleteUser(id) {
+            if (!confirm('¿Seguro que deseas eliminar este militante?')) return;
+            try {
+                const { error } = await supabaseClient.from('profiles').delete().eq('id', id);
+                if (error) throw error;
+                loadUsers();
+            } catch (err) { alert(err.message); }
+        }
+
+        function editUser(user) {
+            openModal();
+            document.getElementById('user-id').value = user.id;
+            document.getElementById('full_name').value = user.full_name;
+            document.getElementById('rut').value = user.rut;
+            document.getElementById('email').value = user.email;
+            document.getElementById('phone_number').value = user.phone_number || '';
+            document.getElementById('role').value = user.role;
+            document.getElementById('modal-title').innerHTML = '<span class="material-symbols-outlined">edit</span> Editar Militante';
+        }
+
+        async function handleExcelImport(event) {
+            const file = event.target.files[0];
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const sheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[sheetName];
+                const json = XLSX.utils.sheet_to_json(worksheet);
+
+                console.log("Importando:", json);
+
+                // Mapear campos esperados
+                const usersToImport = json.map(row => ({
+                    full_name: row.Nombre || row.full_name,
+                    rut: row.RUT || row.rut,
+                    email: row.Email || row.email,
+                    phone_number: String(row.Telefono || row.phone_number || ''),
+                    role: row.Rol || row.role || 'normal'
+                }));
+
+                try {
+                    const { error } = await supabaseClient.from('profiles').insert(usersToImport);
+                    if (error) throw error;
+                    alert('Importación completada: ' + usersToImport.length + ' usuarios agregados.');
+                    loadUsers();
+                } catch (err) {
+                    alert('Error en importación: ' + err.message);
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        // Carga inicial
+        window.addEventListener('DOMContentLoaded', loadUsers);
+    </script>
+</body>
+
+</html>

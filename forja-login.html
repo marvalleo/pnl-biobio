@@ -84,6 +84,10 @@
         </p>
     </div>
 
+    <!-- Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
+
     <script>
         // Cargar credenciales guardadas al cargar la página
         window.addEventListener('DOMContentLoaded', function () {
@@ -93,40 +97,69 @@
             }
         });
 
-        // Definición de Usuarios y Roles
-        const USERS = {
-            'user': { pass: '123', role: 'normal', redirect: 'forja-academia.html' },
-            'pnl.biobio': { pass: 'forja2026', role: 'normal', redirect: 'forja-academia.html' }, // Usuario legacy
-            'admin': { pass: '123', role: 'super_admin', redirect: 'admin-dashboard.html' },
-            'admin.foros': { pass: '123', role: 'admin_foros', redirect: 'admin-foros.html' },
-            'admin.votos': { pass: '123', role: 'admin_votos', redirect: 'admin-votos.html' },
-            'admin.forja': { pass: '123', role: 'admin_forja', redirect: 'admin-forja.html' }
+        // Mapeo de rutas por rol para redirección
+        const ROLE_REDIRECTS = {
+            'normal': 'forja-academia.html',
+            'super_admin': 'admin-dashboard.html',
+            'admin_foros': 'admin-foros.html',
+            'admin_votos': 'admin-votos.html',
+            'admin_forja': 'admin-forja.html'
         };
 
-        function handleLogin() {
-            const userInput = document.getElementById('user-input').value.trim();
-            const passInput = document.getElementById('pass-input').value.trim();
+        async function handleLogin() {
+            const email = document.getElementById('user-input').value.trim();
+            const password = document.getElementById('pass-input').value.trim();
             const errorMsg = document.getElementById('error-message');
+            const errorText = errorMsg.querySelector('p');
             const loginContainer = document.getElementById('login-container');
 
-            const userAccount = USERS[userInput];
+            // Feedback Visual: Deshabilitar botón
+            const btn = document.querySelector('button');
+            const originalText = btn.textContent;
+            btn.disabled = true;
+            btn.textContent = "Verificando...";
 
-            if (userAccount && userAccount.pass === passInput) {
-                errorMsg.classList.add('hidden');
+            try {
+                // 1. Intentar Loguearse en Supabase Auth
+                const { data: authData, error: authError } = await supabaseClient.auth.signInWithPassword({
+                    email: email,
+                    password: password
+                });
 
-                // Guardar datos de sesión
-                localStorage.setItem('forja_username', userInput);
-                localStorage.setItem('pnl_user_role', userAccount.role);
+                if (authError) throw authError;
 
-                // Redirección basada en rol
-                window.location.href = userAccount.redirect;
-            } else {
-                // UI de Error
+                // 2. Obtener el rol desde la tabla 'profiles'
+                const { data: profile, error: profileError } = await supabaseClient
+                    .from('profiles')
+                    .select('role')
+                    .eq('id', authData.user.id)
+                    .single();
+
+                if (profileError) throw profileError;
+
+                // 3. Guardar datos de sesión (compatibilidad con frontend existente)
+                localStorage.setItem('forja_username', email);
+                localStorage.setItem('pnl_user_role', profile.role);
+
+                // 4. Redirección basada en rol
+                const redirectPath = ROLE_REDIRECTS[profile.role] || 'forja-academia.html';
+                window.location.href = redirectPath;
+
+            } catch (err) {
+                console.error("Login error:", err);
+
+                // Mostrar alerta de error
                 errorMsg.classList.remove('hidden');
+                errorText.textContent = `Error: ${err.message || 'Error desconocido'}`;
+
                 loginContainer.classList.add('error-shake');
                 setTimeout(() => {
                     loginContainer.classList.remove('error-shake');
                 }, 500);
+
+                // Restaurar botón
+                btn.disabled = false;
+                btn.textContent = originalText;
             }
         }
 
