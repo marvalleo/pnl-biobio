@@ -133,9 +133,13 @@
                     .from('profiles')
                     .select('role')
                     .eq('id', authData.user.id)
-                    .single();
+                    .maybeSingle(); // Usar maybeSingle para evitar error automático de PGRST116
 
                 if (profileError) throw profileError;
+
+                if (!profile) {
+                    throw new Error("PGRST116: Tu cuenta de Auth existe pero no tienes un perfil creado. Por favor, contacta al administrador para vincular tu ID manualmente.");
+                }
 
                 // 3. Guardar datos de sesión (compatibilidad con frontend existente)
                 localStorage.setItem('forja_username', email);
