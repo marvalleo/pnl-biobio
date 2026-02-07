@@ -30,7 +30,10 @@
                 window.location.href = 'forja-login.html';
             }
         });
-        function logout() { localStorage.clear(); window.location.href = 'index.html'; }
+        function logout() {
+            localStorage.removeItem('pnl_user_role');
+            window.location.href = 'index.html';
+        }
     </script>
 </head>
 
@@ -51,7 +54,7 @@
     <main class="max-w-7xl mx-auto px-6 py-10">
         <div class="flex justify-between items-center mb-8">
             <h1 class="text-3xl font-900 uppercase">Gestión de Cursos</h1>
-            <button
+            <button onclick="openModal()"
                 class="bg-[#fba931] text-[#0f172a] px-6 py-3 rounded-xl font-900 text-xs uppercase tracking-widest shadow-lg hover:brightness-110 flex items-center gap-2">
                 <span class="material-symbols-outlined">add</span> Nuevo Curso
             </button>
@@ -68,43 +71,156 @@
                             Acciones</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-gray-100">
-                    <tr class="hover:bg-gray-50 transition-colors">
-                        <td class="p-6">
-                            <div class="font-bold">Fundamentos del PNL</div>
-                            <div class="text-xs text-gray-400">Módulo Básico</div>
-                        </td>
-                        <td class="p-6"><span
-                                class="bg-green-100 text-green-700 font-bold px-3 py-1 rounded-full text-[10px] uppercase">Publicado</span>
-                        </td>
-                        <td class="p-6 font-bold">124</td>
-                        <td class="p-6 text-right space-x-2">
-                            <button
-                                class="text-blue-600 hover:text-blue-800 font-bold text-xs uppercase">Editar</button>
-                            <button
-                                class="text-red-500 hover:text-red-700 font-bold text-xs uppercase">Eliminar</button>
-                        </td>
-                    </tr>
-                    <tr class="hover:bg-gray-50 transition-colors">
-                        <td class="p-6">
-                            <div class="font-bold">Estrategia Política</div>
-                            <div class="text-xs text-gray-400">Módulo Avanzado</div>
-                        </td>
-                        <td class="p-6"><span
-                                class="bg-yellow-100 text-yellow-700 font-bold px-3 py-1 rounded-full text-[10px] uppercase">Borrador</span>
-                        </td>
-                        <td class="p-6 font-bold">--</td>
-                        <td class="p-6 text-right space-x-2">
-                            <button
-                                class="text-blue-600 hover:text-blue-800 font-bold text-xs uppercase">Editar</button>
-                            <button
-                                class="text-red-500 hover:text-red-700 font-bold text-xs uppercase">Eliminar</button>
-                        </td>
-                    </tr>
+                <tbody id="course-table-body" class="divide-y divide-gray-100">
+                    <!-- Renderizado dinámico -->
                 </tbody>
             </table>
         </div>
     </main>
+
+    <!-- Modal Nuevo/Editar Curso -->
+    <div id="course-modal"
+        class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center backdrop-blur-sm">
+        <div class="bg-white rounded-3xl p-8 max-w-lg w-full shadow-2xl mx-4">
+            <h2 id="modal-title" class="text-2xl font-900 uppercase mb-6">Nuevo Curso</h2>
+            <form id="course-form" onsubmit="saveCourse(event)" class="space-y-4">
+                <input type="hidden" id="course-id">
+                <div>
+                    <label class="text-[10px] font-black uppercase text-gray-400 ml-1">Título del Curso</label>
+                    <input type="text" id="course-title" required
+                        class="w-full bg-gray-50 border border-gray-100 p-4 rounded-xl focus:ring-2 focus:ring-[#fba931] outline-none">
+                </div>
+                <div>
+                    <label class="text-[10px] font-black uppercase text-gray-400 ml-1">Nivel / Módulo</label>
+                    <select id="course-level"
+                        class="w-full bg-gray-50 border border-gray-100 p-4 rounded-xl focus:ring-2 focus:ring-[#fba931] outline-none">
+                        <option value="Módulo Básico">Módulo Básico</option>
+                        <option value="Módulo Avanzado">Módulo Avanzado</option>
+                        <option value="Especialización">Especialización</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="text-[10px] font-black uppercase text-gray-400 ml-1">Imagen URL</label>
+                    <input type="url" id="course-image" placeholder="https://..."
+                        class="w-full bg-gray-50 border border-gray-100 p-4 rounded-xl focus:ring-2 focus:ring-[#fba931] outline-none">
+                </div>
+                <div>
+                    <label class="text-[10px] font-black uppercase text-gray-400 ml-1">Estado</label>
+                    <select id="course-status"
+                        class="w-full bg-gray-50 border border-gray-100 p-4 rounded-xl focus:ring-2 focus:ring-[#fba931] outline-none">
+                        <option value="Publicado">Publicado</option>
+                        <option value="Borrador">Borrador</option>
+                    </select>
+                </div>
+                <div class="flex gap-4 pt-4">
+                    <button type="button" onclick="closeModal()"
+                        class="flex-1 bg-gray-100 text-gray-600 py-4 rounded-xl font-900 uppercase text-xs hover:bg-gray-200">Cancelar</button>
+                    <button type="submit"
+                        class="flex-1 bg-[#fba931] text-[#0f172a] py-4 rounded-xl font-900 uppercase text-xs hover:brightness-110 shadow-lg">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const DEFAULT_COURSES = [
+            { id: 1, title: "Fundamentos del PNL", level: "Módulo Básico", image: "https://images.unsplash.com/photo-1517048676732-d65bc937f952?auto=format&fit=crop&q=80&w=400", status: "Publicado", students: 124 },
+            { id: 2, title: "Estrategia Política", level: "Módulo Avanzado", image: "https://images.unsplash.com/photo-1524178232363-1fb2b075b655?auto=format&fit=crop&q=80&w=400", status: "Borrador", students: 0 }
+        ];
+
+        let courses = JSON.parse(localStorage.getItem('pnl_courses')) || DEFAULT_COURSES;
+        if (!localStorage.getItem('pnl_courses')) {
+            localStorage.setItem('pnl_courses', JSON.stringify(courses));
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('course-table-body');
+            tbody.innerHTML = '';
+
+            courses.forEach(course => {
+                const statusBadge = course.status === 'Publicado'
+                    ? '<span class="bg-green-100 text-green-700 font-bold px-3 py-1 rounded-full text-[10px] uppercase">Publicado</span>'
+                    : '<span class="bg-yellow-100 text-yellow-700 font-bold px-3 py-1 rounded-full text-[10px] uppercase">Borrador</span>';
+
+                const row = `
+                    <tr class="hover:bg-gray-50 transition-colors">
+                        <td class="p-6">
+                            <div class="font-bold">${course.title}</div>
+                            <div class="text-xs text-gray-400">${course.level}</div>
+                        </td>
+                        <td class="p-6">${statusBadge}</td>
+                        <td class="p-6 font-bold">${course.students || '--'}</td>
+                        <td class="p-6 text-right space-x-2">
+                            <button onclick="editCourse(${course.id})" class="text-blue-600 hover:text-blue-800 font-bold text-xs uppercase">Editar</button>
+                            <button onclick="deleteCourse(${course.id})" class="text-red-500 hover:text-red-700 font-bold text-xs uppercase">Eliminar</button>
+                        </td>
+                    </tr>
+                `;
+                tbody.innerHTML += row;
+            });
+        }
+
+        const modal = document.getElementById('course-modal');
+        function openModal() {
+            modal.classList.remove('hidden');
+            document.getElementById('course-form').reset();
+            document.getElementById('course-id').value = '';
+            document.getElementById('modal-title').textContent = 'Nuevo Curso';
+        }
+
+        function closeModal() {
+            modal.classList.add('hidden');
+        }
+
+        function saveCourse(e) {
+            e.preventDefault();
+            const id = document.getElementById('course-id').value;
+            const title = document.getElementById('course-title').value;
+            const level = document.getElementById('course-level').value;
+            const image = document.getElementById('course-image').value || 'https://images.unsplash.com/photo-1517048676732-d65bc937f952?auto=format&fit=crop&q=80&w=400';
+            const status = document.getElementById('course-status').value;
+
+            if (id) {
+                const index = courses.findIndex(c => c.id == id);
+                courses[index] = { ...courses[index], title, level, image, status };
+            } else {
+                const newCourse = {
+                    id: Date.now(),
+                    title,
+                    level,
+                    image,
+                    status,
+                    students: 0
+                };
+                courses.push(newCourse);
+            }
+
+            localStorage.setItem('pnl_courses', JSON.stringify(courses));
+            renderTable();
+            closeModal();
+        }
+
+        function editCourse(id) {
+            const course = courses.find(c => c.id == id);
+            document.getElementById('course-id').value = course.id;
+            document.getElementById('course-title').value = course.title;
+            document.getElementById('course-level').value = course.level;
+            document.getElementById('course-image').value = course.image;
+            document.getElementById('course-status').value = course.status;
+            document.getElementById('modal-title').textContent = 'Editar Curso';
+            modal.classList.remove('hidden');
+        }
+
+        function deleteCourse(id) {
+            if (confirm('¿Seguro que deseas eliminar este curso?')) {
+                courses = courses.filter(c => c.id != id);
+                localStorage.setItem('pnl_courses', JSON.stringify(courses));
+                renderTable();
+            }
+        }
+
+        renderTable();
+    </script>
 </body>
 
 </html>

@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aula Virtual - Forja Libertaria</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+    <style>
+        :root {
+            --pnl-blue: #0f172a;
+            --pnl-gold: #fba931;
+        }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background-color: #f3f4f6;
+            color: var(--pnl-blue);
+        }
+
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+    </style>
+</head>
+
+<body class="h-screen flex flex-col md:flex-row overflow-hidden">
+
+    <!-- Sidebar Lecciones -->
+    <aside class="w-full md:w-96 bg-white border-r border-gray-200 flex flex-col h-full z-10">
+        <div class="p-6 border-b border-gray-100 flex items-center gap-4">
+            <a href="forja-academia.html" class="hover:bg-gray-100 p-2 rounded-full transition-colors">
+                <span class="material-symbols-outlined">arrow_back</span>
+            </a>
+            <div>
+                <h1 id="course-title" class="font-900 uppercase text-sm leading-tight">Cargando curso...</h1>
+                <p id="course-progress" class="text-[10px] font-bold text-[#fba931] uppercase mt-1">0% Completado</p>
+            </div>
+        </div>
+
+        <div id="lessons-list" class="flex-1 overflow-y-auto p-4 space-y-2">
+            <!-- Renderizado dinámico de lecciones -->
+            <div class="animate-pulse space-y-4">
+                <div class="h-12 bg-gray-100 rounded-xl"></div>
+                <div class="h-12 bg-gray-100 rounded-xl"></div>
+                <div class="h-12 bg-gray-100 rounded-xl"></div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Reproductor Principal -->
+    <main class="flex-1 flex flex-col relative">
+        <div class="flex-1 bg-black flex items-center justify-center relative group">
+            <!-- Placeholder de Video / Iframe -->
+            <div id="video-container" class="w-full h-full max-h-[80vh] aspect-video">
+                <iframe id="video-player" class="w-full h-full" src="" title="Video Player" frameborder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowfullscreen></iframe>
+
+                <!-- Placeholder si no hay video -->
+                <div id="no-video"
+                    class="hidden absolute inset-0 flex flex-col items-center justify-center text-white p-8 text-center">
+                    <span class="material-symbols-outlined text-6xl mb-4 opacity-50">play_circle_off</span>
+                    <h2 class="text-xl font-bold uppercase">Selecciona una lección para comenzar</h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white p-6 border-t border-gray-100">
+            <div class="flex justify-between items-start">
+                <div>
+                    <span id="lesson-module"
+                        class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Módulo 1</span>
+                    <h2 id="lesson-title" class="text-2xl font-900 uppercase mt-1">Introducción al Curso</h2>
+                </div>
+                <button onclick="markAsCompleted()" id="btn-complete"
+                    class="bg-gray-100 text-gray-400 px-6 py-3 rounded-xl font-900 text-xs uppercase tracking-widest hover:bg-[#fba931] hover:text-[#0f172a] transition-all flex items-center gap-2">
+                    <span class="material-symbols-outlined text-lg">check_circle</span>
+                    <span id="btn-text">Marcar como Visto</span>
+                </button>
+            </div>
+            <p id="lesson-desc" class="mt-4 text-gray-600 text-sm leading-relaxed max-w-3xl">
+                Selecciona una lección del menú lateral para ver su contenido y descripción.
+            </p>
+        </div>
+    </main>
+
+    <script>
+        let currentCourse = null;
+        let currentLessonIndex = 0;
+
+        // Datos Mock de Lecciones (Simulando base de datos)
+        const MOCK_LESSONS = [
+            { title: "Bienvenida e Introducción", module: "Módulo 1: Fundamentos", video: "https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=0", desc: "Objetivos del curso y visión general del programa.", completed: false },
+            { title: "Historia del Libertarismo", module: "Módulo 1: Fundamentos", video: "https://www.youtube.com/embed/ysz5S6P_z-U", desc: "Orígenes filosóficos y evolución histórica.", completed: false },
+            { title: "Economía Austriaca Básica", module: "Módulo 2: Economía", video: "https://www.youtube.com/embed/9bZkp7q19f0", desc: "Conceptos clave: Acción humana, valor subjetivo.", completed: false },
+            { title: "Estrategia Política Local", module: "Módulo 3: Acción", video: "https://www.youtube.com/embed/jNQXAC9IVRw", desc: "Cómo aplicar las ideas en tu comunidad.", completed: false }
+        ];
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const courseId = localStorage.getItem('current_course_id');
+            const courses = JSON.parse(localStorage.getItem('pnl_courses')) || [];
+
+            if (!courseId) {
+                alert('No se seleccionó ningún curso.');
+                window.location.href = 'forja-academia.html';
+                return;
+            }
+
+            currentCourse = courses.find(c => c.id == courseId);
+
+            if (!currentCourse) {
+                alert('Curso no encontrado.');
+                window.location.href = 'forja-academia.html';
+                return;
+            }
+
+            // Cargar datos
+            document.getElementById('course-title').textContent = currentCourse.title;
+            // Recuperar progreso guardado (si existe) para este curso
+            const savedProgress = JSON.parse(localStorage.getItem(`progress_${courseId}`)) || MOCK_LESSONS;
+
+            renderLessons(savedProgress);
+            loadLesson(0, savedProgress); // Cargar primera lección
+        });
+
+        function renderLessons(lessons) {
+            const container = document.getElementById('lessons-list');
+            container.innerHTML = '';
+
+            let completedCount = 0;
+
+            lessons.forEach((lesson, index) => {
+                if (lesson.completed) completedCount++;
+
+                const isActive = index === currentLessonIndex;
+                const statusIcon = lesson.completed
+                    ? '<span class="material-symbols-outlined text-green-500 text-lg">check_circle</span>'
+                    : '<span class="material-symbols-outlined text-gray-300 text-lg">radio_button_unchecked</span>';
+
+                const activeClass = isActive ? 'bg-blue-50 border-l-4 border-[#fba931]' : 'hover:bg-gray-50 border-l-4 border-transparent';
+
+                const html = `
+                    <div onclick="loadLesson(${index}, null)" class="cursor-pointer p-4 rounded-r-xl transition-all ${activeClass} group">
+                        <div class="flex items-start gap-3">
+                            <div class="mt-1">${statusIcon}</div>
+                            <div>
+                                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">${lesson.module}</p>
+                                <h3 class="font-bold text-sm text-[#0f172a] leading-tight group-hover:text-[#fba931] transition-colors">${lesson.title}</h3>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                container.innerHTML += html;
+            });
+
+            // Actualizar % global
+            const percentage = Math.round((completedCount / lessons.length) * 100);
+            document.getElementById('course-progress').textContent = `${percentage}% Completado`;
+
+            // Actualizar barra visual en card de academia (opcional, requeriría lógica compleja de sync)
+        }
+
+        function loadLesson(index, lessonsData) {
+            // Si viene de onclick, recuperar lessons de localStorage
+            const courseId = localStorage.getItem('current_course_id');
+            const lessons = lessonsData || JSON.parse(localStorage.getItem(`progress_${courseId}`)) || MOCK_LESSONS;
+
+            currentLessonIndex = index;
+            const lesson = lessons[index];
+
+            // Renderizar UI
+            renderLessons(lessons); // Re-render para actualizar estado activo
+
+            document.getElementById('video-player').src = lesson.video;
+            document.getElementById('lesson-module').textContent = lesson.module;
+            document.getElementById('lesson-title').textContent = lesson.title;
+            document.getElementById('lesson-desc').textContent = lesson.desc;
+
+            // Estado botón
+            const btn = document.getElementById('btn-complete');
+            const btnText = document.getElementById('btn-text');
+            if (lesson.completed) {
+                btn.classList.remove('bg-gray-100', 'text-gray-400');
+                btn.classList.add('bg-green-100', 'text-green-700');
+                btnText.textContent = "Completada";
+            } else {
+                btn.classList.add('bg-gray-100', 'text-gray-400');
+                btn.classList.remove('bg-green-100', 'text-green-700');
+                btnText.textContent = "Marcar como Visto";
+            }
+        }
+
+        function markAsCompleted() {
+            const courseId = localStorage.getItem('current_course_id');
+            let lessons = JSON.parse(localStorage.getItem(`progress_${courseId}`)) || MOCK_LESSONS;
+
+            // Toggle estado
+            lessons[currentLessonIndex].completed = !lessons[currentLessonIndex].completed;
+
+            // Guardar
+            localStorage.setItem(`progress_${courseId}`, JSON.stringify(lessons));
+
+            // Recargar
+            loadLesson(currentLessonIndex, lessons);
+        }
+    </script>
+</body>
+
+</html>

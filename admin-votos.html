@@ -30,7 +30,7 @@
                 window.location.href = 'forja-login.html';
             }
         });
-        function logout() { localStorage.clear(); window.location.href = 'index.html'; }
+        function logout() { localStorage.removeItem('pnl_user_role'); window.location.href = 'index.html'; }
     </script>
 </head>
 
@@ -51,50 +51,125 @@
     <main class="max-w-7xl mx-auto px-6 py-10">
         <div class="flex justify-between items-center mb-8">
             <h1 class="text-3xl font-900 uppercase">Panel de Votaciones</h1>
-            <button
+            <button onclick="openVoteModal()"
                 class="bg-[#0f172a] text-white px-6 py-3 rounded-xl font-900 text-xs uppercase tracking-widest shadow-lg hover:bg-gray-800 flex items-center gap-2">
                 <span class="material-symbols-outlined">add_circle</span> Nueva Votación
             </button>
         </div>
 
-        <div class="grid gap-6">
-            <!-- Votación Activa -->
-            <div
-                class="bg-white p-6 rounded-3xl shadow-sm border-l-8 border-green-500 flex justify-between items-center">
-                <div>
-                    <span
-                        class="bg-green-100 text-green-700 font-bold px-3 py-1 rounded-full text-[10px] uppercase mb-2 inline-block">Urna
-                        Abierta</span>
-                    <h2 class="text-xl font-900 uppercase">Elección de Directiva Juvenil</h2>
-                    <p class="text-sm text-gray-400 mt-1">Cierra en: 4 horas 23 minutos</p>
-                </div>
-                <div class="flex gap-3">
-                    <button
-                        class="bg-gray-100 text-gray-600 px-4 py-2 rounded-lg font-bold text-xs uppercase hover:bg-gray-200">Ver
-                        Resultados</button>
-                    <button
-                        class="bg-red-50 text-red-600 px-4 py-2 rounded-lg font-bold text-xs uppercase hover:bg-red-100 border border-red-100">Cerrar
-                        Urna</button>
-                </div>
-            </div>
-
-            <!-- Votación Cerrada -->
-            <div
-                class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex justify-between items-center opacity-75">
-                <div>
-                    <span
-                        class="bg-gray-100 text-gray-500 font-bold px-3 py-1 rounded-full text-[10px] uppercase mb-2 inline-block">Cerrada</span>
-                    <h2 class="text-xl font-900 uppercase text-gray-500">Aprobación Presupuesto 2026</h2>
-                    <p class="text-sm text-gray-400 mt-1">Finalizada el 15 Ene 2026</p>
-                </div>
-                <div>
-                    <button
-                        class="bg-[#fba931] text-[#0f172a] px-4 py-2 rounded-lg font-bold text-xs uppercase shadow-sm">Ver
-                        Acta</button>
-                </div>
-            </div>
+        <div id="votes-container" class="grid gap-6">
+            <!-- Renderizado dinámico -->
         </div>
     </main>
+
+    <!-- Modal Nueva Votación -->
+    <div id="vote-modal"
+        class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center backdrop-blur-sm">
+        <div class="bg-white rounded-3xl p-8 max-w-lg w-full shadow-2xl mx-4">
+            <h2 class="text-2xl font-900 uppercase mb-6">Nueva Votación</h2>
+            <form id="vote-form" onsubmit="saveVote(event)" class="space-y-4">
+                <div>
+                    <label class="text-[10px] font-black uppercase text-gray-400 ml-1">Título de la Votación</label>
+                    <input type="text" id="vote-title" required
+                        class="w-full bg-gray-50 border border-gray-100 p-4 rounded-xl focus:ring-2 focus:ring-[#fba931] outline-none">
+                </div>
+                <div>
+                    <label class="text-[10px] font-black uppercase text-gray-400 ml-1">Fecha de Cierre</label>
+                    <input type="datetime-local" id="vote-deadline" required
+                        class="w-full bg-gray-50 border border-gray-100 p-4 rounded-xl focus:ring-2 focus:ring-[#fba931] outline-none">
+                </div>
+                <div class="flex gap-4 pt-4">
+                    <button type="button" onclick="closeVoteModal()"
+                        class="flex-1 bg-gray-100 text-gray-600 py-4 rounded-xl font-900 uppercase text-xs hover:bg-gray-200">Cancelar</button>
+                    <button type="submit"
+                        class="flex-1 bg-[#0f172a] text-white py-4 rounded-xl font-900 uppercase text-xs hover:bg-gray-800 shadow-lg">Crear
+                        Urna</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const DEFAULT_VOTES = [
+            { id: 1, title: "Elección de Directiva Juvenil", deadline: new Date(Date.now() + 86400000).toISOString(), status: "open" },
+            { id: 2, title: "Aprobación Presupuesto 2026", deadline: "2026-01-15T18:00", status: "closed" }
+        ];
+
+        let votes = JSON.parse(localStorage.getItem('pnl_votes')) || DEFAULT_VOTES;
+        if (!localStorage.getItem('pnl_votes')) {
+            localStorage.setItem('pnl_votes', JSON.stringify(votes));
+        }
+
+        function renderVotes() {
+            const container = document.getElementById('votes-container');
+            container.innerHTML = '';
+
+            votes.forEach(vote => {
+                const isOpen = vote.status === 'open';
+                const statusBadge = isOpen
+                    ? '<span class="bg-green-100 text-green-700 font-bold px-3 py-1 rounded-full text-[10px] uppercase mb-2 inline-block">Urna Abierta</span>'
+                    : '<span class="bg-gray-100 text-gray-500 font-bold px-3 py-1 rounded-full text-[10px] uppercase mb-2 inline-block">Cerrada</span>';
+
+                const deadlineText = isOpen
+                    ? `Cierra el: ${new Date(vote.deadline).toLocaleString()}`
+                    : `Finalizada el: ${new Date(vote.deadline).toLocaleDateString()}`;
+
+                const borderClass = isOpen ? 'border-l-8 border-green-500' : 'border border-gray-100 opacity-75';
+
+                const actions = isOpen
+                    ? `<div class="flex gap-3">
+                        <button onclick="closeVote(${vote.id})" class="bg-red-50 text-red-600 px-4 py-2 rounded-lg font-bold text-xs uppercase hover:bg-red-100 border border-red-100">Cerrar Urna</button>
+                       </div>`
+                    : `<div><button class="bg-[#fba931] text-[#0f172a] px-4 py-2 rounded-lg font-bold text-xs uppercase shadow-sm">Ver Acta</button></div>`;
+
+                const card = `
+                    <div class="bg-white p-6 rounded-3xl shadow-sm ${borderClass} flex justify-between items-center">
+                        <div>
+                            ${statusBadge}
+                            <h2 class="text-xl font-900 uppercase ${!isOpen ? 'text-gray-500' : ''}">${vote.title}</h2>
+                            <p class="text-sm text-gray-400 mt-1">${deadlineText}</p>
+                        </div>
+                        ${actions}
+                    </div>
+                `;
+                container.innerHTML += card;
+            });
+        }
+
+        const modal = document.getElementById('vote-modal');
+        function openVoteModal() { modal.classList.remove('hidden'); }
+        function closeVoteModal() { modal.classList.add('hidden'); }
+
+        function saveVote(e) {
+            e.preventDefault();
+            const title = document.getElementById('vote-title').value;
+            const deadline = document.getElementById('vote-deadline').value;
+
+            const newVote = {
+                id: Date.now(),
+                title,
+                deadline,
+                status: 'open'
+            };
+
+            votes.unshift(newVote);
+            localStorage.setItem('pnl_votes', JSON.stringify(votes));
+            renderVotes();
+            closeVoteModal();
+            document.getElementById('vote-form').reset();
+        }
+
+        function closeVote(id) {
+            if (confirm('¿Seguro que deseas cerrar esta votación?')) {
+                const index = votes.findIndex(v => v.id == id);
+                votes[index].status = 'closed';
+                localStorage.setItem('pnl_votes', JSON.stringify(votes));
+                renderVotes();
+            }
+        }
+
+        renderVotes();
+    </script>
 </body>
 
 </html>
