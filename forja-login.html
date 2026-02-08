@@ -132,13 +132,13 @@
                 const { data: profile, error: profileError } = await supabaseClient
                     .from('profiles')
                     .select('role')
-                    .eq('id', authData.user.id)
-                    .maybeSingle(); // Usar maybeSingle para evitar error automático de PGRST116
+                    .eq('auth_id', authData.user.id)
+                    .maybeSingle();
 
                 if (profileError) throw profileError;
 
                 if (!profile) {
-                    throw new Error("PGRST116: Tu cuenta de Auth existe pero no tienes un perfil creado. Por favor, contacta al administrador para vincular tu ID manualmente.");
+                    throw new Error("PGRST116: Tu cuenta de Auth existe pero no tienes un perfil vinculado. Por favor, contacta al administrador.");
                 }
 
                 // 3. Guardar datos de sesión (compatibilidad con frontend existente)

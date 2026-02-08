@@ -109,7 +109,7 @@
                 <span class="material-symbols-outlined">person_add</span> Nuevo Militante
             </h2>
             <form id="user-form" onsubmit="saveUser(event)" class="space-y-4">
-                <input type="hidden" id="user-id">
+                <input type="hidden" id="profile-id">
                 <div class="grid grid-cols-2 gap-4">
                     <div class="col-span-2">
                         <label class="text-[10px] font-black uppercase text-gray-400">Nombre Completo</label>
@@ -220,10 +220,13 @@
             }
         }
 
-        function openModal() {
+        function openModal(mode = 'create') {
             document.getElementById('user-form').reset();
-            document.getElementById('user-id').value = '';
-            document.getElementById('modal-title').innerHTML = '<span class="material-symbols-outlined">person_add</span> Nuevo Militante';
+            document.getElementById('profile-id').value = '';
+            modal.dataset.mode = mode;
+            document.getElementById('modal-title').innerHTML = mode === 'edit' ?
+                '<span class="material-symbols-outlined">edit</span> Editar Militante' :
+                '<span class="material-symbols-outlined">person_add</span> Nuevo Militante';
             modal.classList.remove('hidden');
         }
 
@@ -231,7 +234,7 @@
 
         async function saveUser(e) {
             e.preventDefault();
-            const id = document.getElementById('user-id').value;
+            const id = document.getElementById('profile-id').value;
             const formData = {
                 full_name: document.getElementById('full_name').value,
                 rut: document.getElementById('rut').value,
@@ -241,15 +244,11 @@
             };
 
             try {
+                const isEditing = modal.dataset.mode === 'edit';
                 let res;
-                if (id) {
+                if (isEditing) {
                     res = await supabaseClient.from('profiles').update(formData).eq('id', id);
                 } else {
-                    // Nota: En un sistema real, crear el Auth User requiere API de Admin o Edge Functions.
-                    // Para el MVP, creamos el perfil y asumimos que el usuario se registrará con ese email.
-                    // O podemos usar auth.admin.createUser si tenemos la service_key (no recomendado en frontend).
-                    // Mostraremos un aviso si es necesario.
-                    formData.id = crypto.randomUUID(); // Placeholder UUID si estamos creando perfil puro
                     res = await supabaseClient.from('profiles').insert([formData]);
                 }
 
@@ -272,14 +271,13 @@
         }
 
         function editUser(user) {
-            openModal();
-            document.getElementById('user-id').value = user.id;
+            openModal('edit');
+            document.getElementById('profile-id').value = user.id;
             document.getElementById('full_name').value = user.full_name;
             document.getElementById('rut').value = user.rut;
             document.getElementById('email').value = user.email;
             document.getElementById('phone_number').value = user.phone_number || '';
             document.getElementById('role').value = user.role;
-            document.getElementById('modal-title').innerHTML = '<span class="material-symbols-outlined">edit</span> Editar Militante';
         }
 
         async function handleExcelImport(event) {
