@@ -194,8 +194,17 @@
                         </span>
                     </td>
                     <td class="px-6 py-4">
-                        <button onclick='editUser(${JSON.stringify(user)})' class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"><span class="material-symbols-outlined">edit</span></button>
-                        <button onclick="deleteUser('${user.id}')" class="p-2 text-red-600 hover:bg-red-50 rounded-lg"><span class="material-symbols-outlined">delete</span></button>
+                        <div class="flex gap-1">
+                            <button onclick='sendInvite(${JSON.stringify(user)})' class="p-2 text-amber-600 hover:bg-amber-50 rounded-lg" title="Invitar (Email)">
+                                <span class="material-symbols-outlined">mail</span>
+                            </button>
+                            <button onclick='editUser(${JSON.stringify(user)})' class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg" title="Editar">
+                                <span class="material-symbols-outlined">edit</span>
+                            </button>
+                            <button onclick="deleteUser('${user.id}')" class="p-2 text-red-600 hover:bg-red-50 rounded-lg" title="Eliminar">
+                                <span class="material-symbols-outlined">delete</span>
+                            </button>
+                        </div>
                     </td>
                 </tr>
             `).join('');
@@ -231,6 +240,22 @@
         }
 
         function closeModal() { modal.classList.add('hidden'); }
+
+        async function sendInvite(user) {
+            // Copiar email al portapapeles para conveniencia
+            try {
+                await navigator.clipboard.writeText(user.email);
+
+                // Extraer el "Project Ref" de la URL de Supabase (ej: https://project-ref.supabase.co)
+                const projectRef = SUPABASE_URL.split('://')[1].split('.')[0];
+                const dashboardUrl = `https://supabase.com/dashboard/project/${projectRef}/auth/users`;
+
+                alert(`Email "${user.email}" copiado al portapapeles.\n\nRedirigiendo a tu Dashboard de Supabase... sólo tendrás que pegar el correo.`);
+                window.open(dashboardUrl, '_blank');
+            } catch (err) {
+                alert('No se pudo copiar el email: ' + err.message);
+            }
+        }
 
         async function saveUser(e) {
             e.preventDefault();
