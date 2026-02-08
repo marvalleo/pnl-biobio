@@ -242,18 +242,30 @@
         function closeModal() { modal.classList.add('hidden'); }
 
         async function sendInvite(user) {
-            // Copiar email al portapapeles para conveniencia
+            if (!confirm(`¿Deseas enviar una invitación oficial a ${user.email}?`)) return;
+
             try {
-                await navigator.clipboard.writeText(user.email);
+                // Feedback visual: Cambiar el cursor
+                document.body.style.cursor = 'wait';
 
-                // Extraer el "Project Ref" de la URL de Supabase (ej: https://project-ref.supabase.co)
-                const projectRef = SUPABASE_URL.split('://')[1].split('.')[0];
-                const dashboardUrl = `https://supabase.com/dashboard/project/${projectRef}/auth/users`;
+                const { data, error } = await supabaseClient.functions.invoke('invite-militante', {
+                    body: { email: user.email }
+                });
 
-                alert(`Email "${user.email}" copiado al portapapeles.\n\nRedirigiendo a tu Dashboard de Supabase... sólo tendrás que pegar el correo.`);
-                window.open(dashboardUrl, '_blank');
+                if (error) throw error;
+
+                alert(`¡Invitación enviada con éxito a ${user.email}!\nEl militante recibirá un correo para crear su contraseña.`);
             } catch (err) {
-                alert('No se pudo copiar el email: ' + err.message);
+                console.error('Error al invitar:', err);
+                alert('No se pudo enviar la invitación.\nError: ' + err.message);
+
+                // Fallback: Si la función no está desplegada, abrir el dashboard como plan B
+                if (confirm('¿Deseas abrir el Dashboard de Supabase para enviarla manualmente?')) {
+                    const projectRef = SUPABASE_URL.split('://')[1].split('.')[0];
+                    window.open(`https://supabase.com/dashboard/project/${projectRef}/auth/users`, '_blank');
+                }
+            } finally {
+                document.body.style.cursor = 'default';
             }
         }
 
