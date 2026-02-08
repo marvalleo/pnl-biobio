@@ -47,6 +47,13 @@
                 <p class="text-gray-500 font-medium">Control total de la base de datos de usuarios y roles.</p>
             </div>
             <div class="flex gap-2">
+                <div class="relative">
+                    <span
+                        class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">search</span>
+                    <input type="text" id="search-input" placeholder="Buscar por nombre, rut o email..."
+                        oninput="filterUsers()"
+                        class="bg-white border border-gray-200 pl-11 pr-6 py-3 rounded-xl font-medium text-xs outline-none focus:ring-2 focus:ring-[#fba931] w-[300px] transition-all">
+                </div>
                 <button onclick="document.getElementById('excel-input').click()"
                     class="bg-white border border-gray-200 px-6 py-3 rounded-xl font-800 text-xs uppercase tracking-widest flex items-center gap-2 hover:bg-gray-50 transition-all">
                     <span class="material-symbols-outlined text-lg">upload_file</span> Importar Excel
@@ -80,6 +87,7 @@
                         <th class="px-6 py-4 text-[10px] font-black uppercase text-gray-400">Nombre</th>
                         <th class="px-6 py-4 text-[10px] font-black uppercase text-gray-400">RUT</th>
                         <th class="px-6 py-4 text-[10px] font-black uppercase text-gray-400">Email</th>
+                        <th class="px-6 py-4 text-[10px] font-black uppercase text-gray-400">Teléfono</th>
                         <th class="px-6 py-4 text-[10px] font-black uppercase text-gray-400">Rol</th>
                         <th class="px-6 py-4 text-[10px] font-black uppercase text-gray-400">Acciones</th>
                     </tr>
@@ -149,6 +157,7 @@
     <script>
         const tableBody = document.getElementById('users-table-body');
         const modal = document.getElementById('user-modal');
+        let allUsers = []; // Cache para búsqueda
 
         // Renderizar la tabla
         async function loadUsers() {
@@ -159,32 +168,47 @@
                     .order('created_at', { ascending: false });
 
                 if (error) throw error;
-
-                if (data.length === 0) {
-                    tableBody.innerHTML = `<tr><td colspan="5" class="px-6 py-10 text-center text-gray-400">No hay militantes registrados.</td></tr>`;
-                    return;
-                }
-
-                tableBody.innerHTML = data.map(user => `
-                    <tr class="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
-                        <td class="px-6 py-4 font-bold uppercase text-sm">${user.full_name}</td>
-                        <td class="px-6 py-4 text-xs font-medium text-gray-500">${user.rut}</td>
-                        <td class="px-6 py-4 text-xs text-gray-500">${user.email}</td>
-                        <td class="px-6 py-4 text-[10px]">
-                            <span class="px-2 py-1 rounded-full font-black uppercase tracking-tighter ${getRoleClass(user.role)}">
-                                ${user.role}
-                            </span>
-                        </td>
-                        <td class="px-6 py-4">
-                            <button onclick='editUser(${JSON.stringify(user)})' class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"><span class="material-symbols-outlined">edit</span></button>
-                            <button onclick="deleteUser('${user.id}')" class="p-2 text-red-600 hover:bg-red-50 rounded-lg"><span class="material-symbols-outlined">delete</span></button>
-                        </td>
-                    </tr>
-                `).join('');
+                allUsers = data;
+                renderUsers(allUsers);
             } catch (err) {
                 console.error(err);
-                tableBody.innerHTML = `<tr><td colspan="5" class="px-6 py-10 text-center text-red-500 font-bold uppercase text-xs">Error al cargar datos.</td></tr>`;
+                tableBody.innerHTML = `<tr><td colspan="6" class="px-6 py-10 text-center text-red-500 font-bold uppercase text-xs">Error al cargar datos.</td></tr>`;
             }
+        }
+
+        function renderUsers(usersToRender) {
+            if (usersToRender.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="6" class="px-6 py-10 text-center text-gray-400">No se encontraron militantes.</td></tr>`;
+                return;
+            }
+
+            tableBody.innerHTML = usersToRender.map(user => `
+                <tr class="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
+                    <td class="px-6 py-4 font-bold uppercase text-sm">${user.full_name}</td>
+                    <td class="px-6 py-4 text-xs font-medium text-gray-500">${user.rut}</td>
+                    <td class="px-6 py-4 text-xs text-gray-500">${user.email}</td>
+                    <td class="px-6 py-4 text-xs text-gray-500">${user.phone_number || '-'}</td>
+                    <td class="px-6 py-4 text-[10px]">
+                        <span class="px-2 py-1 rounded-full font-black uppercase tracking-tighter ${getRoleClass(user.role)}">
+                            ${user.role}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4">
+                        <button onclick='editUser(${JSON.stringify(user)})' class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"><span class="material-symbols-outlined">edit</span></button>
+                        <button onclick="deleteUser('${user.id}')" class="p-2 text-red-600 hover:bg-red-50 rounded-lg"><span class="material-symbols-outlined">delete</span></button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function filterUsers() {
+            const query = document.getElementById('search-input').value.toLowerCase();
+            const filtered = allUsers.filter(user =>
+                user.full_name.toLowerCase().includes(query) ||
+                user.rut.toLowerCase().includes(query) ||
+                user.email.toLowerCase().includes(query)
+            );
+            renderUsers(filtered);
         }
 
         function getRoleClass(role) {
