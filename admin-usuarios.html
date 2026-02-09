@@ -177,7 +177,7 @@
             </div>
 
             <div class="flex gap-3">
-                <button onclick="copyWhatsAppMessage()"
+                <button id="btn-copy-whatsapp" onclick="copyWhatsAppMessage()"
                     class="flex-1 bg-gray-600 text-white py-3 rounded-xl font-900 text-xs uppercase hover:bg-gray-700 flex items-center justify-center gap-2">
                     <span class="material-symbols-outlined text-sm">content_copy</span> Copiar
                 </button>
@@ -417,7 +417,7 @@
 Ya puedes acceder a la Forja Libertaria del PNL Biobío:
 🌐 https://pnl-biobio.netlify.app/forja-login.html
 
-Usuario: ${userData.rut}
+Usuario (Email): ${userData.email}
 Contraseña: ${tempPassword}
 
 ⚠️ Deberás cambiar tu contraseña en el primer inicio de sesión.
@@ -427,19 +427,40 @@ Contraseña: ${tempPassword}
             document.getElementById('whatsapp-message').textContent = message;
             currentWhatsAppData = { phone: userData.phone_number, message };
             document.getElementById('whatsapp-modal').classList.remove('hidden');
+
+            // Resetear botón de copiar
+            const btn = document.getElementById('btn-copy-whatsapp');
+            if (btn) {
+                btn.innerHTML = '<span class="material-symbols-outlined text-sm">content_copy</span> Copiar';
+                btn.className = 'flex-1 bg-gray-600 text-white py-3 rounded-xl font-900 text-xs uppercase hover:bg-gray-700 flex items-center justify-center gap-2';
+            }
         }
 
         function closeWhatsAppModal() {
             document.getElementById('whatsapp-modal').classList.add('hidden');
         }
 
-        function copyWhatsAppMessage() {
-            const message = document.getElementById('whatsapp-message').textContent;
-            navigator.clipboard.writeText(message).then(() => {
-                alert('✅ Mensaje copiado al portapapeles\n\nAhora solo pégalo en WhatsApp/Telegram');
-            }).catch(err => {
-                alert('Error al copiar: ' + err);
-            });
+        async function copyWhatsAppMessage() {
+            try {
+                await navigator.clipboard.writeText(currentWhatsAppData.message);
+
+                const btn = document.getElementById('btn-copy-whatsapp');
+                if (btn) {
+                    const originalContent = btn.innerHTML;
+                    const originalClass = btn.className;
+
+                    btn.innerHTML = '<span class="material-symbols-outlined text-sm">check</span> ¡Copiado!';
+                    btn.className = 'flex-1 bg-green-500 text-white py-3 rounded-xl font-900 text-xs uppercase hover:bg-green-600 flex items-center justify-center gap-2 shadow-lg scale-105 transition-all';
+
+                    setTimeout(() => {
+                        btn.innerHTML = originalContent;
+                        btn.className = originalClass;
+                    }, 2000);
+                }
+            } catch (err) {
+                console.error('Error al copiar:', err);
+                alert('No se pudo copiar automáticamente.');
+            }
         }
 
         function openWhatsApp() {
