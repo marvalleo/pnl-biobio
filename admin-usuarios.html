@@ -331,40 +331,21 @@
                     closeModal();
                     loadUsers();
                 } else {
-                    // Modo creación: Generar contraseña temporal y crear usuario completo
+                    // Modo creación: Llamar a la Edge Function
+                    // Feedback visual
+                    document.body.style.cursor = 'wait';
 
-                    // 1. Generar contraseña temporal basada en el RUT
-                    const tempPassword = `PNL-${formData.rut.replace('-', '').slice(-5)}`;
-
-                    // 2. Crear usuario en Supabase Auth con Service Role Key
-                    // NOTA: Esto requiere que tengas el Service Role Key configurado
-                    const { data: authData, error: authError } = await supabaseClient.auth.admin.createUser({
-                        email: formData.email,
-                        password: tempPassword,
-                        email_confirm: true, // Confirmar email automáticamente
-                        user_metadata: {
-                            full_name: formData.full_name,
-                            rut: formData.rut
-                        }
+                    const { data, error } = await supabaseClient.functions.invoke('create-user-temp', {
+                        body: formData
                     });
 
-                    if (authError) throw authError;
+                    document.body.style.cursor = 'default';
 
-                    // 3. Crear perfil con must_change_password = true
-                    const profileData = {
-                        ...formData,
-                        auth_id: authData.user.id,
-                        must_change_password: true
-                    };
+                    if (error) throw error;
 
-                    const { error: profileError } = await supabaseClient
-                        .from('profiles')
-                        .insert([profileData]);
-
-                    if (profileError) throw profileError;
-
-                    // 4. Mostrar modal de WhatsApp con el mensaje
-                    showWhatsAppModal(formData, tempPassword);
+                    // Mostrar modal de WhatsApp con la contraseña temporal
+                    // data.user contiene la info del usuario y data.tempPassword la contraseña
+                    showWhatsAppModal(data.user, data.tempPassword);
 
                     closeModal();
                     loadUsers();
