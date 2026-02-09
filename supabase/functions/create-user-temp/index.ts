@@ -36,14 +36,22 @@ serve(async (req: Request) => {
     }
 
     const { full_name, rut, email, phone_number, role } = userData
-    console.log(`Intentando crear usuario: ${email}, RUT: ${rut}`)
+    console.log(`Intentando crear usuario: ${email}, RUT: ${rut || 'N/A'}`)
 
-    if (!email || !rut) {
-      throw new Error("Email y RUT son obligatorios")
+    if (!email) {
+      throw new Error("El Email es obligatorio")
     }
 
     // 1. Generar contraseña temporal
-    const tempPassword = `PNL-${rut.replace('-', '').slice(-5)}`
+    // Priorizamos RUT si existe, si no, usamos parte del email + random
+    let tempPassword;
+    if (rut && rut.trim() !== '') {
+      tempPassword = `PNL-${rut.replace('-', '').slice(-5)}`;
+    } else {
+      const emailPrefix = email.split('@')[0].slice(0, 4).toUpperCase();
+      const randomSuffix = Math.random().toString(36).slice(-4).toUpperCase();
+      tempPassword = `PNL-${emailPrefix}${randomSuffix}`;
+    }
 
     // 2. Crear usuario en Supabase Auth
     // Al crear el usuario, el TRIGGER de la base de datos se disparará automáticamente

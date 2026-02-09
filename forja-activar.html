@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Activar Cuenta - Forja Libertaria</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+    <style>
+        :root {
+            --pnl-blue: #0f172a;
+            --pnl-gold: #fba931;
+        }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background-color: var(--pnl-blue);
+            color: var(--pnl-blue);
+        }
+
+        @keyframes shake {
+
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+
+            25% {
+                transform: translateX(-5px);
+            }
+
+            75% {
+                transform: translateX(5px);
+            }
+        }
+
+        .error-shake {
+            animation: shake 0.3s ease-in-out;
+            border-color: #ef4444 !important;
+        }
+    </style>
+</head>
+
+<body class="min-h-screen flex items-center justify-center p-4">
+
+    <div class="max-w-md w-full bg-white rounded-3xl p-8 shadow-2xl text-center border-t-8 border-[#fba931] mx-auto">
+        <a href="forja-login.html"
+            class="absolute top-4 left-4 text-white opacity-50 hover:opacity-100 flex items-center gap-1 transition-opacity">
+            <span class="material-symbols-outlined">arrow_back</span> Volver
+        </a>
+
+        <img src="https://pnl-biobio.netlify.app/wp-content/uploads/2026/pnl-del-biobio01.png" alt="Logo PNL"
+            class="h-20 mx-auto mb-6">
+        <h1 class="text-2xl font-900 uppercase mb-2 tracking-tighter">Activar Cuenta</h1>
+        <p class="text-gray-400 text-[10px] font-bold uppercase tracking-widest mb-8">Validación de Padrón Biobío</p>
+
+        <div id="activation-container" class="space-y-4 text-left">
+            <!-- Mensajes de Feedback -->
+            <div id="feedback-message" class="hidden p-4 mb-4 rounded-lg bg-blue-50 border-l-4 border-blue-500">
+                <p class="text-blue-800 text-xs font-bold uppercase tracking-wider feedback-text"></p>
+            </div>
+
+            <div>
+                <label class="text-[10px] font-black uppercase text-gray-400 ml-1">Tu Correo Electrónico</label>
+                <input type="email" id="email-input" placeholder="nombre@ejemplo.cl"
+                    class="w-full bg-gray-50 border border-gray-100 p-4 rounded-xl focus:ring-2 focus:ring-[#fba931] outline-none transition-all font-bold text-lg">
+                <p class="text-[9px] text-gray-400 mt-2 font-bold ml-1">
+                    * Debe ser el correo con el que te inscribiste en el partido.
+                </p>
+            </div>
+
+            <button onclick="handleActivation()"
+                class="w-full bg-[#fba931] text-[#0f172a] py-4 rounded-xl font-900 uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-all shadow-lg flex items-center justify-center gap-2">
+                <span class="material-symbols-outlined">send</span> Solicitar Link de Acceso
+            </button>
+        </div>
+
+        <p class="mt-8 text-[10px] font-bold text-gray-400 uppercase leading-relaxed">
+            Te enviaremos un <strong class="text-[#fba931]">Enlace Mágico</strong> a tu correo.<br> Úsalo para definir
+            tu contraseña personal.
+        </p>
+    </div>
+
+    <!-- Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
+
+    <script>
+        async function handleActivation() {
+            const email = document.getElementById('email-input').value.trim();
+            const btn = document.querySelector('button');
+            const feedbackBox = document.getElementById('feedback-message');
+            const feedbackText = feedbackBox.querySelector('.feedback-text');
+
+            if (!email || !email.includes('@')) {
+                showFeedback('Por favor, ingresa un correo válido.', 'error');
+                return;
+            }
+
+            // UI Loading
+            const originalText = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<span class="animate-spin h-5 w-5 border-2 border-[#0f172a] border-t-transparent rounded-full mr-2"></span> Buscando en Padrón...';
+            feedbackBox.classList.add('hidden');
+
+            try {
+                // Generar URL de redirección (funciona en localhost y deploy)
+                // Apunta a la página donde el usuario definirá su password
+                const redirectUrl = window.location.origin + '/forja-reset-password.html';
+
+                console.log("Solicitando reset a:", redirectUrl);
+
+                const { data, error } = await supabaseClient.auth.resetPasswordForEmail(email, {
+                    redirectTo: redirectUrl
+                });
+
+                if (error) {
+                    // Supabase limita los intentos frecuentes (rate limit)
+                    if (error.message.includes("Rate limit")) {
+                        throw new Error("Demasiados intentos. Espera unos minutos.");
+                    }
+                    throw error;
+                }
+
+                // ÉXITO
+                showFeedback(`✅ ¡Encontrado! Hemos enviado el enlace a <strong>${email}</strong>.<br>Revisa tu bandeja de entrada (y Spam) para continuar.`, 'success');
+                document.getElementById('email-input').value = ''; // Limpiar
+
+            } catch (err) {
+                console.error("Activation Error:", err);
+                showFeedback(`❌ Error: ${err.message}`, 'error');
+                document.getElementById('activation-container').classList.add('error-shake');
+                setTimeout(() => document.getElementById('activation-container').classList.remove('error-shake'), 500);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
+        }
+
+        function showFeedback(msg, type) {
+            const box = document.getElementById('feedback-message');
+            const text = box.querySelector('.feedback-text');
+
+            box.classList.remove('hidden', 'bg-red-50', 'border-red-500', 'bg-blue-50', 'border-blue-500', 'bg-green-50', 'border-green-500');
+            text.classList.remove('text-red-800', 'text-blue-800', 'text-green-800');
+
+            if (type === 'error') {
+                box.classList.add('bg-red-50', 'border-red-500');
+                text.classList.add('text-red-800');
+            } else if (type === 'success') {
+                box.classList.add('bg-green-50', 'border-green-500');
+                text.classList.add('text-green-800');
+            } else {
+                box.classList.add('bg-blue-50', 'border-blue-500');
+                text.classList.add('text-blue-800');
+            }
+
+            text.innerHTML = msg;
+            box.classList.remove('hidden');
+        }
+
+        // Enter key support
+        document.getElementById('email-input').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') handleActivation();
+        });
+    </script>
+</body>
+
+</html>
