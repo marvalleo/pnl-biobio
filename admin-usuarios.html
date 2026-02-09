@@ -200,6 +200,19 @@
         const modal = document.getElementById('user-modal');
         let allUsers = []; // Cache para búsqueda
 
+        // Protección de Ruta Obligatoria
+        window.addEventListener('DOMContentLoaded', async () => {
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            const role = localStorage.getItem('pnl_user_role');
+
+            if (!session || (role !== 'super_admin' && role !== 'admin_usuarios')) {
+                console.warn("Acceso denegado o sesión expirada.");
+                window.location.href = 'forja-login.html';
+                return;
+            }
+            loadUsers();
+        });
+
         // Renderizar la tabla
         async function loadUsers() {
             try {
