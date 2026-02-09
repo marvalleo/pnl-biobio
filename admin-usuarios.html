@@ -157,6 +157,43 @@
         </div>
     </div>
 
+    <!-- Modal WhatsApp -->
+    <div id="whatsapp-modal"
+        class="fixed inset-0 bg-black/60 z-50 hidden flex items-center justify-center backdrop-blur-sm p-4">
+        <div class="bg-white w-full max-w-md rounded-3xl p-8 shadow-2xl">
+            <h2 class="text-2xl font-900 uppercase mb-4 flex items-center gap-2 text-green-600">
+                <span class="material-symbols-outlined">check_circle</span> ¡Usuario Creado!
+            </h2>
+            <p class="text-sm text-gray-600 mb-6">
+                Ahora envía las credenciales por <strong>WhatsApp</strong> o <strong>Telegram</strong>:
+            </p>
+
+            <div class="bg-gray-50 p-4 rounded-xl mb-4 border border-gray-200">
+                <p class="text-xs font-bold text-gray-400 uppercase mb-2">Mensaje para copiar:</p>
+                <div id="whatsapp-message" class="text-sm font-mono bg-white p-4 rounded-lg border select-all"
+                    style="white-space: pre-line;">
+                    <!-- El mensaje se llenará dinámicamente -->
+                </div>
+            </div>
+
+            <div class="flex gap-3">
+                <button onclick="copyWhatsAppMessage()"
+                    class="flex-1 bg-gray-600 text-white py-3 rounded-xl font-900 text-xs uppercase hover:bg-gray-700 flex items-center justify-center gap-2">
+                    <span class="material-symbols-outlined text-sm">content_copy</span> Copiar
+                </button>
+                <button onclick="openWhatsApp()"
+                    class="flex-1 bg-green-600 text-white py-3 rounded-xl font-900 text-xs uppercase hover:bg-green-700 flex items-center justify-center gap-2">
+                    📱 Abrir WhatsApp
+                </button>
+            </div>
+
+            <button onclick="closeWhatsAppModal()"
+                class="w-full mt-3 bg-gray-100 text-gray-600 py-3 rounded-xl font-900 text-xs uppercase hover:bg-gray-200">
+                Cerrar
+            </button>
+        </div>
+    </div>
+
     <script>
         const tableBody = document.getElementById('users-table-body');
         const modal = document.getElementById('user-modal');
@@ -285,18 +322,55 @@
 
             try {
                 const isEditing = modal.dataset.mode === 'edit';
-                let res;
-                if (isEditing) {
-                    res = await supabaseClient.from('profiles').update(formData).eq('id', id);
-                } else {
-                    res = await supabaseClient.from('profiles').insert([formData]);
-                }
 
-                if (res.error) throw res.error;
-                alert('Usuario guardado correctamente.');
-                closeModal();
-                loadUsers();
+                if (isEditing) {
+                    // Modo edición: solo actualizar el perfil
+                    const res = await supabaseClient.from('profiles').update(formData).eq('id', id);
+                    if (res.error) throw res.error;
+                    alert('Usuario actualizado correctamente.');
+                    closeModal();
+                    loadUsers();
+                } else {
+                    // Modo creación: Generar contraseña temporal y crear usuario completo
+
+                    // 1. Generar contraseña temporal basada en el RUT
+                    const tempPassword = `PNL-${formData.rut.replace('-', '').slice(-5)}`;
+
+                    // 2. Crear usuario en Supabase Auth con Service Role Key
+                    // NOTA: Esto requiere que tengas el Service Role Key configurado
+                    const { data: authData, error: authError } = await supabaseClient.auth.admin.createUser({
+                        email: formData.email,
+                        password: tempPassword,
+                        email_confirm: true, // Confirmar email automáticamente
+                        user_metadata: {
+                            full_name: formData.full_name,
+                            rut: formData.rut
+                        }
+                    });
+
+                    if (authError) throw authError;
+
+                    // 3. Crear perfil con must_change_password = true
+                    const profileData = {
+                        ...formData,
+                        auth_id: authData.user.id,
+                        must_change_password: true
+                    };
+
+                    const { error: profileError } = await supabaseClient
+                        .from('profiles')
+                        .insert([profileData]);
+
+                    if (profileError) throw profileError;
+
+                    // 4. Mostrar modal de WhatsApp con el mensaje
+                    showWhatsAppModal(formData, tempPassword);
+
+                    closeModal();
+                    loadUsers();
+                }
             } catch (err) {
+                console.error('Error completo:', err);
                 alert('Error: ' + err.message);
             }
         }
@@ -318,6 +392,52 @@
             document.getElementById('email').value = user.email;
             document.getElementById('phone_number').value = user.phone_number || '';
             document.getElementById('role').value = user.role;
+        }
+
+        // Funciones del Modal de WhatsApp
+        let currentWhatsAppData = {};
+
+        function showWhatsAppModal(userData, tempPassword) {
+            const message = `Hola ${userData.full_name.split(' ')[0]},
+
+Ya puedes acceder a la Forja Libertaria del PNL Biobío:
+🌐 https://pnl-biobio.netlify.app/forja-login.html
+
+Usuario: ${userData.rut}
+Contraseña: ${tempPassword}
+
+⚠️ Deberás cambiar tu contraseña en el primer inicio de sesión.
+
+¡Bienvenid@!`;
+
+            document.getElementById('whatsapp-message').textContent = message;
+            currentWhatsAppData = { phone: userData.phone_number, message };
+            document.getElementById('whatsapp-modal').classList.remove('hidden');
+        }
+
+        function closeWhatsAppModal() {
+            document.getElementById('whatsapp-modal').classList.add('hidden');
+        }
+
+        function copyWhatsAppMessage() {
+            const message = document.getElementById('whatsapp-message').textContent;
+            navigator.clipboard.writeText(message).then(() => {
+                alert('✅ Mensaje copiado al portapapeles\n\nAhora solo pégalo en WhatsApp/Telegram');
+            }).catch(err => {
+                alert('Error al copiar: ' + err);
+            });
+        }
+
+        function openWhatsApp() {
+            const message = encodeURIComponent(document.getElementById('whatsapp-message').textContent);
+            const phone = currentWhatsAppData.phone?.replace(/[^0-9]/g, '') || '';
+
+            // Si tiene teléfono, abrir chat directo; si no, abrir WhatsApp Web genérico
+            const whatsappUrl = phone ?
+                `https://wa.me/56${phone}?text=${message}` :
+                `https://web.whatsapp.com/send?text=${message}`;
+
+            window.open(whatsappUrl, '_blank');
         }
 
         async function handleExcelImport(event) {

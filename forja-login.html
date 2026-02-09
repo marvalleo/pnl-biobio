@@ -84,6 +84,37 @@
         </p>
     </div>
 
+    <!-- Modal de Cambio de Contraseña Obligatorio -->
+    <div id="password-change-modal" class="fixed inset-0 bg-black/80 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-md rounded-3xl p-8 shadow-2xl">
+            <h2 class="text-2xl font-900 uppercase mb-4 text-[#fba931]">🔒 Cambio de Contraseña Obligatorio</h2>
+            <p class="text-sm text-gray-600 mb-6">
+                Esta es tu primera sesión. Por seguridad, debes cambiar tu contraseña temporal.
+            </p>
+
+            <div id="change-error" class="hidden bg-red-50 border-l-4 border-red-500 p-3 mb-4 rounded">
+                <p class="text-red-700 text-xs font-bold"></p>
+            </div style="white-space: pre-line;">
+
+            <div class="space-y-4">
+                <div>
+                    <label class="text-[10px] font-black uppercase text-gray-400">Nueva Contraseña</label>
+                    <input type="password" id="new-password" placeholder="Mínimo 6 caracteres"
+                        class="w-full bg-gray-50 border p-4 rounded-xl focus:ring-2 focus:ring-[#fba931] outline-none">
+                </div>
+                <div>
+                    <label class="text-[10px] font-black uppercase text-gray-400">Confirmar Contraseña</label>
+                    <input type="password" id="confirm-password" placeholder="Repite tu contraseña"
+                        class="w-full bg-gray-50 border p-4 rounded-xl focus:ring-2 focus:ring-[#fba931] outline-none">
+                </div>
+                <button onclick="handlePasswordChange()"
+                    class="w-full bg-[#fba931] text-[#0f172a] py-4 rounded-xl font-900 uppercase hover:brightness-110 shadow-lg">
+                    Confirmar y Continuar
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Supabase SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabase-config.js"></script>
@@ -131,7 +162,7 @@
                 // 2. Obtener el rol desde la tabla 'profiles'
                 const { data: profile, error: profileError } = await supabaseClient
                     .from('profiles')
-                    .select('role')
+                    .select('role, must_change_password')
                     .eq('auth_id', authData.user.id)
                     .maybeSingle();
 
@@ -141,11 +172,18 @@
                     throw new Error("PGRST116: Tu cuenta de Auth existe pero no tienes un perfil vinculado. Por favor, contacta al administrador.");
                 }
 
-                // 3. Guardar datos de sesión (compatibilidad con frontend existente)
+                // 3. Verificar si debe cambiar contraseña
+                if (profile.must_change_password) {
+                    // Mostrar modal de cambio obligatorio
+                    showPasswordChangeModal(authData.user.id, profile.role);
+                    return; // No redirigir todavía
+                }
+
+                // 4. Guardar datos de sesión (compatibilidad con frontend existente)
                 localStorage.setItem('forja_username', email);
                 localStorage.setItem('pnl_user_role', profile.role);
 
-                // 4. Redirección basada en rol
+                // 5. Redirección basada en rol
                 const redirectPath = ROLE_REDIRECTS[profile.role] || 'forja-academia.html';
                 window.location.href = redirectPath;
 
@@ -170,6 +208,79 @@
         // Permitir login con Enter
         document.getElementById('pass-input').addEventListener('keypress', function (e) {
             if (e.key === 'Enter') handleLogin();
+        });
+
+        // Funciones de Cambio de Contraseña Obligatorio
+        let currentUserId = null;
+        let currentUserRole = null;
+
+        function showPasswordChangeModal(userId, role) {
+            currentUserId = userId;
+            currentUserRole = role;
+            document.getElementById('password-change-modal').classList.remove('hidden');
+            // Ocultar el formulario de login
+            document.getElementById('login-container').style.display = 'none';
+        }
+
+        async function handlePasswordChange() {
+            const newPassword = document.getElementById('new-password').value.trim();
+            const confirmPassword = document.getElementById('confirm-password').value.trim();
+            const errorDiv = document.getElementById('change-error');
+            const errorText = errorDiv.querySelector('p');
+
+            // Validaciones
+            if (!newPassword || !confirmPassword) {
+                errorDiv.classList.remove('hidden');
+                errorText.textContent = 'Por favor, completa ambos campos';
+                return;
+            }
+
+            if (newPassword.length < 6) {
+                errorDiv.classList.remove('hidden');
+                errorText.textContent = 'La contraseña debe tener al menos 6 caracteres';
+                return;
+            }
+
+            if (newPassword !== confirmPassword) {
+                errorDiv.classList.remove('hidden');
+                errorText.textContent = 'Las contraseñas no coinciden';
+                return;
+            }
+
+            try {
+                // 1. Actualizar la contraseña en Supabase Auth
+                const { error: authError } = await supabaseClient.auth.updateUser({
+                    password: newPassword
+                });
+
+                if (authError) throw authError;
+
+                // 2. Actualizar el flag en la base de datos
+                const { error: profileError } = await supabaseClient
+                    .from('profiles')
+                    .update({ must_change_password: false })
+                    .eq('auth_id', currentUserId);
+
+                if (profileError) throw profileError;
+
+                // 3. Guardar datos de sesión
+                localStorage.setItem('forja_username', document.getElementById('user-input').value);
+                localStorage.setItem('pnl_user_role', currentUserRole);
+
+                // 4. Redirigir según el rol
+                const redirectPath = ROLE_REDIRECTS[currentUserRole] || 'forja-academia.html';
+                window.location.href = redirectPath;
+
+            } catch (err) {
+                console.error('Error al cambiar contraseña:', err);
+                errorDiv.classList.remove('hidden');
+                errorText.textContent = 'Error: ' + err.message;
+            }
+        }
+
+        // Permitir cambio de contraseña con Enter
+        document.getElementById('confirm-password').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') handlePasswordChange();
         });
     </script>
 </body>

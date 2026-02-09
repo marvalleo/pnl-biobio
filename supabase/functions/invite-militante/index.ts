@@ -24,8 +24,10 @@ serve(async (req: Request) => {
       throw new Error('Email es requerido')
     }
 
-    // Enviar invitación oficial de Supabase
-    const { data, error } = await supabaseClient.auth.admin.inviteUserByEmail(email)
+    // Enviar invitación oficial de Supabase con redirección explícita a producción
+    const { data, error } = await supabaseClient.auth.admin.inviteUserByEmail(email, {
+      redirectTo: 'https://pnl-biobio.netlify.app/forja-login.html'
+    })
 
     if (error) throw error
 
