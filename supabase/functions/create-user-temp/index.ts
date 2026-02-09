@@ -13,7 +13,7 @@ serve(async (req: Request) => {
   }
 
   try {
-    console.log("Inicio de create-user-temp")
+    console.log("Inicio de create-user-temp v2 (Upsert Fix)")
 
     // Verificar variables de entorno
     const supabaseUrl = Deno.env.get('SUPABASE_URL')
@@ -46,6 +46,8 @@ serve(async (req: Request) => {
     const tempPassword = `PNL-${rut.replace('-', '').slice(-5)}`
 
     // 2. Crear usuario en Supabase Auth
+    // Al crear el usuario, el TRIGGER de la base de datos se disparará automáticamente
+    // y creará un perfil básico en 'public.profiles'.
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email: email,
       password: tempPassword,
@@ -65,27 +67,30 @@ serve(async (req: Request) => {
 
     console.log(`Usuario Auth creado: ${authData.user.id}`)
 
-    // 3. Crear perfil
+    // 3. Completar/Actualizar perfil (Upsert)
+    // Usamos UPSERT para manejar dos casos:
+    // A) El trigger creó el perfil: Lo actualizamos con los datos extra (role, must_change_password)
+    // B) El trigger falló o no existe: Lo creamos desde cero.
     const { error: profileError } = await supabaseAdmin
       .from('profiles')
-      .insert([{
-        auth_id: authData.user.id,
+      .upsert({
+        auth_id: authData.user.id, // Llave única para el upsert
         full_name,
         rut,
         email,
         phone_number,
         role: role || 'normal',
         must_change_password: true
-      }])
+      }, { onConflict: 'auth_id' }) // Importante: especificar la columna de conflicto
 
     if (profileError) {
-      console.error("Error creando perfil:", profileError)
+      console.error("Error actualizando perfil:", profileError)
       // Intentar rollback (borrar usuario de auth si falló el perfil)
       await supabaseAdmin.auth.admin.deleteUser(authData.user.id)
-      throw new Error(`Error creando perfil: ${profileError.message}`)
+      throw new Error(`Error actualizando perfil: ${profileError.message}`)
     }
 
-    console.log("Perfil creado exitosamente")
+    console.log("Perfil actualizado exitosamente")
 
     return new Response(
       JSON.stringify({ 
@@ -107,9 +112,8 @@ serve(async (req: Request) => {
     )
 
   } catch (error: any) {
-    console.error("Error capturado en catch final:", error)
+    console.error("Error capturado:", error)
     
-    // Devolvemos 400 en lugar de 500 para errores controlados, para que el frontend pueda leer el mensaje
     return new Response(
       JSON.stringify({ 
         error: error.message || 'Error desconocido en el servidor',
