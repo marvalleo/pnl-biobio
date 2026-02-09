@@ -357,12 +357,45 @@
         }
 
         async function deleteUser(id) {
-            if (!confirm('¿Seguro que deseas eliminar este militante?')) return;
+            // Obtener el usuario para mostrar su nombre en la confirmación (opcional pero bueno para UX)
+            const userToDelete = allUsers.find(u => u.id === id);
+            const name = userToDelete ? userToDelete.full_name : 'este militante';
+
+            if (!confirm(`⚠️ PELIGRO:\n\n¿Seguro que deseas eliminar DEFINITIVAMENTE a ${name}?\n\nEsta acción borrará:\n- Su cuenta de acceso (Auth)\n- Su perfil y datos personales\n- Su progreso en cursos y votos\n\nNO SE PUEDE DESHACER.`)) return;
+
             try {
-                const { error } = await supabaseClient.from('profiles').delete().eq('id', id);
-                if (error) throw error;
+                // Feedback visual de carga
+                document.body.style.cursor = 'wait';
+
+                // Usamos la Edge Function para borrar todo (Auth + DB)
+                // Nota: Enviamos el auth_id si lo tenemos, o el ID del perfil si es lo que tenemos.
+                // En nuestra tabla renderizada, 'id' es el ID del perfil. 
+                // Necesitamos el Auth ID para borrar de Auth.
+
+                let authId = userToDelete.auth_id;
+
+                // Si por alguna razón no tiene auth_id (usuario huérfano), intentamos borrar solo el perfil
+                if (!authId) {
+                    console.warn('Usuario sin Auth ID, borrando solo perfil...');
+                    const { error } = await supabaseClient.from('profiles').delete().eq('id', id);
+                    if (error) throw error;
+                } else {
+                    // Llamada a la Edge Function
+                    const { data, error } = await supabaseClient.functions.invoke('delete-user-complete', {
+                        body: { userId: authId }
+                    });
+
+                    if (error) throw error;
+                }
+
+                alert('✅ Militante eliminado correctamente.');
                 loadUsers();
-            } catch (err) { alert(err.message); }
+            } catch (err) {
+                console.error('Error eliminando:', err);
+                alert('❌ Error al eliminar: ' + (err.message || 'Error desconocido'));
+            } finally {
+                document.body.style.cursor = 'default';
+            }
         }
 
         function editUser(user) {
