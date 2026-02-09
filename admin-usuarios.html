@@ -39,24 +39,28 @@
             </a>
         </div>
         <div class="flex items-center gap-4">
+            <!-- User Menu Premium -->
             <div id="user-menu"
-                class="hidden flex items-center gap-3 bg-gray-50 px-4 py-2 rounded-full border border-gray-100">
-                <div class="flex flex-col items-end">
-                    <span id="nav-user-name" class="text-[11px] font-900 uppercase leading-none">Cargando...</span>
-                    <span id="nav-user-role" class="text-[9px] font-bold text-[#fba931] uppercase tracking-wider">Super
-                        Admin</span>
+                class="hidden flex items-center gap-3 bg-white shadow-sm px-4 py-2 rounded-2xl border border-gray-100 transition-all hover:shadow-md">
+                <div class="flex flex-col items-end mr-1">
+                    <span id="nav-user-name"
+                        class="text-[11px] font-900 uppercase leading-none text-[#0f172a]">Cargando...</span>
+                    <span id="nav-user-role"
+                        class="text-[9px] font-bold text-[#fba931] uppercase tracking-widest mt-1">Administrador</span>
                 </div>
                 <div
-                    class="h-8 w-8 rounded-full bg-[#0f172a] text-white flex items-center justify-center font-black text-xs">
+                    class="h-10 w-10 rounded-xl bg-[#0f172a] text-[#fba931] flex items-center justify-center font-black text-sm border-2 border-gray-50 shadow-inner">
                     <span id="nav-user-initials">?</span>
                 </div>
+                <div class="h-6 w-[1px] bg-gray-100 mx-1"></div>
                 <button onclick="handleLogout()"
-                    class="ml-2 p-2 hover:bg-red-50 hover:text-red-500 rounded-full transition-colors group"
+                    class="p-2 hover:bg-red-50 text-gray-400 hover:text-red-500 rounded-xl transition-all group flex items-center gap-2"
                     title="Cerrar Sesión">
-                    <span class="material-symbols-outlined text-sm">logout</span>
+                    <span class="material-symbols-outlined text-lg">logout</span>
+                    <span class="text-[10px] font-black uppercase hidden lg:block">Salir</span>
                 </button>
             </div>
-            <span class="text-[10px] font-bold uppercase text-gray-400">Super Admin Mode</span>
+            <span class="text-[10px] font-bold uppercase text-gray-400 hidden md:block">Super Admin Mode</span>
         </div>
     </nav>
 
@@ -230,9 +234,11 @@
 
             // Mostrar info de usuario en Nav
             const user = session.user;
+            const fullName = user.user_metadata?.full_name || user.email;
+
             document.getElementById('user-menu').classList.remove('hidden');
-            document.getElementById('nav-user-name').innerText = user.user_metadata.full_name || user.email;
-            document.getElementById('nav-user-initials').innerText = (user.user_metadata.full_name || 'U').charAt(0).toUpperCase();
+            document.getElementById('nav-user-name').innerText = fullName;
+            document.getElementById('nav-user-initials').innerText = fullName.trim().charAt(0).toUpperCase();
 
             loadUsers();
         });
@@ -378,9 +384,10 @@
                     loadUsers();
                 } else {
                     // Modo creación: Llamar a la Edge Function
-                    // 1. Asegurar sesión fresca para evitar 401
-                    const { data: { session } } = await supabaseClient.auth.getSession();
-                    if (!session) {
+                    // 1. Asegurar sesión fresca y refrescar token para evitar 401
+                    const { data: { session }, error: sessionErr } = await supabaseClient.auth.refreshSession();
+                    if (sessionErr || !session) {
+                        console.error("Error renovando sesión:", sessionErr);
                         alert('Tu sesión ha expirado. Por favor, inicia sesión de nuevo.');
                         window.location.href = 'forja-login.html';
                         return;
@@ -389,6 +396,7 @@
                     // Feedback visual
                     document.body.style.cursor = 'wait';
 
+                    // 2. Llamar a la función
                     const { data, error } = await supabaseClient.functions.invoke('create-user-temp', {
                         body: formData
                     });
