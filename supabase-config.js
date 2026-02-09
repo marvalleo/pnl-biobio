@@ -6,7 +6,7 @@ const SUPABASE_ANON_KEY = "sb_publishable_SNZ9Np8K8sq9MG1x9OMolQ_-ry_Uoc5";
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // --- GESTIÓN DE SESIÓN Y SEGURIDAD ---
-const INACTIVITY_LIMIT = 5 * 60 * 1000; // 5 minutos
+const INACTIVITY_LIMIT = 30 * 60 * 1000; // 30 minutos
 let inactivityTimer;
 
 function resetInactivityTimer() {

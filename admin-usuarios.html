@@ -39,6 +39,23 @@
             </a>
         </div>
         <div class="flex items-center gap-4">
+            <div id="user-menu"
+                class="hidden flex items-center gap-3 bg-gray-50 px-4 py-2 rounded-full border border-gray-100">
+                <div class="flex flex-col items-end">
+                    <span id="nav-user-name" class="text-[11px] font-900 uppercase leading-none">Cargando...</span>
+                    <span id="nav-user-role" class="text-[9px] font-bold text-[#fba931] uppercase tracking-wider">Super
+                        Admin</span>
+                </div>
+                <div
+                    class="h-8 w-8 rounded-full bg-[#0f172a] text-white flex items-center justify-center font-black text-xs">
+                    <span id="nav-user-initials">?</span>
+                </div>
+                <button onclick="handleLogout()"
+                    class="ml-2 p-2 hover:bg-red-50 hover:text-red-500 rounded-full transition-colors group"
+                    title="Cerrar Sesión">
+                    <span class="material-symbols-outlined text-sm">logout</span>
+                </button>
+            </div>
             <span class="text-[10px] font-bold uppercase text-gray-400">Super Admin Mode</span>
         </div>
     </nav>
@@ -200,7 +217,7 @@
         const modal = document.getElementById('user-modal');
         let allUsers = []; // Cache para búsqueda
 
-        // Protección de Ruta Obligatoria
+        // Protección de Ruta Obligatoria y Carga de Usuario
         window.addEventListener('DOMContentLoaded', async () => {
             const { data: { session } } = await supabaseClient.auth.getSession();
             const role = localStorage.getItem('pnl_user_role');
@@ -210,8 +227,23 @@
                 window.location.href = 'forja-login.html';
                 return;
             }
+
+            // Mostrar info de usuario en Nav
+            const user = session.user;
+            document.getElementById('user-menu').classList.remove('hidden');
+            document.getElementById('nav-user-name').innerText = user.user_metadata.full_name || user.email;
+            document.getElementById('nav-user-initials').innerText = (user.user_metadata.full_name || 'U').charAt(0).toUpperCase();
+
             loadUsers();
         });
+
+        async function handleLogout() {
+            if (confirm('¿Estás seguro de que deseas cerrar sesión?')) {
+                await supabaseClient.auth.signOut();
+                localStorage.clear();
+                window.location.href = 'forja-login.html';
+            }
+        }
 
         // Renderizar la tabla
         async function loadUsers() {
@@ -346,6 +378,14 @@
                     loadUsers();
                 } else {
                     // Modo creación: Llamar a la Edge Function
+                    // 1. Asegurar sesión fresca para evitar 401
+                    const { data: { session } } = await supabaseClient.auth.getSession();
+                    if (!session) {
+                        alert('Tu sesión ha expirado. Por favor, inicia sesión de nuevo.');
+                        window.location.href = 'forja-login.html';
+                        return;
+                    }
+
                     // Feedback visual
                     document.body.style.cursor = 'wait';
 
@@ -355,10 +395,14 @@
 
                     document.body.style.cursor = 'default';
 
-                    if (error) throw error;
+                    if (error) {
+                        if (error.status === 401) {
+                            throw new Error("Sesión no válida o expirada. Por favor re-inicia sesión.");
+                        }
+                        throw error;
+                    }
 
                     // Mostrar modal de WhatsApp con la contraseña temporal
-                    // data.user contiene la info del usuario y data.tempPassword la contraseña
                     showWhatsAppModal(data.user, data.tempPassword);
 
                     closeModal();
