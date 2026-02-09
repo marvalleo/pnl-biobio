@@ -35,7 +35,11 @@ serve(async (req: Request) => {
       throw new Error("Body inválido o vacío")
     }
 
-    const { full_name, rut, email, phone_number, role } = userData
+    const { full_name, email, role } = userData
+    // Normalizar vacíos a null para evitar errores de restricción UNIQUE o NOT NULL (si el parche no se aplicó)
+    const rut = userData.rut?.trim() === '' ? null : userData.rut;
+    const phone_number = userData.phone_number?.trim() === '' ? null : userData.phone_number;
+
     console.log(`Intentando crear usuario: ${email}, RUT: ${rut || 'N/A'}`)
 
     if (!email) {
