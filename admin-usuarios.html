@@ -146,7 +146,8 @@
                             <option value="admin_forja">Admin Academia (Forja)</option>
                             <option value="admin_votos">Admin Votaciones</option>
                             <option value="admin_foros">Admin Foros</option>
-                            <option value="super_admin">Super Administrador</option>
+                            <option value="admin_usuarios">Admin Usuarios (Militantes)</option>
+                            <option value="super_admin">Super Administrador (Total)</option>
                         </select>
                     </div>
                 </div>
@@ -210,7 +211,14 @@
                     <td class="px-6 py-4 font-bold uppercase text-xs">${u.full_name}</td>
                     <td class="px-6 py-4 text-[10px] text-gray-400">${u.rut || '---'}</td>
                     <td class="px-6 py-4 text-[10px] text-gray-400 lowercase">${u.email}</td>
-                    <td class="px-6 py-4"><span class="px-2 py-0.5 rounded-full text-[9px] font-black uppercase bg-gray-100 text-gray-600">${u.role}</span></td>
+                    <td class="px-6 py-4">
+                        <span class="px-2 py-0.5 rounded-full text-[9px] font-black uppercase 
+                            ${u.role === 'super_admin' ? 'bg-purple-100 text-purple-700' :
+                    u.role.startsWith('admin_') ? 'bg-blue-100 text-blue-700' :
+                        'bg-gray-100 text-gray-600'}">
+                            ${u.role.replace('_', ' ')}
+                        </span>
+                    </td>
                     <td class="px-6 py-4 text-right">
                         <button onclick='editUser(${JSON.stringify(u)})' class="p-2 text-blue-500 hover:bg-blue-50 rounded-lg"><span class="material-symbols-outlined">edit</span></button>
                         <button onclick="deleteUser('${u.auth_id}')" class="p-2 text-red-500 hover:bg-red-50 rounded-lg"><span class="material-symbols-outlined">delete</span></button>

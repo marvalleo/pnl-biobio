@@ -49,11 +49,13 @@
                     <div class="h-8 w-[1px] bg-gray-200 hidden md:block"></div>
                     <span class="font-900 uppercase text-sm tracking-tighter hidden md:block">Forja Libertaria</span>
                 </div>
-                <div class="flex items-center gap-6">
+                <div class="flex items-center gap-4 lg:gap-8">
                     <a href="forja-academia.html"
                         class="text-xs font-black uppercase tracking-widest text-[#fba931] border-b-2 border-[#fba931] pb-1">Academia</a>
                     <a href="forja-eventos.html"
                         class="text-xs font-black uppercase tracking-widest text-gray-400 hover:text-[#0f172a] transition-colors">Eventos</a>
+                    <a href="forja-votaciones.html"
+                        class="text-xs font-black uppercase tracking-widest text-gray-400 hover:text-[#0f172a] transition-colors">Votaciones</a>
                     <button onclick="logout()"
                         class="text-[9px] font-black uppercase bg-gray-100 px-4 py-2 rounded-xl hover:bg-gray-200 transition-colors">Salir</button>
                 </div>
@@ -130,7 +132,7 @@
 
                 // 2. Obtener Cursos, Lecciones y Progreso al mismo tiempo
                 const [coursesRes, lessonsRes, progressRes] = await Promise.all([
-                    supabaseClient.from('courses').select('*').eq('status', 'published').order('created_at', { ascending: false }),
+                    supabaseClient.from('courses').select('*').eq('status', 'published').neq('title', 'Agenda Regional').order('created_at', { ascending: false }),
                     supabaseClient.from('lessons').select('id, course_id'),
                     supabaseClient.from('user_progress').select('lesson_id').eq('profile_id', profile.id)
                 ]);

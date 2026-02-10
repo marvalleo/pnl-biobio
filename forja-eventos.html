@@ -6,8 +6,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Eventos - Forja Libertaria</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&display=swap"
+    <link
+        href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&family=Playfair+Display:wght@700&display=swap"
         rel="stylesheet">
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
     <style>
         :root {
             --pnl-blue: #0f172a;
@@ -16,8 +19,12 @@
 
         body {
             font-family: 'Montserrat', sans-serif;
-            background-color: #f3f4f6;
+            background-color: #f8fafc;
             color: var(--pnl-blue);
+        }
+
+        .serif {
+            font-family: 'Playfair Display', serif;
         }
 
         .nav-link {
@@ -44,134 +51,299 @@
             background-color: var(--pnl-gold);
         }
 
-        .badge {
-            font-size: 0.65rem;
-            font-weight: 900;
-            padding: 4px 10px;
-            border-radius: 6px;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
+        .calendar-day {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s;
         }
 
-        .badge-presencial {
-            background-color: #e2e8f0;
-            color: #0f172a;
+        .calendar-day:hover {
+            background-color: #f1f5f9;
         }
 
-        .badge-online {
+        .calendar-day.has-event {
             background-color: #fef3c7;
             color: #d97706;
+            border: 2px solid #fba931;
+        }
+
+        .calendar-day.selected {
+            background-color: #fba931 !important;
+            color: #0f172a !important;
+            box-shadow: 0 4px 12px rgba(251, 169, 49, 0.3);
         }
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
 </head>
 
-<body>
+<body class="min-h-screen flex flex-col">
 
     <!-- NAVEGACIÓN -->
-    <nav class="bg-white shadow-md sticky top-0 z-50 border-b-4 border-[#fba931]">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-20">
-                <div class="flex items-center">
-                    <img src="https://pnl-biobio.netlify.app/wp-content/uploads/2026/pnl-del-biobio01.png"
-                        alt="PNL Biobío" class="h-16">
-                </div>
-
-                <div class="flex items-center space-x-4 md:space-x-8">
-                    <a href="forja-academia.html" class="nav-link text-[#0f172a]">Academia</a>
-                    <a href="forja-eventos.html" class="nav-link text-[#0f172a] active">Eventos</a>
-                    <a href="index.html"
-                        class="text-[9px] font-black uppercase bg-gray-100 px-3 py-2 rounded-lg hover:bg-gray-200 transition-colors">Salir</a>
-                </div>
+    <nav class="bg-white shadow-sm sticky top-0 z-50 border-b-4 border-[#fba931]">
+        <div class="max-w-7xl mx-auto px-6 h-20 flex justify-between items-center">
+            <div class="flex items-center gap-4">
+                <img src="wp-content/uploads/2026/pnl-del-biobio01.png" alt="PNL Biobío" class="h-14">
+            </div>
+            <div class="flex items-center gap-4 lg:gap-8">
+                <a href="forja-academia.html" class="nav-link text-gray-400">Academia</a>
+                <a href="forja-eventos.html" class="nav-link active">Eventos</a>
+                <a href="forja-votaciones.html" class="nav-link text-gray-400">Votaciones</a>
+                <button onclick="logout()"
+                    class="text-[9px] font-black uppercase bg-gray-100 px-3 py-2 rounded-lg hover:bg-gray-200 transition-colors">Salir</button>
             </div>
         </div>
     </nav>
 
-    <!-- CONTENIDO PRINCIPAL -->
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div class="mb-8 flex items-end justify-between">
-            <div>
-                <h2 class="text-3xl font-900 uppercase">Calendario</h2>
-                <p class="text-gray-400 font-bold text-sm uppercase">Próximos Encuentros Regionales</p>
+    <!-- CONTENT -->
+    <main class="max-w-7xl mx-auto px-6 py-12 flex-1 w-full grid grid-cols-1 lg:grid-cols-3 gap-12">
+
+        <!-- Listado de Eventos -->
+        <div class="lg:col-span-2">
+            <div class="mb-10">
+                <h1 class="serif text-5xl text-[#0f172a] mb-2">Agenda Regional</h1>
+                <p class="text-gray-400 font-bold text-xs uppercase tracking-widest">Próximas Convocatorias y Talleres
+                </p>
+            </div>
+
+            <div id="events-list" class="space-y-6">
+                <!-- Loading State -->
+                <div class="animate-pulse space-y-4">
+                    <div class="h-40 bg-gray-100 rounded-[2.5rem]"></div>
+                    <div class="h-40 bg-gray-100 rounded-[2.5rem]"></div>
+                </div>
             </div>
         </div>
 
-        <div class="grid gap-6">
-            <!-- Evento Presencial -->
-            <div
-                class="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 flex flex-col md:flex-row gap-6 relative">
-                <div class="absolute top-4 right-4"><span class="badge badge-presencial">Presencial</span></div>
-                <div class="md:w-48 h-36 bg-[#0f172a] rounded-2xl overflow-hidden shrink-0">
-                    <img src="https://images.unsplash.com/photo-1540317580384-e5d43616b9aa?auto=format&fit=crop&q=80&w=300"
-                        class="w-full h-full object-cover">
-                </div>
-                <div class="flex-1">
-                    <h3 class="text-xl font-900 uppercase mb-2">Estrategias de Campaña Local</h3>
-                    <div class="flex items-center gap-2 text-[11px] font-bold text-[#0f172a] uppercase mb-4">
-                        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-                            <circle cx="12" cy="10" r="3" />
-                        </svg>
-                        Sede Biobío, Concepción — 15 Feb, 18:30 hrs
+        <!-- Sidebar: Calendario y Filtros -->
+        <div class="space-y-8">
+            <div class="bg-white rounded-[2.5rem] p-8 shadow-xl border border-gray-100 border-t-8 border-[#fba931]">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="font-900 uppercase text-xs tracking-widest text-gray-400" id="current-month-name">Febrero
+                        2026</h3>
+                    <div class="flex gap-2 text-gray-400">
+                        <button class="material-symbols-outlined hover:text-[#fba931]"
+                            onclick="changeMonth(-1)">chevron_left</button>
+                        <button class="material-symbols-outlined hover:text-[#fba931]"
+                            onclick="changeMonth(1)">chevron_right</button>
                     </div>
-                    <button
-                        class="bg-[#0f172a] text-white px-6 py-3 rounded-xl font-900 text-[10px] uppercase tracking-widest hover:bg-[#fba931] hover:text-[#0f172a] transition-colors">Reservar
-                        mi Cupo</button>
+                </div>
+
+                <div class="grid grid-cols-7 gap-1 text-center mb-2">
+                    <span class="text-[8px] font-black uppercase text-gray-300">Lu</span>
+                    <span class="text-[8px] font-black uppercase text-gray-300">Ma</span>
+                    <span class="text-[8px] font-black uppercase text-gray-300">Mi</span>
+                    <span class="text-[8px] font-black uppercase text-gray-300">Ju</span>
+                    <span class="text-[8px] font-black uppercase text-gray-300">Vi</span>
+                    <span class="text-[8px] font-black uppercase text-gray-300">Sa</span>
+                    <span class="text-[8px] font-black uppercase text-gray-300">Do</span>
+                </div>
+                <div id="calendar-grid" class="grid grid-cols-7 gap-1">
+                    <!-- Calendario dinámico -->
                 </div>
             </div>
 
-            <!-- Evento Online -->
-            <div
-                class="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 flex flex-col md:flex-row gap-6 relative">
-                <div class="absolute top-4 right-4"><span class="badge badge-online">Online</span></div>
-                <div class="md:w-48 h-36 bg-[#fba931] rounded-2xl overflow-hidden shrink-0">
-                    <img src="https://images.unsplash.com/photo-1588196749597-9ff075ee6b5b?auto=format&fit=crop&q=80&w=300"
-                        class="w-full h-full object-cover opacity-80">
+            <div class="bg-blue-50 rounded-[2.5rem] p-8 border border-blue-100">
+                <div class="flex items-center gap-3 mb-4">
+                    <span class="material-symbols-outlined text-[#fba931]">help</span>
+                    <h4 class="font-900 uppercase text-[11px] tracking-widest">Sobre las inscripciones</h4>
                 </div>
-                <div class="flex-1">
-                    <h3 class="text-xl font-900 uppercase mb-2">Webinar: Ética y Propiedad</h3>
-                    <div class="flex items-center gap-2 text-[11px] font-bold text-[#fba931] uppercase mb-4">
-                        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="m22 8-6 4 6 4V8Z" />
-                            <rect width="14" height="12" x="2" y="6" rx="2" ry="2" />
-                        </svg>
-                        Vía Google Meet — 22 Feb, 20:00 hrs
-                    </div>
-                    <button
-                        class="bg-[#fba931] text-[#0f172a] px-6 py-3 rounded-xl font-900 text-[10px] uppercase tracking-widest shadow-lg">Obtener
-                        Enlace de Acceso</button>
-                </div>
-            </div>
-
-            <!-- Evento Presencial 2 -->
-            <div
-                class="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 flex flex-col md:flex-row gap-6 relative">
-                <div class="absolute top-4 right-4"><span class="badge badge-presencial">Presencial</span></div>
-                <div class="md:w-48 h-36 bg-[#0f172a] rounded-2xl overflow-hidden shrink-0">
-                    <img src="https://images.unsplash.com/photo-1523580494863-6f3031224c94?auto=format&fit=crop&q=80&w=300"
-                        class="w-full h-full object-cover">
-                </div>
-                <div class="flex-1">
-                    <h3 class="text-xl font-900 uppercase mb-2">Taller: Comunicación Política</h3>
-                    <div class="flex items-center gap-2 text-[11px] font-bold text-[#0f172a] uppercase mb-4">
-                        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-                            <circle cx="12" cy="10" r="3" />
-                        </svg>
-                        Sede Biobío, Concepción — 28 Feb, 19:00 hrs
-                    </div>
-                    <button
-                        class="bg-[#0f172a] text-white px-6 py-3 rounded-xl font-900 text-[10px] uppercase tracking-widest hover:bg-[#fba931] hover:text-[#0f172a] transition-colors">Reservar
-                        mi Cupo</button>
-                </div>
+                <p class="text-[10px] font-bold text-gray-500 leading-relaxed uppercase">
+                    Para los eventos presenciales, el cupo es limitado para asegurar la calidad de la sesión. Si no
+                    puedes asistir, por favor cancela tu inscripción.
+                </p>
             </div>
         </div>
     </main>
 
-    <footer class="bg-white border-t border-gray-200 py-6 mt-20 text-center">
-        <p class="text-[9px] font-black text-gray-300 uppercase tracking-[0.3em]">Forja Biobío — Sistema Interno de
-            Capacitación</p>
+    <footer class="bg-white border-t border-gray-100 py-10">
+        <div class="max-w-7xl mx-auto px-6 text-center">
+            <p class="text-[9px] font-black text-gray-300 uppercase tracking-widest">Forja Biobío — Sistema Interno de
+                Convocatorias</p>
+        </div>
     </footer>
 
+    <script>
+        let events = [];
+        let profileId = null;
+        let registrations = new Set();
+        let currentMonth = new Date(2026, 1, 1); // Empezar en Feb 2026
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            const { data: { user } } = await supabaseClient.auth.getUser();
+            if (!user) { window.location.href = 'forja-login.html'; return; }
+
+            const { data: profile } = await supabaseClient.from('profiles').select('id').eq('auth_id', user.id).single();
+            if (!profile) return;
+            profileId = profile.id;
+
+            await Promise.all([loadEvents(), loadRegistrations()]);
+            renderEvents();
+            renderCalendar();
+        });
+
+        async function loadEvents() {
+            const { data, error } = await supabaseClient
+                .from('lessons')
+                .select('*, courses!inner(title)')
+                .eq('courses.title', 'Agenda Regional')
+                .order('event_date', { ascending: true });
+
+            if (!error) events = data;
+        }
+
+        async function loadRegistrations() {
+            const { data } = await supabaseClient
+                .from('lesson_registrations')
+                .select('lesson_id')
+                .eq('profile_id', profileId);
+
+            registrations = new Set(data.map(r => r.lesson_id));
+        }
+
+        function renderEvents(dateToFilter = null) {
+            const list = document.getElementById('events-list');
+            let filteredEvents = events;
+
+            if (dateToFilter) {
+                const dayStr = dateToFilter.toDateString();
+                filteredEvents = events.filter(e => new Date(e.event_date).toDateString() === dayStr);
+            }
+
+            if (filteredEvents.length === 0) {
+                list.innerHTML = `
+                    <div class="py-20 text-center border-2 border-dashed rounded-[3rem] border-gray-200">
+                        <p class="text-[10px] font-black text-gray-300 uppercase tracking-[0.2em]">No hay eventos para esta selección</p>
+                        <button onclick="renderEvents()" class="mt-4 text-[9px] font-black text-[#fba931] uppercase hover:underline">Ver todos los eventos</button>
+                    </div>
+                `;
+                return;
+            }
+
+            list.innerHTML = filteredEvents.map(event => {
+                const date = new Date(event.event_date);
+                const isRegistered = registrations.has(event.id);
+                const isOnline = event.delivery_type !== 'in_person';
+
+                return `
+                    <div class="bg-white rounded-[2.5rem] p-8 shadow-sm border border-gray-100 flex flex-col md:flex-row gap-8 relative group hover:shadow-xl transition-all border-t-4 ${isOnline ? 'border-[#fba931]' : 'border-[#0f172a]'}">
+                        <div class="md:w-56 h-40 bg-gray-100 rounded-3xl overflow-hidden shrink-0 relative">
+                            <img src="https://images.unsplash.com/photo-${isOnline ? '1588196749597-9ff075ee6b5b' : '1540317580384-e5d43616b9aa'}?auto=format&fit=crop&q=80&w=400" 
+                                 class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000">
+                            <div class="absolute inset-0 bg-black/20"></div>
+                        </div>
+                        
+                        <div class="flex-1 flex flex-col justify-center">
+                            <div class="flex items-center gap-3 mb-2">
+                                <span class="text-[8px] font-black uppercase tracking-[0.2em] px-3 py-1 rounded-full ${isOnline ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-700'}">
+                                    ${event.delivery_type === 'live' ? 'En Vivo (Online)' : event.delivery_type === 'recorded' ? 'Taller Grabado' : 'Presencial'}
+                                </span>
+                                ${isRegistered ? '<span class="text-[8px] font-black text-green-500 uppercase tracking-widest flex items-center gap-1"><span class="material-symbols-outlined text-[12px]">check_circle</span> Inscrito</span>' : ''}
+                            </div>
+                            
+                            <h3 class="serif text-2xl text-[#0f172a] mb-2">${event.title}</h3>
+                            <p class="text-xs text-gray-400 font-medium mb-4 line-clamp-2">${event.description || 'Sin descripción detallada.'}</p>
+                            
+                            <div class="flex flex-wrap items-center gap-6 mb-6">
+                                <div class="flex items-center gap-2">
+                                    <span class="material-symbols-outlined text-xs text-[#fba931]">calendar_today</span>
+                                    <span class="text-[10px] font-black uppercase tracking-wider">${date.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' })} — ${date.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })} hrs</span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span class="material-symbols-outlined text-xs text-[#fba931]">location_on</span>
+                                    <span class="text-[10px] font-black uppercase tracking-wider">${event.location || 'Por definir'}</span>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center gap-4">
+                                <button onclick="handleRegistration('${event.id}', ${isRegistered})" 
+                                        class="${isRegistered ? 'bg-gray-100 text-gray-400' : isOnline ? 'bg-[#fba931] text-[#0f172a]' : 'bg-[#0f172a] text-white'} px-8 py-3 rounded-xl font-900 text-[10px] uppercase tracking-widest hover:brightness-110 transition-all shadow-lg active:scale-95">
+                                    ${isRegistered ? 'Cancelar Inscripción' : 'Inscribirse Ahora'}
+                                </button>
+                                ${isRegistered && event.content_url ? `<a href="${event.content_url}" target="_blank" class="text-[10px] font-black text-[#fba931] uppercase hover:underline">Ir a la sesión</a>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function handleRegistration(lessonId, isRegistered) {
+            try {
+                if (isRegistered) {
+                    if (!confirm('¿Deseas cancelar tu inscripción a este evento?')) return;
+                    await supabaseClient.from('lesson_registrations').delete().eq('profile_id', profileId).eq('lesson_id', lessonId);
+                    registrations.delete(lessonId);
+                } else {
+                    await supabaseClient.from('lesson_registrations').insert({ profile_id: profileId, lesson_id: lessonId });
+                    registrations.add(lessonId);
+                    alert('¡Inscripción exitosa! Te esperamos.');
+                }
+                renderEvents();
+            } catch (err) { alert('Error al procesar inscripción.'); }
+        }
+
+        function renderCalendar() {
+            const grid = document.getElementById('calendar-grid');
+            const monthLabel = document.getElementById('current-month-name');
+            grid.innerHTML = '';
+
+            const monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+            monthLabel.textContent = `${monthNames[currentMonth.getMonth()]} ${currentMonth.getFullYear()}`;
+
+            const year = currentMonth.getFullYear();
+            const month = currentMonth.getMonth();
+            const firstDay = new Date(year, month, 1).getDay();
+            const totalDays = new Date(year, month + 1, 0).getDate();
+
+            // Ajuste para que empiece en lunes (0=Lun, 6=Dom)
+            let startOffset = firstDay === 0 ? 6 : firstDay - 1;
+
+            for (let i = 0; i < startOffset; i++) {
+                grid.innerHTML += '<span></span>';
+            }
+
+            for (let day = 1; day <= totalDays; day++) {
+                const date = new Date(year, month, day);
+                const hasEvent = events.some(e => new Date(e.event_date).toDateString() === date.toDateString());
+
+                grid.innerHTML += `
+                    <div onclick="filterByDate(${year}, ${month}, ${day})" 
+                         class="calendar-day ${hasEvent ? 'has-event' : ''}">
+                        ${day}
+                    </div>
+                `;
+            }
+        }
+
+        function filterByDate(y, m, d) {
+            const selectedDate = new Date(y, m, d);
+            // Highlight selected day
+            document.querySelectorAll('.calendar-day').forEach(el => {
+                el.classList.remove('selected');
+                if (parseInt(el.textContent) === d) el.classList.add('selected');
+            });
+            renderEvents(selectedDate);
+        }
+
+        function changeMonth(delta) {
+            currentMonth.setMonth(currentMonth.getMonth() + delta);
+            renderCalendar();
+            renderEvents();
+        }
+
+        async function logout() {
+            await supabaseClient.auth.signOut();
+            localStorage.clear();
+            window.location.href = 'index.html';
+        }
+    </script>
 </body>
 
 </html>
