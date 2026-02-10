@@ -1,6 +1,6 @@
 // Configuración de Supabase para PNL Biobío (Template)
-const SUPABASE_URL = "https://kjcwozzfzbizxurppxlf.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtqY3dvenpmemJpenh1cnBweGxmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA0NTMyNjgsImV4cCI6MjA4NjAyOTI2OH0.UEziql_VLY92Opgngmf-LBEYmFzduVMKFcwEviV99NE";
+const SUPABASE_URL = "__SUPABASE_URL__";
+const SUPABASE_ANON_KEY = "__SUPABASE_ANON_KEY__";
 
 // Inicializar el cliente
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);

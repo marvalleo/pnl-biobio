@@ -8,3 +8,12 @@ docs/
 # Archivos del sistema
 .DS_Store
 Thumbs.db
+
+# Seguridad y Entorno
+.env
+.env.local
+supabase-config.js
+test_course.json
+courses_test.json
+profiles_test.json
+lessons_test.json

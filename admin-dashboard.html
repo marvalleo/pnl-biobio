@@ -26,9 +26,21 @@
         // Protección de Ruta
         window.addEventListener('DOMContentLoaded', () => {
             const role = localStorage.getItem('pnl_user_role');
-            if (role !== 'super_admin') {
+            const validRoles = ['super_admin', 'admin_forja', 'admin_votos', 'admin_foros'];
+
+            if (!validRoles.includes(role)) {
                 alert('Acceso no autorizado');
                 window.location.href = 'forja-login.html';
+                return;
+            }
+
+            // Ocultar módulos según el rol (si no es super_admin)
+            if (role !== 'super_admin') {
+                if (role !== 'admin_forja') document.getElementById('mod-forja').classList.add('hidden');
+                if (role !== 'admin_votos') document.getElementById('mod-votos').classList.add('hidden');
+                if (role !== 'admin_foros') document.getElementById('mod-foros').classList.add('hidden');
+                // Militantes solo para super_admin
+                document.getElementById('mod-usuarios').classList.add('hidden');
             }
         });
 
@@ -59,7 +71,7 @@
 
         <div class="grid md:grid-cols-3 gap-6">
             <!-- Módulo Forja -->
-            <a href="admin-forja.html"
+            <a href="admin-forja.html" id="mod-forja"
                 class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 hover:shadow-xl transition-all group">
                 <div
                     class="w-14 h-14 bg-blue-50 rounded-2xl flex items-center justify-center mb-6 text-[#0f172a] group-hover:bg-[#0f172a] group-hover:text-white transition-colors">
@@ -70,7 +82,7 @@
             </a>
 
             <!-- Módulo Votos -->
-            <a href="admin-votos.html"
+            <a href="admin-votos.html" id="mod-votos"
                 class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 hover:shadow-xl transition-all group">
                 <div
                     class="w-14 h-14 bg-blue-50 rounded-2xl flex items-center justify-center mb-6 text-[#0f172a] group-hover:bg-[#0f172a] group-hover:text-white transition-colors">
@@ -81,7 +93,7 @@
             </a>
 
             <!-- Módulo Foros -->
-            <a href="admin-foros.html"
+            <a href="admin-foros.html" id="mod-foros"
                 class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 hover:shadow-xl transition-all group">
                 <div
                     class="w-14 h-14 bg-blue-50 rounded-2xl flex items-center justify-center mb-6 text-[#0f172a] group-hover:bg-[#0f172a] group-hover:text-white transition-colors">
@@ -92,7 +104,7 @@
             </a>
 
             <!-- Módulo Usuarios (NUEVO) -->
-            <a href="admin-usuarios.html"
+            <a href="admin-usuarios.html" id="mod-usuarios"
                 class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 hover:shadow-xl transition-all group border-l-4 border-[#fba931]">
                 <div
                     class="w-14 h-14 bg-yellow-50 rounded-2xl flex items-center justify-center mb-6 text-[#fba931] group-hover:bg-[#fba931] group-hover:text-white transition-colors">
