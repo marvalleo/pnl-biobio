@@ -9,7 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&display=swap"
         rel="stylesheet">
     <link rel="stylesheet"
-        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
     <style>
         :root {
             --pnl-blue: #0f172a;
@@ -257,7 +257,7 @@
                             </span>
                         </td>
                         <td class="p-6 text-[10px] font-bold text-gray-500">
-                            ${lesson.scheduled_at ? new Date(lesson.scheduled_at).toLocaleString('es-CL', { dateStyle: 'short', timeStyle: 'short' }) : '---'}
+                            ${lesson.event_date ? new Date(lesson.event_date).toLocaleString('es-CL', { dateStyle: 'short', timeStyle: 'short' }) : '---'}
                         </td>
                         <td class="p-6">
                             <button onclick="viewRegistrations('${lesson.id}', '${lesson.title}')" class="text-[10px] font-black uppercase text-blue-500 hover:underline">
@@ -297,7 +297,7 @@
                 order: parseInt(document.getElementById('lesson-order').value),
                 content_url: document.getElementById('lesson-url').value || null,
                 location: document.getElementById('lesson-location').value || null,
-                scheduled_at: document.getElementById('lesson-date').value || null,
+                event_date: document.getElementById('lesson-date').value || null,
                 duration: document.getElementById('lesson-duration').value || null,
                 max_capacity: parseInt(document.getElementById('lesson-capacity').value) || 0
             };
@@ -340,9 +340,9 @@
             document.getElementById('lesson-duration').value = lesson.duration || '';
             document.getElementById('lesson-capacity').value = lesson.max_capacity || 0;
 
-            if (lesson.scheduled_at) {
+            if (lesson.event_date) {
                 // Formatear fecha para input datetime-local
-                const d = new Date(lesson.scheduled_at);
+                const d = new Date(lesson.event_date);
                 const isoStr = d.toISOString().slice(0, 16);
                 document.getElementById('lesson-date').value = isoStr;
             }
@@ -377,14 +377,30 @@
                             <p class="text-[9px] text-gray-400 font-bold tracking-widest">${reg.profiles.rut || 'SIN RUT'}</p>
                         </div>
                         <div class="flex items-center gap-2">
-                            <span class="text-[9px] font-black uppercase ${reg.attended ? 'text-green-500' : 'text-gray-400'}">
-                                ${reg.attended ? 'Asistió' : 'Pendiente'}
-                            </span>
+                            <button onclick="toggleAttendance('${reg.id}', ${!reg.attended}, '${lessonId}', '${lessonTitle}')" 
+                                    class="px-4 py-2 rounded-xl text-[9px] font-black uppercase transition-all
+                                    ${reg.attended ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-gray-200 text-gray-600 hover:bg-gray-300'}">
+                                ${reg.attended ? 'Asistió' : 'Marcar Asistencia'}
+                            </button>
                         </div>
                     </div>
                 `).join('');
             } catch (err) {
                 list.innerHTML = '<p class="text-red-500 text-center font-bold">Error al cargar la lista.</p>';
+            }
+        }
+
+        async function toggleAttendance(regId, newState, lessonId, lessonTitle) {
+            try {
+                const { error } = await supabaseClient
+                    .from('lesson_registrations')
+                    .update({ attended: newState })
+                    .eq('id', regId);
+
+                if (error) throw error;
+                viewRegistrations(lessonId, lessonTitle);
+            } catch (err) {
+                alert('Error al actualizarasistencia: ' + err.message);
             }
         }
     </script>
