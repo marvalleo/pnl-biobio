@@ -9,7 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&display=swap"
         rel="stylesheet">
     <link rel="stylesheet"
-        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400;0,0" />
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
     <script src="supabase-config.js"></script>
@@ -31,15 +31,13 @@
     <nav class="bg-white shadow-sm border-b px-6 py-1 flex justify-between items-center">
         <div class="flex items-center gap-3">
             <a href="admin-dashboard.html" class="flex items-center gap-3 hover:opacity-75 transition-opacity">
-                <!-- Logo PNL Ajustado -->
                 <img src="wp-content/uploads/2026/pnl-del-biobio01.png" alt="Logo PNL"
                     style="max-height: 78px; margin-top: 5px;">
-                <span class="h-8 w-[1px] bg-gray-300 mx-1"></span> <!-- Separador vertical -->
+                <span class="h-8 w-[1px] bg-gray-300 mx-1"></span>
                 <span class="font-900 uppercase tracking-tighter text-sm md:text-base">Panel Central</span>
             </a>
         </div>
         <div class="flex items-center gap-4">
-            <!-- User Menu Premium -->
             <div id="user-menu"
                 class="hidden flex items-center gap-3 bg-white shadow-sm px-4 py-2 rounded-2xl border border-gray-100 transition-all hover:shadow-md">
                 <div class="flex flex-col items-end mr-1">
@@ -60,7 +58,6 @@
                     <span class="text-[10px] font-black uppercase hidden lg:block">Salir</span>
                 </button>
             </div>
-            <span class="text-[10px] font-bold uppercase text-gray-400 hidden md:block">Super Admin Mode</span>
         </div>
     </nav>
 
@@ -74,7 +71,7 @@
                 <div class="relative">
                     <span
                         class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">search</span>
-                    <input type="text" id="search-input" placeholder="Buscar por nombre, rut o email..."
+                    <input type="text" id="search-input" placeholder="Buscar por nombre, RUT o email..."
                         oninput="filterUsers()"
                         class="bg-white border border-gray-200 pl-11 pr-6 py-3 rounded-xl font-medium text-xs outline-none focus:ring-2 focus:ring-[#fba931] w-[300px] transition-all">
                 </div>
@@ -91,29 +88,15 @@
             </div>
         </div>
 
-        <div class="bg-blue-50 border border-blue-100 p-4 rounded-2xl mb-8 flex items-center gap-4">
-            <span class="material-symbols-outlined text-blue-500">info</span>
-            <p class="text-[10px] font-bold text-blue-700 uppercase tracking-widest">
-                Tip: El Excel de importación debe tener los encabezados: <span
-                    class="bg-white px-2 py-0.5 rounded border">Nombre</span>, <span
-                    class="bg-white px-2 py-0.5 rounded border">RUT</span>, <span
-                    class="bg-white px-2 py-0.5 rounded border">Email</span>, <span
-                    class="bg-white px-2 py-0.5 rounded border">Telefono</span>, <span
-                    class="bg-white px-2 py-0.5 rounded border">Rol</span>.
-            </p>
-        </div>
-
-        <!-- Tabla de Usuarios -->
         <div class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
             <table class="w-full text-left border-collapse">
                 <thead class="bg-gray-50 border-b border-gray-100">
                     <tr>
-                        <th class="px-6 py-4 text-[10px] font-black uppercase text-gray-400">Nombre</th>
+                        <th class="px-6 py-4 text-[10px] font-black uppercase text-gray-400">Nombre Completo</th>
                         <th class="px-6 py-4 text-[10px] font-black uppercase text-gray-400">RUT</th>
                         <th class="px-6 py-4 text-[10px] font-black uppercase text-gray-400">Email</th>
-                        <th class="px-6 py-4 text-[10px] font-black uppercase text-gray-400">Teléfono</th>
                         <th class="px-6 py-4 text-[10px] font-black uppercase text-gray-400">Rol</th>
-                        <th class="px-6 py-4 text-[10px] font-black uppercase text-gray-400">Acciones</th>
+                        <th class="px-6 py-4 text-[10px] font-black uppercase text-gray-400 text-right">Acciones</th>
                     </tr>
                 </thead>
                 <tbody id="users-table-body">
@@ -125,7 +108,6 @@
         </div>
     </main>
 
-    <!-- Modal Nuevo/Editar Usuaro -->
     <div id="user-modal"
         class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
         <div class="bg-white w-full max-w-lg rounded-3xl p-8 shadow-2xl">
@@ -136,15 +118,20 @@
                 <input type="hidden" id="profile-id">
                 <div class="grid grid-cols-2 gap-4">
                     <div class="col-span-2">
-                        <label class="text-[10px] font-black uppercase text-gray-400">Nombre Completo</label>
+                        <label class="text-[10px] font-black uppercase text-gray-400">Nombre Completo *</label>
                         <input type="text" id="full_name" required
+                            class="w-full bg-gray-50 border p-4 rounded-xl focus:ring-2 focus:ring-[#fba931] outline-none">
+                    </div>
+                    <div class="col-span-2">
+                        <label class="text-[10px] font-black uppercase text-gray-400">Email (Obligatorio para login)
+                            *</label>
+                        <input type="email" id="email" required
                             class="w-full bg-gray-50 border p-4 rounded-xl focus:ring-2 focus:ring-[#fba931] outline-none">
                     </div>
                     <div>
                         <label class="text-[10px] font-black uppercase text-gray-400">RUT (Opcional)</label>
-                        <input type="text" id="rut"
-                            class="w-full bg-gray-50 border p-4 rounded-xl focus:ring-2 focus:ring-[#fba931] outline-none"
-                            placeholder="Ej: 12.345.678-9">
+                        <input type="text" id="rut" placeholder="Ej: 12.345.678-k"
+                            class="w-full bg-gray-50 border p-4 rounded-xl focus:ring-2 focus:ring-[#fba931] outline-none">
                     </div>
                     <div>
                         <label class="text-[10px] font-black uppercase text-gray-400">Teléfono</label>
@@ -152,15 +139,9 @@
                             class="w-full bg-gray-50 border p-4 rounded-xl focus:ring-2 focus:ring-[#fba931] outline-none">
                     </div>
                     <div class="col-span-2">
-                        <label class="text-[10px] font-black uppercase text-gray-400">Email (Obligatorio para
-                            login)</label>
-                        <input type="email" id="email" required
-                            class="w-full bg-gray-50 border p-4 rounded-xl focus:ring-2 focus:ring-[#fba931] outline-none">
-                    </div>
-                    <div class="col-span-2">
                         <label class="text-[10px] font-black uppercase text-gray-400">Rol asignado</label>
                         <select id="role"
-                            class="w-full bg-gray-50 border p-4 rounded-xl focus:ring-2 focus:ring-[#fba931] outline-none appearance-none font-bold">
+                            class="w-full bg-gray-50 border p-4 rounded-xl focus:ring-2 focus:ring-[#fba931] outline-none font-bold">
                             <option value="normal">Militante Normal</option>
                             <option value="admin_forja">Admin Academia (Forja)</option>
                             <option value="admin_votos">Admin Votaciones</option>
@@ -179,403 +160,126 @@
         </div>
     </div>
 
-    <!-- Modal WhatsApp -->
     <div id="whatsapp-modal"
         class="fixed inset-0 bg-black/60 z-50 hidden flex items-center justify-center backdrop-blur-sm p-4">
-        <div class="bg-white w-full max-w-md rounded-3xl p-8 shadow-2xl">
-            <h2 class="text-2xl font-900 uppercase mb-4 flex items-center gap-2 text-green-600">
-                <span class="material-symbols-outlined">check_circle</span> ¡Usuario Creado!
+        <div class="bg-white w-full max-w-md rounded-3xl p-8 shadow-2xl text-center">
+            <h2 class="text-2xl font-900 uppercase mb-4 text-green-600 flex items-center justify-center gap-2">
+                <span class="material-symbols-outlined">check_circle</span> ¡Creado!
             </h2>
-            <p class="text-sm text-gray-600 mb-6">
-                Ahora envía las credenciales por <strong>WhatsApp</strong> o <strong>Telegram</strong>:
-            </p>
-
-            <div class="bg-gray-50 p-4 rounded-xl mb-4 border border-gray-200">
-                <p class="text-xs font-bold text-gray-400 uppercase mb-2">Mensaje para copiar:</p>
-                <div id="whatsapp-message" class="text-sm font-mono bg-white p-4 rounded-lg border select-all"
-                    style="white-space: pre-line;">
-                    <!-- El mensaje se llenará dinámicamente -->
-                </div>
+            <div id="whatsapp-message"
+                class="text-xs font-mono bg-gray-50 p-6 rounded-2xl border text-left select-all whitespace-pre-line mb-6">
             </div>
-
             <div class="flex gap-3">
-                <button id="btn-copy-whatsapp" onclick="copyWhatsAppMessage()"
-                    class="flex-1 bg-gray-600 text-white py-3 rounded-xl font-900 text-xs uppercase hover:bg-gray-700 flex items-center justify-center gap-2">
-                    <span class="material-symbols-outlined text-sm">content_copy</span> Copiar
-                </button>
+                <button onclick="copyWhatsAppMessage()"
+                    class="flex-1 bg-gray-600 text-white py-4 rounded-xl font-900 text-xs uppercase hover:bg-gray-700">Copiar</button>
                 <button onclick="openWhatsApp()"
-                    class="flex-1 bg-green-600 text-white py-3 rounded-xl font-900 text-xs uppercase hover:bg-green-700 flex items-center justify-center gap-2">
-                    📱 Abrir WhatsApp
-                </button>
+                    class="flex-1 bg-green-600 text-white py-4 rounded-xl font-900 text-xs uppercase hover:bg-green-700">WhatsApp</button>
             </div>
-
-            <button onclick="closeWhatsAppModal()"
-                class="w-full mt-3 bg-gray-100 text-gray-600 py-3 rounded-xl font-900 text-xs uppercase hover:bg-gray-200">
-                Cerrar
-            </button>
+            <button onclick="location.reload()" class="w-full mt-4 text-gray-400 font-bold uppercase text-[10px]">Cerrar
+                y Actualizar</button>
         </div>
     </div>
 
     <script>
         const tableBody = document.getElementById('users-table-body');
         const modal = document.getElementById('user-modal');
-        let allUsers = []; // Cache para búsqueda
+        let allUsers = [];
 
-        // Protección de Ruta Obligatoria y Carga de Usuario
         window.addEventListener('DOMContentLoaded', async () => {
             const { data: { session } } = await supabaseClient.auth.getSession();
             const role = localStorage.getItem('pnl_user_role');
-
             if (!session || (role !== 'super_admin' && role !== 'admin_usuarios')) {
-                console.warn("Acceso denegado o sesión expirada.");
                 window.location.href = 'forja-login.html';
                 return;
             }
-
-            // Mostrar info de usuario en Nav
-            const user = session.user;
-            const fullName = user.user_metadata?.full_name || user.email;
-
+            const name = session.user.user_metadata?.full_name || session.user.email;
             document.getElementById('user-menu').classList.remove('hidden');
-            document.getElementById('nav-user-name').innerText = fullName;
-            document.getElementById('nav-user-initials').innerText = fullName.trim().charAt(0).toUpperCase();
-
+            document.getElementById('nav-user-name').innerText = name;
+            document.getElementById('nav-user-initials').innerText = name.charAt(0).toUpperCase();
             loadUsers();
         });
 
-        async function handleLogout() {
-            if (confirm('¿Estás seguro de que deseas cerrar sesión?')) {
-                await supabaseClient.auth.signOut();
-                localStorage.clear();
-                window.location.href = 'forja-login.html';
-            }
-        }
-
-        // Renderizar la tabla
         async function loadUsers() {
-            try {
-                const { data, error } = await supabaseClient
-                    .from('profiles')
-                    .select('*')
-                    .order('created_at', { ascending: false });
-
-                if (error) throw error;
-                allUsers = data;
-                renderUsers(allUsers);
-            } catch (err) {
-                console.error(err);
-                tableBody.innerHTML = `<tr><td colspan="6" class="px-6 py-10 text-center text-red-500 font-bold uppercase text-xs">Error al cargar datos.</td></tr>`;
-            }
+            const { data, error } = await supabaseClient.from('profiles').select('*').order('created_at', { ascending: false });
+            if (!error) { allUsers = data; renderUsers(data); }
         }
 
-        function renderUsers(usersToRender) {
-            if (usersToRender.length === 0) {
-                tableBody.innerHTML = `<tr><td colspan="6" class="px-6 py-10 text-center text-gray-400">No se encontraron militantes.</td></tr>`;
-                return;
-            }
-
-            tableBody.innerHTML = usersToRender.map(user => `
-                <tr class="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
-                    <td class="px-6 py-4 font-bold uppercase text-sm">${user.full_name}</td>
-                    <td class="px-6 py-4 text-xs font-medium text-gray-500">${user.rut || '-'}</td>
-                    <td class="px-6 py-4 text-xs text-gray-500">${user.email}</td>
-                    <td class="px-6 py-4 text-xs text-gray-500">${user.phone_number || '-'}</td>
-                    <td class="px-6 py-4 text-[10px]">
-                        <span class="px-2 py-1 rounded-full font-black uppercase tracking-tighter ${getRoleClass(user.role)}">
-                            ${user.role}
-                        </span>
-                    </td>
-                    <td class="px-6 py-4">
-                        <div class="flex gap-1">
-                            <button onclick='sendInvite(${JSON.stringify(user)})' class="p-2 text-amber-600 hover:bg-amber-50 rounded-lg" title="Invitar (Email)">
-                                <span class="material-symbols-outlined">mail</span>
-                            </button>
-                            <button onclick='editUser(${JSON.stringify(user)})' class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg" title="Editar">
-                                <span class="material-symbols-outlined">edit</span>
-                            </button>
-                            <button onclick="deleteUser('${user.id}')" class="p-2 text-red-600 hover:bg-red-50 rounded-lg" title="Eliminar">
-                                <span class="material-symbols-outlined">delete</span>
-                            </button>
-                        </div>
+        function renderUsers(users) {
+            tableBody.innerHTML = users.map(u => `
+                <tr class="border-b border-gray-50 hover:bg-gray-50 transition-colors">
+                    <td class="px-6 py-4 font-bold uppercase text-xs">${u.full_name}</td>
+                    <td class="px-6 py-4 text-[10px] text-gray-400">${u.rut || '---'}</td>
+                    <td class="px-6 py-4 text-[10px] text-gray-400 lowercase">${u.email}</td>
+                    <td class="px-6 py-4"><span class="px-2 py-0.5 rounded-full text-[9px] font-black uppercase bg-gray-100 text-gray-600">${u.role}</span></td>
+                    <td class="px-6 py-4 text-right">
+                        <button onclick='editUser(${JSON.stringify(u)})' class="p-2 text-blue-500 hover:bg-blue-50 rounded-lg"><span class="material-symbols-outlined">edit</span></button>
+                        <button onclick="deleteUser('${u.auth_id}')" class="p-2 text-red-500 hover:bg-red-50 rounded-lg"><span class="material-symbols-outlined">delete</span></button>
                     </td>
                 </tr>
             `).join('');
         }
 
         function filterUsers() {
-            const query = document.getElementById('search-input').value.toLowerCase();
-            const filtered = allUsers.filter(user =>
-                user.full_name.toLowerCase().includes(query) ||
-                user.rut.toLowerCase().includes(query) ||
-                user.email.toLowerCase().includes(query)
-            );
-            renderUsers(filtered);
-        }
-
-        function getRoleClass(role) {
-            switch (role) {
-                case 'super_admin': return 'bg-purple-100 text-purple-700';
-                case 'admin_forja': return 'bg-orange-100 text-orange-700';
-                case 'normal': return 'bg-blue-100 text-blue-700';
-                default: return 'bg-gray-100 text-gray-700';
-            }
+            const q = document.getElementById('search-input').value.toLowerCase();
+            renderUsers(allUsers.filter(u => u.full_name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q) || (u.rut && u.rut.toLowerCase().includes(q))));
         }
 
         function openModal(mode = 'create') {
             document.getElementById('user-form').reset();
             document.getElementById('profile-id').value = '';
             modal.dataset.mode = mode;
-            document.getElementById('modal-title').innerHTML = mode === 'edit' ?
-                '<span class="material-symbols-outlined">edit</span> Editar Militante' :
-                '<span class="material-symbols-outlined">person_add</span> Nuevo Militante';
             modal.classList.remove('hidden');
         }
 
         function closeModal() { modal.classList.add('hidden'); }
 
-        async function sendInvite(user) {
-            if (!confirm(`¿Deseas enviar una invitación oficial a ${user.email}?`)) return;
-
-            try {
-                // Feedback visual: Cambiar el cursor
-                document.body.style.cursor = 'wait';
-
-                const { data, error } = await supabaseClient.functions.invoke('invite-militante', {
-                    body: { email: user.email }
-                });
-
-                if (error) throw error;
-
-                alert(`¡Invitación enviada con éxito a ${user.email}!\nEl militante recibirá un correo para crear su contraseña.`);
-            } catch (err) {
-                console.error('Error al invitar:', err);
-                alert('No se pudo enviar la invitación.\nError: ' + err.message);
-
-                // Fallback: Si la función no está desplegada, abrir el dashboard como plan B
-                if (confirm('¿Deseas abrir el Dashboard de Supabase para enviarla manualmente?')) {
-                    const projectRef = SUPABASE_URL.split('://')[1].split('.')[0];
-                    window.open(`https://supabase.com/dashboard/project/${projectRef}/auth/users`, '_blank');
-                }
-            } finally {
-                document.body.style.cursor = 'default';
-            }
-        }
-
         async function saveUser(e) {
             e.preventDefault();
-            const id = document.getElementById('profile-id').value;
             const formData = {
                 full_name: document.getElementById('full_name').value,
-                rut: document.getElementById('rut').value,
                 email: document.getElementById('email').value,
-                phone_number: document.getElementById('phone_number').value,
+                rut: document.getElementById('rut').value || null,
+                phone_number: document.getElementById('phone_number').value || null,
                 role: document.getElementById('role').value
             };
 
-            try {
-                const isEditing = modal.dataset.mode === 'edit';
-
-                if (isEditing) {
-                    // Modo edición: solo actualizar el perfil
-                    const res = await supabaseClient.from('profiles').update(formData).eq('id', id);
-                    if (res.error) throw res.error;
-                    alert('Usuario actualizado correctamente.');
-                    closeModal();
-                    loadUsers();
-                } else {
-                    // Modo creación: Llamar a la Edge Function
-                    // 1. Asegurar sesión fresca y refrescar token para evitar 401
-                    const { data: { session }, error: sessionErr } = await supabaseClient.auth.refreshSession();
-                    if (sessionErr || !session) {
-                        console.error("Error renovando sesión:", sessionErr);
-                        alert('Tu sesión ha expirado. Por favor, inicia sesión de nuevo.');
-                        window.location.href = 'forja-login.html';
-                        return;
-                    }
-
-                    // Feedback visual
-                    document.body.style.cursor = 'wait';
-
-                    // 2. Llamar a la función
-                    const { data, error } = await supabaseClient.functions.invoke('create-user-temp', {
-                        body: formData
-                    });
-
-                    document.body.style.cursor = 'default';
-
-                    if (error) {
-                        if (error.status === 401) {
-                            throw new Error("Sesión no válida o expirada. Por favor re-inicia sesión.");
-                        }
-                        throw error;
-                    }
-
-                    // Mostrar modal de WhatsApp con la contraseña temporal
-                    showWhatsAppModal(data.user, data.tempPassword);
-
-                    closeModal();
-                    loadUsers();
-                }
-            } catch (err) {
-                console.error('Error completo:', err);
-                alert('Error: ' + err.message);
-            }
-        }
-
-        async function deleteUser(id) {
-            // Obtener el usuario para mostrar su nombre en la confirmación (opcional pero bueno para UX)
-            const userToDelete = allUsers.find(u => u.id === id);
-            const name = userToDelete ? userToDelete.full_name : 'este militante';
-
-            if (!confirm(`⚠️ PELIGRO:\n\n¿Seguro que deseas eliminar DEFINITIVAMENTE a ${name}?\n\nEsta acción borrará:\n- Su cuenta de acceso (Auth)\n- Su perfil y datos personales\n- Su progreso en cursos y votos\n\nNO SE PUEDE DESHACER.`)) return;
-
-            try {
-                // Feedback visual de carga
+            const isEdit = modal.dataset.mode === 'edit';
+            if (isEdit) {
+                const { error } = await supabaseClient.from('profiles').update(formData).eq('id', document.getElementById('profile-id').value);
+                if (!error) { alert('Militante actualizado'); location.reload(); }
+            } else {
                 document.body.style.cursor = 'wait';
-
-                // Usamos la Edge Function para borrar todo (Auth + DB)
-                // Nota: Enviamos el auth_id si lo tenemos, o el ID del perfil si es lo que tenemos.
-                // En nuestra tabla renderizada, 'id' es el ID del perfil. 
-                // Necesitamos el Auth ID para borrar de Auth.
-
-                let authId = userToDelete.auth_id;
-
-                // Si por alguna razón no tiene auth_id (usuario huérfano), intentamos borrar solo el perfil
-                if (!authId) {
-                    console.warn('Usuario sin Auth ID, borrando solo perfil...');
-                    const { error } = await supabaseClient.from('profiles').delete().eq('id', id);
-                    if (error) throw error;
-                } else {
-                    // Llamada a la Edge Function
-                    const { data, error } = await supabaseClient.functions.invoke('delete-user-complete', {
-                        body: { userId: authId }
-                    });
-
-                    if (error) throw error;
-                }
-
-                alert('✅ Militante eliminado correctamente.');
-                loadUsers();
-            } catch (err) {
-                console.error('Error eliminando:', err);
-                alert('❌ Error al eliminar: ' + (err.message || 'Error desconocido'));
-            } finally {
+                const { data, error } = await supabaseClient.functions.invoke('create-user-temp', { body: formData });
                 document.body.style.cursor = 'default';
+                if (!error) showWhatsAppModal(formData, data.tempPassword);
+                else alert(error.message);
             }
         }
 
-        function editUser(user) {
-            openModal('edit');
-            document.getElementById('profile-id').value = user.id;
-            document.getElementById('full_name').value = user.full_name;
-            document.getElementById('rut').value = user.rut;
-            document.getElementById('email').value = user.email;
-            document.getElementById('phone_number').value = user.phone_number || '';
-            document.getElementById('role').value = user.role;
-        }
-
-        // Funciones del Modal de WhatsApp
-        let currentWhatsAppData = {};
-
-        function showWhatsAppModal(userData, tempPassword) {
-            const message = `Hola ${userData.full_name.split(' ')[0]},
-
-Ya puedes acceder a la Forja Libertaria del PNL Biobío:
-🌐 https://pnl-biobio.netlify.app/forja-login.html
-
-Usuario (Email): ${userData.email}
-Contraseña: ${tempPassword}
-
-⚠️ Deberás cambiar tu contraseña en el primer inicio de sesión.
-
-¡Bienvenid@!`;
-
-            document.getElementById('whatsapp-message').textContent = message;
-            currentWhatsAppData = { phone: userData.phone_number, message };
+        let currentMsg = '';
+        function showWhatsAppModal(user, pass) {
+            currentMsg = `Hola ${user.full_name.split(' ')[0]},\n\nYa puedes acceder a la Forja Libertaria:\n🌐 https://pnl-biobio.netlify.app/forja-login.html\n\nUsuario: ${user.email}\nClave: ${pass}\n\nDeberás cambiarla al entrar por primera vez. ¡Bienvenid@!`;
+            document.getElementById('whatsapp-message').innerText = currentMsg;
             document.getElementById('whatsapp-modal').classList.remove('hidden');
-
-            // Resetear botón de copiar
-            const btn = document.getElementById('btn-copy-whatsapp');
-            if (btn) {
-                btn.innerHTML = '<span class="material-symbols-outlined text-sm">content_copy</span> Copiar';
-                btn.className = 'flex-1 bg-gray-600 text-white py-3 rounded-xl font-900 text-xs uppercase hover:bg-gray-700 flex items-center justify-center gap-2';
-            }
         }
 
-        function closeWhatsAppModal() {
-            document.getElementById('whatsapp-modal').classList.add('hidden');
+        function copyWhatsAppMessage() { navigator.clipboard.writeText(currentMsg); alert('Copiado'); }
+        function openWhatsApp() { window.open(`https://web.whatsapp.com/send?text=${encodeURIComponent(currentMsg)}`, '_blank'); }
+        async function handleLogout() { await supabaseClient.auth.signOut(); localStorage.clear(); location.href = 'index.html'; }
+        function editUser(u) {
+            openModal('edit');
+            document.getElementById('profile-id').value = u.id;
+            document.getElementById('full_name').value = u.full_name;
+            document.getElementById('email').value = u.email;
+            document.getElementById('rut').value = u.rut || '';
+            document.getElementById('phone_number').value = u.phone_number || '';
+            document.getElementById('role').value = u.role;
         }
-
-        async function copyWhatsAppMessage() {
-            try {
-                await navigator.clipboard.writeText(currentWhatsAppData.message);
-
-                const btn = document.getElementById('btn-copy-whatsapp');
-                if (btn) {
-                    const originalContent = btn.innerHTML;
-                    const originalClass = btn.className;
-
-                    btn.innerHTML = '<span class="material-symbols-outlined text-sm">check</span> ¡Copiado!';
-                    btn.className = 'flex-1 bg-green-500 text-white py-3 rounded-xl font-900 text-xs uppercase hover:bg-green-600 flex items-center justify-center gap-2 shadow-lg scale-105 transition-all';
-
-                    setTimeout(() => {
-                        btn.innerHTML = originalContent;
-                        btn.className = originalClass;
-                    }, 2000);
-                }
-            } catch (err) {
-                console.error('Error al copiar:', err);
-                alert('No se pudo copiar automáticamente.');
-            }
+        async function deleteUser(id) {
+            if (!confirm('¿Seguro que deseas eliminar a este militante definitivamente?')) return;
+            const { error } = await supabaseClient.functions.invoke('delete-user-complete', { body: { userId: id } });
+            if (!error) location.reload();
         }
-
-        function openWhatsApp() {
-            const message = encodeURIComponent(document.getElementById('whatsapp-message').textContent);
-            const phone = currentWhatsAppData.phone?.replace(/[^0-9]/g, '') || '';
-
-            // Si tiene teléfono, abrir chat directo; si no, abrir WhatsApp Web genérico
-            const whatsappUrl = phone ?
-                `https://wa.me/56${phone}?text=${message}` :
-                `https://web.whatsapp.com/send?text=${message}`;
-
-            window.open(whatsappUrl, '_blank');
-        }
-
-        async function handleExcelImport(event) {
-            const file = event.target.files[0];
-            const reader = new FileReader();
-            reader.onload = async (e) => {
-                const data = new Uint8Array(e.target.result);
-                const workbook = XLSX.read(data, { type: 'array' });
-                const sheetName = workbook.SheetNames[0];
-                const worksheet = workbook.Sheets[sheetName];
-                const json = XLSX.utils.sheet_to_json(worksheet);
-
-                console.log("Importando:", json);
-
-                // Mapear campos esperados
-                const usersToImport = json.map(row => ({
-                    full_name: row.Nombre || row.full_name,
-                    rut: row.RUT || row.rut,
-                    email: row.Email || row.email,
-                    phone_number: String(row.Telefono || row.phone_number || ''),
-                    role: row.Rol || row.role || 'normal'
-                }));
-
-                try {
-                    const { error } = await supabaseClient.from('profiles').insert(usersToImport);
-                    if (error) throw error;
-                    alert('Importación completada: ' + usersToImport.length + ' usuarios agregados.');
-                    loadUsers();
-                } catch (err) {
-                    alert('Error en importación: ' + err.message);
-                }
-            };
-            reader.readAsArrayBuffer(file);
-        }
-
-        // Carga inicial
-        window.addEventListener('DOMContentLoaded', loadUsers);
     </script>
 </body>
 

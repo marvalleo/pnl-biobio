@@ -7,134 +7,51 @@ const corsHeaders = {
 }
 
 serve(async (req: Request) => {
-  // Manejo de CORS preflight
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
-  }
+  if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
 
   try {
-    console.log("Inicio de create-user-temp v2 (Upsert Fix)")
-
-    // Verificar variables de entorno
     const supabaseUrl = Deno.env.get('SUPABASE_URL')
     const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+    const supabaseAdmin = createClient(supabaseUrl!, serviceRoleKey!)
 
-    if (!supabaseUrl || !serviceRoleKey) {
-      console.error("Faltan variables de entorno SUPABASE_URL o SUPABASE_SERVICE_ROLE_KEY")
-      throw new Error("Error de configuración del servidor (Environment Variables)")
-    }
+    const { full_name, email, role, rut, phone_number } = await req.json()
 
-    const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey)
+    if (!email || !full_name) throw new Error("Email y Nombre son obligatorios")
 
-    // Parsear body
-    let userData
-    try {
-      userData = await req.json()
-    } catch (e) {
-      console.error("Error parseando JSON:", e)
-      throw new Error("Body inválido o vacío")
-    }
+    // 1. Generar contraseña aleatoria (Segura y simple)
+    const tempPassword = `PNL-${Math.random().toString(36).slice(-6).toUpperCase()}`
 
-    const { full_name, email, role } = userData
-    // Normalizar vacíos a null para evitar errores de restricción UNIQUE o NOT NULL (si el parche no se aplicó)
-    const rut = userData.rut?.trim() === '' ? null : userData.rut;
-    const phone_number = userData.phone_number?.trim() === '' ? null : userData.phone_number;
-
-    console.log(`Intentando crear usuario: ${email}, RUT: ${rut || 'N/A'}`)
-
-    if (!email) {
-      throw new Error("El Email es obligatorio")
-    }
-
-    // 1. Generar contraseña temporal
-    // Priorizamos RUT si existe, si no, usamos parte del email + random
-    let tempPassword;
-    if (rut && rut.trim() !== '') {
-      tempPassword = `PNL-${rut.replace('-', '').slice(-5)}`;
-    } else {
-      const emailPrefix = email.split('@')[0].slice(0, 4).toUpperCase();
-      const randomSuffix = Math.random().toString(36).slice(-4).toUpperCase();
-      tempPassword = `PNL-${emailPrefix}${randomSuffix}`;
-    }
-
-    // 2. Crear usuario en Supabase Auth
-    // Al crear el usuario, el TRIGGER de la base de datos se disparará automáticamente
-    // y creará un perfil básico en 'public.profiles'.
+    // 2. Crear usuario en Auth
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
-      email: email,
+      email,
       password: tempPassword,
       email_confirm: true,
       user_metadata: { full_name, rut }
     })
 
-    if (authError) {
-      console.error("Error Auth createUser:", authError)
-      throw authError
-    }
+    if (authError) throw authError
 
-    if (!authData.user) {
-      console.error("Auth createUser no retornó usuario")
-      throw new Error("Error inesperado al crear usuario en Auth")
-    }
-
-    console.log(`Usuario Auth creado: ${authData.user.id}`)
-
-    // 3. Completar/Actualizar perfil (Upsert)
-    // Usamos UPSERT para manejar dos casos:
-    // A) El trigger creó el perfil: Lo actualizamos con los datos extra (role, must_change_password)
-    // B) El trigger falló o no existe: Lo creamos desde cero.
+    // 3. Upsert Perfil (Role y Progress)
     const { error: profileError } = await supabaseAdmin
       .from('profiles')
       .upsert({
-        auth_id: authData.user.id, // Llave única para el upsert
+        auth_id: authData.user.id,
         full_name,
-        rut,
+        rut: rut || null,
         email,
-        phone_number,
+        phone_number: phone_number || null,
         role: role || 'normal',
         must_change_password: true
-      }, { onConflict: 'auth_id' }) // Importante: especificar la columna de conflicto
+      }, { onConflict: 'auth_id' })
 
-    if (profileError) {
-      console.error("Error actualizando perfil:", profileError)
-      // Intentar rollback (borrar usuario de auth si falló el perfil)
-      await supabaseAdmin.auth.admin.deleteUser(authData.user.id)
-      throw new Error(`Error actualizando perfil: ${profileError.message}`)
-    }
-
-    console.log("Perfil actualizado exitosamente")
+    if (profileError) throw profileError
 
     return new Response(
-      JSON.stringify({ 
-        success: true, 
-        tempPassword,
-        user: { 
-          id: authData.user.id,
-          full_name, 
-          rut, 
-          email, 
-          phone_number, 
-          role 
-        }
-      }),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200 
-      }
+      JSON.stringify({ success: true, tempPassword, user: { full_name, email, role, phone_number } }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
     )
 
   } catch (error: any) {
-    console.error("Error capturado:", error)
-    
-    return new Response(
-      JSON.stringify({ 
-        error: error.message || 'Error desconocido en el servidor',
-        details: error
-      }),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 400 
-      }
-    )
+    return new Response(JSON.stringify({ error: error.message }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 })
   }
 })

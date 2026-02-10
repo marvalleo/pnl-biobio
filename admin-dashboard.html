@@ -24,24 +24,38 @@
     </style>
     <script>
         // Protección de Ruta
-        window.addEventListener('DOMContentLoaded', () => {
+        window.addEventListener('DOMContentLoaded', async () => {
+            const { data: { session } } = await supabaseClient.auth.getSession();
             const role = localStorage.getItem('pnl_user_role');
-            const validRoles = ['super_admin', 'admin_forja', 'admin_votos', 'admin_foros'];
 
-            if (!validRoles.includes(role)) {
-                alert('Acceso no autorizado');
+            if (!session || !['super_admin', 'admin_forja', 'admin_votos', 'admin_foros', 'admin_usuarios'].includes(role)) {
                 window.location.href = 'forja-login.html';
                 return;
             }
 
-            // Ocultar módulos según el rol (si no es super_admin)
-            if (role !== 'super_admin') {
-                if (role !== 'admin_forja') document.getElementById('mod-forja').classList.add('hidden');
-                if (role !== 'admin_votos') document.getElementById('mod-votos').classList.add('hidden');
-                if (role !== 'admin_foros') document.getElementById('mod-foros').classList.add('hidden');
-                // Militantes solo para super_admin
-                document.getElementById('mod-usuarios').classList.add('hidden');
-            }
+            // Aplicar segregación de predios (Bloqueo visual)
+            const modules = {
+                'mod-forja': ['super_admin', 'admin_forja'],
+                'mod-votos': ['super_admin', 'admin_votos'],
+                'mod-foros': ['super_admin', 'admin_foros'],
+                'mod-usuarios': ['super_admin', 'admin_usuarios']
+            };
+
+            Object.entries(modules).forEach(([id, allowedRoles]) => {
+                const element = document.getElementById(id);
+                if (element && !allowedRoles.includes(role)) {
+                    element.classList.add('opacity-40', 'grayscale', 'cursor-not-allowed');
+                    element.onclick = (e) => {
+                        e.preventDefault();
+                        alert('Acceso Denegado: Este predio está bajo otra administración.');
+                        return false;
+                    };
+                }
+            });
+
+            // Mostrar info usuario
+            const user = session.user;
+            document.getElementById('nav-user-name').innerText = user.user_metadata?.full_name || user.email;
         });
 
         function logout() {

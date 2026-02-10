@@ -105,6 +105,12 @@
                         class="w-full bg-gray-50 border border-gray-100 p-4 rounded-xl focus:ring-2 focus:ring-[#fba931] outline-none">
                 </div>
                 <div>
+                    <label class="text-[10px] font-black uppercase text-gray-400 ml-1">Descripción del Curso</label>
+                    <textarea id="course-description"
+                        class="w-full bg-gray-50 border border-gray-100 p-4 rounded-xl focus:ring-2 focus:ring-[#fba931] outline-none h-24"
+                        placeholder="De qué trata este curso..."></textarea>
+                </div>
+                <div>
                     <label class="text-[10px] font-black uppercase text-gray-400 ml-1">Nivel / Módulo</label>
                     <select id="course-level"
                         class="w-full bg-gray-50 border border-gray-100 p-4 rounded-xl focus:ring-2 focus:ring-[#fba931] outline-none font-bold">
@@ -206,6 +212,7 @@
             const id = document.getElementById('course-id').value;
             const courseData = {
                 title: document.getElementById('course-title').value,
+                description: document.getElementById('course-description').value,
                 level: document.getElementById('course-level').value,
                 image_url: document.getElementById('course-image').value || null,
                 status: document.getElementById('course-status').value
@@ -241,6 +248,7 @@
             openModal();
             document.getElementById('course-id').value = course.id;
             document.getElementById('course-title').value = course.title;
+            document.getElementById('course-description').value = course.description || '';
             document.getElementById('course-level').value = course.level;
             document.getElementById('course-image').value = course.image_url || '';
             document.getElementById('course-status').value = course.status;

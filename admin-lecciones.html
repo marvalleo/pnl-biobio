@@ -89,10 +89,13 @@
             <table class="w-full text-left">
                 <thead class="bg-gray-50 border-b border-gray-100">
                     <tr>
-                        <th class="p-6 text-[10px] font-black uppercase text-gray-400 tracking-wider">Orden</th>
+                        <th class="p-6 text-[10px] font-black uppercase text-gray-400 tracking-wider text-center">Orden
+                        </th>
                         <th class="p-6 text-[10px] font-black uppercase text-gray-400 tracking-wider">Título</th>
                         <th class="p-6 text-[10px] font-black uppercase text-gray-400 tracking-wider">Tipo</th>
                         <th class="p-6 text-[10px] font-black uppercase text-gray-400 tracking-wider">Programación</th>
+                        <th class="p-6 text-[10px] font-black uppercase text-gray-400 tracking-wider text-center">Cupos
+                        </th>
                         <th class="p-6 text-[10px] font-black uppercase text-gray-400 tracking-wider text-right">
                             Acciones</th>
                     </tr>
@@ -167,6 +170,13 @@
                         class="w-full bg-gray-50 border border-gray-100 p-4 rounded-xl focus:ring-2 focus:ring-[#fba931] outline-none">
                 </div>
 
+                <div>
+                    <label class="text-[10px] font-black uppercase text-gray-400 ml-1">Capacidad Máxima
+                        (0=infinito)</label>
+                    <input type="number" id="lesson-capacity" value="0"
+                        class="w-full bg-gray-50 border border-gray-100 p-4 rounded-xl focus:ring-2 focus:ring-[#fba931] outline-none">
+                </div>
+
                 <div class="md:col-span-2 flex gap-4 pt-4">
                     <button type="button" onclick="closeModal()"
                         class="flex-1 bg-gray-100 text-gray-600 py-4 rounded-xl font-900 uppercase text-xs hover:bg-gray-200">Cancelar</button>
@@ -175,6 +185,19 @@
                         Lección</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- Modal Listado Inscritos -->
+    <div id="reg-modal"
+        class="fixed inset-0 bg-black/50 z-[60] hidden flex items-center justify-center backdrop-blur-sm">
+        <div class="bg-white rounded-3xl p-8 max-w-xl w-full shadow-2xl mx-4">
+            <h2 id="reg-modal-title" class="text-2xl font-900 uppercase mb-6 text-[#0f172a]">Inscritos</h2>
+            <div id="reg-list" class="space-y-3 max-h-96 overflow-y-auto pr-2">
+                <!-- Miembros inscritos -->
+            </div>
+            <button onclick="document.getElementById('reg-modal').classList.add('hidden')"
+                class="w-full mt-6 bg-gray-100 text-gray-600 py-4 rounded-xl font-900 uppercase text-xs hover:bg-gray-200">Cerrar</button>
         </div>
     </div>
 
@@ -236,6 +259,11 @@
                         <td class="p-6 text-[10px] font-bold text-gray-500">
                             ${lesson.scheduled_at ? new Date(lesson.scheduled_at).toLocaleString('es-CL', { dateStyle: 'short', timeStyle: 'short' }) : '---'}
                         </td>
+                        <td class="p-6">
+                            <button onclick="viewRegistrations('${lesson.id}', '${lesson.title}')" class="text-[10px] font-black uppercase text-blue-500 hover:underline">
+                                ${lesson.max_capacity > 0 ? `Cupos: ${lesson.max_capacity}` : 'Ilimitado'}
+                            </button>
+                        </td>
                         <td class="p-6 text-right">
                             <button onclick='editLesson(${JSON.stringify(lesson)})' class="p-2 text-[#0f172a] hover:bg-gray-100 rounded-lg"><span class="material-symbols-outlined">edit</span></button>
                             <button onclick="deleteLesson('${lesson.id}')" class="p-2 text-red-500 hover:bg-red-50 rounded-lg"><span class="material-symbols-outlined">delete</span></button>
@@ -244,7 +272,7 @@
                 `).join('');
             } catch (err) {
                 console.error(err);
-                tableBody.innerHTML = '<tr><td colspan="5" class="p-10 text-center text-red-500 font-bold uppercase text-xs">Error al cargar lecciones.</td></tr>';
+                tableBody.innerHTML = '<tr><td colspan="6" class="p-10 text-center text-red-500 font-bold uppercase text-xs">Error al cargar lecciones.</td></tr>';
             }
         }
 
@@ -270,7 +298,8 @@
                 content_url: document.getElementById('lesson-url').value || null,
                 location: document.getElementById('lesson-location').value || null,
                 scheduled_at: document.getElementById('lesson-date').value || null,
-                duration: document.getElementById('lesson-duration').value || null
+                duration: document.getElementById('lesson-duration').value || null,
+                max_capacity: parseInt(document.getElementById('lesson-capacity').value) || 0
             };
 
             try {
@@ -309,6 +338,7 @@
             document.getElementById('lesson-url').value = lesson.content_url || '';
             document.getElementById('lesson-location').value = lesson.location || '';
             document.getElementById('lesson-duration').value = lesson.duration || '';
+            document.getElementById('lesson-capacity').value = lesson.max_capacity || 0;
 
             if (lesson.scheduled_at) {
                 // Formatear fecha para input datetime-local
@@ -319,6 +349,43 @@
 
             document.getElementById('modal-title').textContent = 'Editar Lección';
             toggleFields();
+        }
+
+        async function viewRegistrations(lessonId, lessonTitle) {
+            document.getElementById('reg-modal-title').textContent = `Inscritos: ${lessonTitle}`;
+            const list = document.getElementById('reg-list');
+            list.innerHTML = '<p class="text-center text-gray-400 py-10 italic">Buscando inscritos...</p>';
+            document.getElementById('reg-modal').classList.remove('hidden');
+
+            try {
+                const { data, error } = await supabaseClient
+                    .from('lesson_registrations')
+                    .select('*, profiles(full_name, rut)')
+                    .eq('lesson_id', lessonId);
+
+                if (error) throw error;
+
+                if (data.length === 0) {
+                    list.innerHTML = '<p class="text-center text-gray-400 py-10">No hay inscritos todavía.</p>';
+                    return;
+                }
+
+                list.innerHTML = data.map(reg => `
+                    <div class="flex justify-between items-center p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                        <div>
+                            <p class="font-black uppercase text-xs">${reg.profiles.full_name}</p>
+                            <p class="text-[9px] text-gray-400 font-bold tracking-widest">${reg.profiles.rut || 'SIN RUT'}</p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-[9px] font-black uppercase ${reg.attended ? 'text-green-500' : 'text-gray-400'}">
+                                ${reg.attended ? 'Asistió' : 'Pendiente'}
+                            </span>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (err) {
+                list.innerHTML = '<p class="text-red-500 text-center font-bold">Error al cargar la lista.</p>';
+            }
         }
     </script>
 </body>
