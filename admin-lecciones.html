@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Forja - Gestión de Lecciones</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+    <style>
+        :root {
+            --pnl-blue: #0f172a;
+            --pnl-gold: #fba931;
+        }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background-color: #f3f4f6;
+            color: var(--pnl-blue);
+        }
+    </style>
+    <!-- Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
+    <script>
+        // Obtener course_id de la URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const courseId = urlParams.get('course_id');
+
+        if (!courseId) {
+            alert("Curso no especificado.");
+            window.location.href = 'admin-forja.html';
+        }
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            const role = localStorage.getItem('pnl_user_role');
+            if (role !== 'super_admin' && role !== 'admin_forja') {
+                alert('Acceso no autorizado');
+                window.location.href = 'forja-login.html';
+                return;
+            }
+            loadCourseInfo();
+            loadLessons();
+        });
+
+        async function loadCourseInfo() {
+            const { data, error } = await supabaseClient.from('courses').select('title').eq('id', courseId).single();
+            if (data) document.getElementById('course-name').textContent = data.title;
+        }
+
+        async function logout() {
+            await supabaseClient.auth.signOut();
+            localStorage.removeItem('pnl_user_role');
+            window.location.href = 'index.html';
+        }
+    </script>
+</head>
+
+<body class="min-h-screen">
+    <nav
+        class="bg-white shadow-md border-b-4 border-[#fba931] px-6 py-1 flex justify-between items-center sticky top-0 z-50">
+        <div class="flex items-center gap-3">
+            <a href="admin-forja.html" class="flex items-center gap-2 hover:opacity-80">
+                <span class="material-symbols-outlined">arrow_back</span>
+                <span class="font-black text-lg uppercase">Volver a Cursos</span>
+            </a>
+        </div>
+        <button onclick="logout()"
+            class="text-[10px] font-bold uppercase bg-gray-100 px-4 py-2 rounded-lg hover:bg-gray-200">Cerrar
+            Sesión</button>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-6 py-10">
+        <div class="flex justify-between items-center mb-8">
+            <div>
+                <p class="text-[10px] font-black uppercase text-[#fba931] tracking-widest">Gestión de Contenido</p>
+                <h1 id="course-name" class="text-3xl font-900 uppercase text-[#0f172a]">Lecciones del Curso</h1>
+            </div>
+            <button onclick="openModal()"
+                class="bg-[#fba931] text-[#0f172a] px-6 py-3 rounded-xl font-900 text-xs uppercase tracking-widest shadow-lg hover:brightness-110 flex items-center gap-2">
+                <span class="material-symbols-outlined">add</span> Nueva Lección
+            </button>
+        </div>
+
+        <div class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
+            <table class="w-full text-left">
+                <thead class="bg-gray-50 border-b border-gray-100">
+                    <tr>
+                        <th class="p-6 text-[10px] font-black uppercase text-gray-400 tracking-wider">Orden</th>
+                        <th class="p-6 text-[10px] font-black uppercase text-gray-400 tracking-wider">Título</th>
+                        <th class="p-6 text-[10px] font-black uppercase text-gray-400 tracking-wider">Tipo</th>
+                        <th class="p-6 text-[10px] font-black uppercase text-gray-400 tracking-wider">Programación</th>
+                        <th class="p-6 text-[10px] font-black uppercase text-gray-400 tracking-wider text-right">
+                            Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="lesson-table-body" class="divide-y divide-gray-100">
+                    <tr>
+                        <td colspan="5" class="p-10 text-center text-gray-400 italic">Cargando lecciones...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <!-- Modal Nueva/Editar Lección -->
+    <div id="lesson-modal"
+        class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center backdrop-blur-sm overflow-y-auto pt-10 pb-10">
+        <div class="bg-white rounded-3xl p-8 max-w-2xl w-full shadow-2xl mx-4">
+            <h2 id="modal-title" class="text-2xl font-900 uppercase mb-6 text-[#0f172a]">Detalle de Lección</h2>
+            <form id="lesson-form" onsubmit="saveLesson(event)" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <input type="hidden" id="lesson-id">
+
+                <div class="md:col-span-2">
+                    <label class="text-[10px] font-black uppercase text-gray-400 ml-1">Título</label>
+                    <input type="text" id="lesson-title" required
+                        class="w-full bg-gray-50 border border-gray-100 p-4 rounded-xl focus:ring-2 focus:ring-[#fba931] outline-none">
+                </div>
+
+                <div class="md:col-span-2">
+                    <label class="text-[10px] font-black uppercase text-gray-400 ml-1">Descripción corta</label>
+                    <textarea id="lesson-desc"
+                        class="w-full bg-gray-50 border border-gray-100 p-4 rounded-xl focus:ring-2 focus:ring-[#fba931] outline-none h-24"></textarea>
+                </div>
+
+                <div>
+                    <label class="text-[10px] font-black uppercase text-gray-400 ml-1">Tipo de Entrega</label>
+                    <select id="lesson-type" required onchange="toggleFields()"
+                        class="w-full bg-gray-50 border border-gray-100 p-4 rounded-xl focus:ring-2 focus:ring-[#fba931] outline-none font-bold">
+                        <option value="recorded">🎥 Grabado (Video)</option>
+                        <option value="live">📡 En Vivo (Online)</option>
+                        <option value="in_person">🏛️ Presencial</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="text-[10px] font-black uppercase text-gray-400 ml-1">Orden (N°)</label>
+                    <input type="number" id="lesson-order" value="1"
+                        class="w-full bg-gray-50 border border-gray-100 p-4 rounded-xl focus:ring-2 focus:ring-[#fba931] outline-none">
+                </div>
+
+                <div id="field-url" class="md:col-span-2">
+                    <label id="label-url" class="text-[10px] font-black uppercase text-gray-400 ml-1">Link (YouTube /
+                        Zoom)</label>
+                    <input type="text" id="lesson-url" placeholder="https://..."
+                        class="w-full bg-gray-50 border border-gray-100 p-4 rounded-xl focus:ring-2 focus:ring-[#fba931] outline-none">
+                </div>
+
+                <div id="field-location" class="md:col-span-2 hidden">
+                    <label class="text-[10px] font-black uppercase text-gray-400 ml-1">Ubicación / Dirección</label>
+                    <input type="text" id="lesson-location" placeholder="Sede PNL Biobío..."
+                        class="w-full bg-gray-50 border border-gray-100 p-4 rounded-xl focus:ring-2 focus:ring-[#fba931] outline-none">
+                </div>
+
+                <div id="field-date" class="hidden">
+                    <label class="text-[10px] font-black uppercase text-gray-400 ml-1">Fecha y Hora</label>
+                    <input type="datetime-local" id="lesson-date"
+                        class="w-full bg-gray-50 border border-gray-100 p-4 rounded-xl focus:ring-2 focus:ring-[#fba931] outline-none">
+                </div>
+
+                <div>
+                    <label class="text-[10px] font-black uppercase text-gray-400 ml-1">Duración (Ej: 45 min)</label>
+                    <input type="text" id="lesson-duration"
+                        class="w-full bg-gray-50 border border-gray-100 p-4 rounded-xl focus:ring-2 focus:ring-[#fba931] outline-none">
+                </div>
+
+                <div class="md:col-span-2 flex gap-4 pt-4">
+                    <button type="button" onclick="closeModal()"
+                        class="flex-1 bg-gray-100 text-gray-600 py-4 rounded-xl font-900 uppercase text-xs hover:bg-gray-200">Cancelar</button>
+                    <button type="submit"
+                        class="flex-1 bg-[#fba931] text-[#0f172a] py-4 rounded-xl font-900 uppercase text-xs hover:brightness-110 shadow-lg">Guardar
+                        Lección</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const tableBody = document.getElementById('lesson-table-body');
+        const modal = document.getElementById('lesson-modal');
+
+        function toggleFields() {
+            const type = document.getElementById('lesson-type').value;
+            const fUrl = document.getElementById('field-url');
+            const fLoc = document.getElementById('field-location');
+            const fDate = document.getElementById('field-date');
+            const lUrl = document.getElementById('label-url');
+
+            fLoc.classList.add('hidden');
+            fDate.classList.add('hidden');
+            fUrl.classList.add('hidden');
+
+            if (type === 'recorded') {
+                fUrl.classList.remove('hidden');
+                lUrl.textContent = 'URL del Video (YouTube/Vimeo)';
+            } else if (type === 'live') {
+                fUrl.classList.remove('hidden');
+                fDate.classList.remove('hidden');
+                lUrl.textContent = 'Link de Conexión (Zoom/Meet)';
+            } else if (type === 'in_person') {
+                fLoc.classList.remove('hidden');
+                fDate.classList.remove('hidden');
+            }
+        }
+
+        async function loadLessons() {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('lessons')
+                    .select('*')
+                    .eq('course_id', courseId)
+                    .order('order', { ascending: true });
+
+                if (error) throw error;
+
+                if (data.length === 0) {
+                    tableBody.innerHTML = '<tr><td colspan="5" class="p-10 text-center text-gray-400 italic">No hay lecciones creadas para este curso.</td></tr>';
+                    return;
+                }
+
+                tableBody.innerHTML = data.map(lesson => `
+                    <tr class="hover:bg-gray-50 transition-colors">
+                        <td class="p-6 font-black text-[#fba931]">${lesson.order}</td>
+                        <td class="p-6">
+                            <div class="font-bold text-sm uppercase">${lesson.title}</div>
+                            <div class="text-[9px] text-gray-400 uppercase font-black tracking-tighter">${lesson.duration || 'Sin duración'}</div>
+                        </td>
+                        <td class="p-6">
+                            <span class="px-2 py-1 rounded-md text-[9px] font-black uppercase bg-gray-100">
+                                ${lesson.delivery_type === 'recorded' ? '🎥 Grabado' : lesson.delivery_type === 'live' ? '📡 En Vivo' : '🏛️ Presencial'}
+                            </span>
+                        </td>
+                        <td class="p-6 text-[10px] font-bold text-gray-500">
+                            ${lesson.scheduled_at ? new Date(lesson.scheduled_at).toLocaleString('es-CL', { dateStyle: 'short', timeStyle: 'short' }) : '---'}
+                        </td>
+                        <td class="p-6 text-right">
+                            <button onclick='editLesson(${JSON.stringify(lesson)})' class="p-2 text-[#0f172a] hover:bg-gray-100 rounded-lg"><span class="material-symbols-outlined">edit</span></button>
+                            <button onclick="deleteLesson('${lesson.id}')" class="p-2 text-red-500 hover:bg-red-50 rounded-lg"><span class="material-symbols-outlined">delete</span></button>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (err) {
+                console.error(err);
+                tableBody.innerHTML = '<tr><td colspan="5" class="p-10 text-center text-red-500 font-bold uppercase text-xs">Error al cargar lecciones.</td></tr>';
+            }
+        }
+
+        function openModal() {
+            document.getElementById('lesson-form').reset();
+            document.getElementById('lesson-id').value = '';
+            document.getElementById('modal-title').textContent = 'Nueva Lección';
+            toggleFields();
+            modal.classList.remove('hidden');
+        }
+
+        function closeModal() { modal.classList.add('hidden'); }
+
+        async function saveLesson(e) {
+            e.preventDefault();
+            const id = document.getElementById('lesson-id').value;
+            const lessonData = {
+                course_id: courseId,
+                title: document.getElementById('lesson-title').value,
+                description: document.getElementById('lesson-desc').value,
+                delivery_type: document.getElementById('lesson-type').value,
+                order: parseInt(document.getElementById('lesson-order').value),
+                content_url: document.getElementById('lesson-url').value || null,
+                location: document.getElementById('lesson-location').value || null,
+                scheduled_at: document.getElementById('lesson-date').value || null,
+                duration: document.getElementById('lesson-duration').value || null
+            };
+
+            try {
+                let error;
+                if (id) {
+                    ({ error } = await supabaseClient.from('lessons').update(lessonData).eq('id', id));
+                } else {
+                    ({ error } = await supabaseClient.from('lessons').insert([lessonData]));
+                }
+
+                if (error) throw error;
+                alert('Lección guardada con éxito.');
+                closeModal();
+                loadLessons();
+            } catch (err) {
+                alert('Error al guardar: ' + err.message);
+            }
+        }
+
+        async function deleteLesson(id) {
+            if (!confirm('¿Seguro que deseas eliminar esta lección?')) return;
+            try {
+                const { error } = await supabaseClient.from('lessons').delete().eq('id', id);
+                if (error) throw error;
+                loadLessons();
+            } catch (err) { alert(err.message); }
+        }
+
+        function editLesson(lesson) {
+            openModal();
+            document.getElementById('lesson-id').value = lesson.id;
+            document.getElementById('lesson-title').value = lesson.title;
+            document.getElementById('lesson-desc').value = lesson.description || '';
+            document.getElementById('lesson-type').value = lesson.delivery_type;
+            document.getElementById('lesson-order').value = lesson.order;
+            document.getElementById('lesson-url').value = lesson.content_url || '';
+            document.getElementById('lesson-location').value = lesson.location || '';
+            document.getElementById('lesson-duration').value = lesson.duration || '';
+
+            if (lesson.scheduled_at) {
+                // Formatear fecha para input datetime-local
+                const d = new Date(lesson.scheduled_at);
+                const isoStr = d.toISOString().slice(0, 16);
+                document.getElementById('lesson-date').value = isoStr;
+            }
+
+            document.getElementById('modal-title').textContent = 'Editar Lección';
+            toggleFields();
+        }
+    </script>
+</body>
+
+</html>

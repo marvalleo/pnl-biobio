@@ -122,8 +122,9 @@
                     <label class="text-[10px] font-black uppercase text-gray-400 ml-1">Estado</label>
                     <select id="course-status"
                         class="w-full bg-gray-50 border border-gray-100 p-4 rounded-xl focus:ring-2 focus:ring-[#fba931] outline-none font-bold">
-                        <option value="Publicado">Publicado</option>
-                        <option value="Borrador">Borrador</option>
+                        <option value="published">Publicado</option>
+                        <option value="draft">Borrador</option>
+                        <option value="archived">Archivado</option>
                     </select>
                 </div>
                 <div class="flex gap-4 pt-4">
@@ -161,14 +162,27 @@
                             <div class="text-[10px] font-black text-[#fba931] uppercase tracking-tighter">${course.level}</div>
                         </td>
                         <td class="p-6">
-                            <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase ${course.status === 'Publicado' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}">
-                                ${course.status}
+                            <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase ${course.status === 'published' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}">
+                                ${course.status === 'published' ? 'Publicado' : course.status === 'draft' ? 'Borrador' : 'Archivado'}
                             </span>
                         </td>
                         <td class="p-6 text-xs text-gray-400 font-bold">${new Date(course.created_at).toLocaleDateString()}</td>
-                        <td class="p-6 text-right">
-                            <button onclick='editCourse(${JSON.stringify(course)})' class="p-2 text-[#0f172a] hover:bg-gray-100 rounded-lg"><span class="material-symbols-outlined">edit</span></button>
-                            <button onclick="deleteCourse('${course.id}')" class="p-2 text-red-500 hover:bg-red-50 rounded-lg"><span class="material-symbols-outlined">delete</span></button>
+                        <td class="p-6 text-right flex justify-end gap-2">
+                            <a href="admin-lecciones.html?course_id=${course.id}" 
+                               title="Gestionar Lecciones"
+                               class="p-2 text-blue-500 hover:bg-blue-50 rounded-lg flex items-center justify-center">
+                               <span class="material-symbols-outlined">menu_book</span>
+                            </a>
+                            <button onclick='editCourse(${JSON.stringify(course)})' 
+                                    title="Editar Curso"
+                                    class="p-2 text-[#0f172a] hover:bg-gray-100 rounded-lg">
+                                <span class="material-symbols-outlined">edit</span>
+                            </button>
+                            <button onclick="deleteCourse('${course.id}')" 
+                                    title="Eliminar Curso"
+                                    class="p-2 text-red-500 hover:bg-red-50 rounded-lg">
+                                <span class="material-symbols-outlined">delete</span>
+                            </button>
                         </td>
                     </tr>
                 `).join('');
@@ -228,7 +242,7 @@
             document.getElementById('course-id').value = course.id;
             document.getElementById('course-title').value = course.title;
             document.getElementById('course-level').value = course.level;
-            document.getElementById('course-image_url').value = course.image_url || '';
+            document.getElementById('course-image').value = course.image_url || '';
             document.getElementById('course-status').value = course.status;
             document.getElementById('modal-title').textContent = 'Editar Curso';
         }
