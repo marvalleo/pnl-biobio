@@ -27,12 +27,29 @@
     <script src="supabase-config.js"></script>
     <script>
         // Obtener course_id de la URL
-        const urlParams = new URLSearchParams(window.location.search);
-        const courseId = urlParams.get('course_id');
+        // Lógica de extracción robusta (URL normal o Hash)
+        function getCourseId() {
+            const params = new URLSearchParams(window.location.search);
+            let cid = params.get('course_id');
+
+            // Si no está en el search, buscar en el hash (por si el servidor redirige)
+            if (!cid && window.location.hash) {
+                const hashParams = new URLSearchParams(window.location.hash.substring(1));
+                cid = hashParams.get('course_id');
+            }
+            if (!cid) cid = localStorage.getItem('pnl_current_course_id');
+            return cid;
+        }
+
+        const courseId = getCourseId();
 
         if (!courseId) {
-            alert("Curso no especificado.");
-            window.location.href = 'admin-forja.html';
+            console.error("❌ FALLO DE CAPTURA. URL:", window.location.href);
+            // Solo redirigir si no estamos ya en admin-forja para evitar bucles
+            if (!window.location.href.includes('admin-forja.html')) {
+                alert("Error: No se recibió un identificador de curso válido.");
+                window.location.href = 'admin-forja.html';
+            }
         }
 
         window.addEventListener('DOMContentLoaded', async () => {
@@ -44,16 +61,61 @@
             }
             loadCourseInfo();
             loadLessons();
+            initNavbar();
+
+            // Suscripción en tiempo real: Escuchar cambios en inscripciones para refrescar los cupos
+            supabaseClient
+                .channel('registrations-updates')
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'lesson_registrations' }, () => {
+                    console.log("🔄 Cambio detectado en inscripciones, actualizando tabla...");
+                    loadLessons();
+                })
+                .subscribe();
+        });
+
+        async function initNavbar() {
+            const { data: { user } } = await supabaseClient.auth.getUser();
+            if (!user) return;
+
+            const { data: profile } = await supabaseClient.from('profiles').select('full_name').eq('auth_id', user.id).single();
+            const fullName = profile?.full_name || user.user_metadata?.full_name || user.email || 'Miembro';
+            const initials = fullName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+
+            document.getElementById('user-menu-container').innerHTML = `
+                <div class="relative">
+                    <button onclick="toggleUserMenu()" class="w-10 h-10 rounded-full bg-[#fba931] text-[#0f172a] font-900 text-xs border-2 border-white shadow-sm hover:scale-105 transition-all flex items-center justify-center">
+                        ${initials}
+                    </button>
+                    <div id="user-dropdown" class="hidden absolute right-0 mt-3 w-56 bg-white rounded-2xl shadow-2xl border border-gray-100 py-3 z-[100]">
+                        <div class="px-5 py-3 border-b border-gray-50 mb-2">
+                            <p class="text-[8px] font-black uppercase text-[#fba931] tracking-widest leading-none mb-1">Sesión Iniciada</p>
+                            <p class="text-xs font-black text-[#0f172a] truncate">${fullName}</p>
+                        </div>
+                        <button onclick="logout()" class="w-full text-left px-5 py-3 text-[10px] font-black uppercase text-red-500 hover:bg-red-50 flex items-center gap-3 transition-colors">
+                            <span class="material-symbols-outlined text-lg">logout</span> Cerrar Sesión
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function toggleUserMenu() {
+            document.getElementById('user-dropdown').classList.toggle('hidden');
+        }
+
+        window.addEventListener('click', (e) => {
+            const dropdown = document.getElementById('user-dropdown');
+            const menuContainer = document.getElementById('user-menu-container');
+            if (dropdown && !dropdown.classList.contains('hidden') && !menuContainer.contains(e.target)) {
+                dropdown.classList.add('hidden');
+            }
         });
 
         async function loadCourseInfo() {
             const { data, error } = await supabaseClient.from('courses').select('title, level').eq('id', courseId).single();
             if (data) {
                 document.getElementById('course-name').textContent = data.title;
-                if (data.level === 'Agenda Regional' || data.title === 'Agenda Regional') {
-                    document.getElementById('btn-new-item').innerHTML = '<span class="material-symbols-outlined">calendar_add_on</span> Nuevo Evento';
-                    document.getElementById('section-subtitle').textContent = 'Programación de Agenda';
-                }
+                document.getElementById('section-subtitle').textContent = 'Gestión de Contenido Académico';
             }
         }
 
@@ -68,15 +130,32 @@
 <body class="min-h-screen">
     <nav
         class="bg-white shadow-md border-b-4 border-[#fba931] px-6 py-1 flex justify-between items-center sticky top-0 z-50">
-        <div class="flex items-center gap-3">
-            <a href="admin-forja.html" class="flex items-center gap-2 hover:opacity-80">
-                <span class="material-symbols-outlined">arrow_back</span>
-                <span class="font-black text-lg uppercase">Volver a Cursos</span>
+        <div class="flex items-center gap-6">
+            <a href="admin-forja.html" class="flex items-center gap-3 hover:opacity-80 transition-all group">
+                <img src="wp-content/uploads/2026/pnl-del-biobio01.png" alt="Logo PNL" style="max-height: 70px;">
+                <div class="flex flex-col text-left">
+                    <span class="text-[9px] font-black uppercase text-[#fba931] leading-none mb-1">Volver a Forja</span>
+                    <span class="font-black text-lg uppercase leading-none">Gestión Lecciones</span>
+                </div>
             </a>
+
+            <div class="h-8 w-[1px] bg-gray-200 hidden md:block"></div>
+
+            <div class="hidden md:flex items-center gap-4">
+                <a href="admin-dashboard.html"
+                    class="flex items-center gap-1.5 text-[10px] font-black uppercase text-gray-400 hover:text-[#0f172a] transition-colors">
+                    <span class="material-symbols-outlined text-lg">dashboard</span> Panel Central
+                </a>
+                <a href="forja-academia.html" target="_blank"
+                    class="flex items-center gap-1.5 text-[10px] font-black uppercase text-gray-400 hover:text-blue-600 transition-colors">
+                    <span class="material-symbols-outlined text-lg">visibility</span> Vista Usuario
+                </a>
+            </div>
         </div>
-        <button onclick="logout()"
-            class="text-[10px] font-bold uppercase bg-gray-100 px-4 py-2 rounded-lg hover:bg-gray-200">Cerrar
-            Sesión</button>
+
+        <div id="user-menu-container" class="flex items-center gap-4">
+            <div class="w-10 h-10 rounded-full bg-gray-100 animate-pulse"></div>
+        </div>
     </nav>
 
     <main class="max-w-7xl mx-auto px-6 py-10">
@@ -238,37 +317,63 @@
 
         async function loadLessons() {
             try {
+                // Obtener lecciones con el conteo de inscritos
                 const { data, error } = await supabaseClient
                     .from('lessons')
-                    .select('*')
+                    .select('*, lesson_registrations(count)')
                     .eq('course_id', courseId)
                     .order('order', { ascending: true });
 
                 if (error) throw error;
 
                 if (data.length === 0) {
-                    tableBody.innerHTML = '<tr><td colspan="5" class="p-10 text-center text-gray-400 italic">No hay lecciones creadas para este curso.</td></tr>';
+                    tableBody.innerHTML = '<tr><td colspan="6" class="p-10 text-center text-gray-400 italic">No hay lecciones creadas para este curso.</td></tr>';
                     return;
                 }
 
-                tableBody.innerHTML = data.map(lesson => `
+                tableBody.innerHTML = data.map(lesson => {
+                    // Calcular cupos disponibles
+                    const registeredCount = (lesson.lesson_registrations && lesson.lesson_registrations[0]) ? lesson.lesson_registrations[0].count : 0;
+                    const available = lesson.max_capacity > 0 ? (lesson.max_capacity - registeredCount) : '∞';
+
+                    let cuposDisplay = "";
+                    if (lesson.max_capacity > 0) {
+                        cuposDisplay = `
+                            <div class="flex flex-col items-center leading-none">
+                                <span class="text-[8px] font-black text-gray-300 uppercase tracking-widest mb-1">CUPOS</span>
+                                <div class="font-black text-sm flex items-center gap-1">
+                                    <span class="text-gray-400" title="Total">${lesson.max_capacity}</span>
+                                    <span class="text-gray-200">/</span>
+                                    <span class="text-green-600" title="Disponibles">${available > 0 ? available : 0}</span>
+                                </div>
+                                <div class="flex gap-2 mt-1 text-[7px] font-black text-gray-300 uppercase tracking-tighter">
+                                    <span>Tot.</span>
+                                    <span>Disp.</span>
+                                </div>
+                            </div>
+                        `;
+                    } else {
+                        cuposDisplay = '<span class="text-[9px] font-black text-gray-300 italic uppercase tracking-widest">Ilimitado</span>';
+                    }
+
+                    return `
                     <tr class="hover:bg-gray-50 transition-colors">
-                        <td class="p-6 font-black text-[#fba931]">${lesson.order}</td>
+                        <td class="p-6 font-black text-[#fba931] text-center">${lesson.order}</td>
                         <td class="p-6">
                             <div class="font-bold text-sm uppercase">${lesson.title}</div>
                             <div class="text-[9px] text-gray-400 uppercase font-black tracking-tighter">${lesson.duration || 'Sin duración'}</div>
                         </td>
-                        <td class="p-6">
+                        <td class="p-6 text-center">
                             <span class="px-2 py-1 rounded-md text-[9px] font-black uppercase bg-gray-100">
                                 ${lesson.delivery_type === 'recorded' ? '🎥 Grabado' : lesson.delivery_type === 'live' ? '📡 En Vivo' : '🏛️ Presencial'}
                             </span>
                         </td>
-                        <td class="p-6 text-[10px] font-bold text-gray-500">
+                        <td class="p-6 text-[10px] font-bold text-gray-500 text-center">
                             ${lesson.event_date ? new Date(lesson.event_date).toLocaleString('es-CL', { dateStyle: 'short', timeStyle: 'short' }) : '---'}
                         </td>
-                        <td class="p-6">
-                            <button onclick="viewRegistrations('${lesson.id}', '${lesson.title}')" class="text-[10px] font-black uppercase text-blue-500 hover:underline">
-                                ${lesson.max_capacity > 0 ? `Cupos: ${lesson.max_capacity}` : 'Ilimitado'}
+                        <td class="p-6 text-center">
+                            <button onclick="viewRegistrations('${lesson.id}', '${lesson.title}')" class="hover:opacity-70 transition-opacity">
+                                ${cuposDisplay}
                             </button>
                         </td>
                         <td class="p-6 text-right">
@@ -276,7 +381,7 @@
                             <button onclick="deleteLesson('${lesson.id}')" class="p-2 text-red-500 hover:bg-red-50 rounded-lg"><span class="material-symbols-outlined">delete</span></button>
                         </td>
                     </tr>
-                `).join('');
+                `}).join('');
             } catch (err) {
                 console.error(err);
                 tableBody.innerHTML = '<tr><td colspan="6" class="p-10 text-center text-red-500 font-bold uppercase text-xs">Error al cargar lecciones.</td></tr>';

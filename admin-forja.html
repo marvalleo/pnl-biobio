@@ -34,7 +34,55 @@
                 window.location.href = 'forja-login.html';
                 return;
             }
-            loadCourses();
+            await loadCourses();
+            await loadEvents();
+            initNavbar();
+
+            // Suscripción en tiempo real para inscripciones a eventos
+            supabaseClient
+                .channel('registrations-updates-admin')
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'regional_event_registrations' }, () => {
+                    loadEvents();
+                })
+                .subscribe();
+        });
+
+        async function initNavbar() {
+            const { data: { user } } = await supabaseClient.auth.getUser();
+            if (!user) return;
+
+            const { data: profile } = await supabaseClient.from('profiles').select('full_name').eq('auth_id', user.id).single();
+            const fullName = profile?.full_name || user.user_metadata?.full_name || user.email || 'Miembro';
+            const initials = fullName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+
+            document.getElementById('user-menu-container').innerHTML = `
+                <div class="relative">
+                    <button onclick="toggleUserMenu()" class="w-10 h-10 rounded-full bg-[#fba931] text-[#0f172a] font-900 text-xs border-2 border-white shadow-sm hover:scale-105 transition-all flex items-center justify-center">
+                        ${initials}
+                    </button>
+                    <div id="user-dropdown" class="hidden absolute right-0 mt-3 w-56 bg-white rounded-2xl shadow-2xl border border-gray-100 py-3 z-[100]">
+                        <div class="px-5 py-3 border-b border-gray-50 mb-2">
+                            <p class="text-[8px] font-black uppercase text-[#fba931] tracking-widest leading-none mb-1">Sesión Iniciada</p>
+                            <p class="text-xs font-black text-[#0f172a] truncate">${fullName}</p>
+                        </div>
+                        <button onclick="logout()" class="w-full text-left px-5 py-3 text-[10px] font-black uppercase text-red-500 hover:bg-red-50 flex items-center gap-3 transition-colors">
+                            <span class="material-symbols-outlined text-lg">logout</span> Cerrar Sesión
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function toggleUserMenu() {
+            document.getElementById('user-dropdown').classList.toggle('hidden');
+        }
+
+        window.addEventListener('click', (e) => {
+            const dropdown = document.getElementById('user-dropdown');
+            const menuContainer = document.getElementById('user-menu-container');
+            if (dropdown && !dropdown.classList.contains('hidden') && !menuContainer.contains(e.target)) {
+                dropdown.classList.add('hidden');
+            }
         });
 
         async function logout() {
@@ -48,45 +96,59 @@
 <body class="min-h-screen">
     <nav
         class="bg-white shadow-md border-b-4 border-[#fba931] px-6 py-1 flex justify-between items-center sticky top-0 z-50">
-        <div class="flex items-center gap-3">
-            <a href="admin-dashboard.html" class="flex items-center gap-3 hover:opacity-80">
-                <!-- Logo PNL Ajustado -->
-                <img src="wp-content/uploads/2026/pnl-del-biobio01.png" alt="Logo PNL"
-                    style="max-height: 78px; margin-top: 5px;">
-                <span class="h-8 w-[1px] bg-gray-300 mx-1"></span> <!-- Separador vertical -->
-                <span class="font-black text-lg uppercase">Admin Forja</span>
+        <div class="flex items-center gap-6">
+            <a href="admin-dashboard.html" class="flex items-center gap-3 hover:opacity-80 transition-all group">
+                <img src="wp-content/uploads/2026/pnl-del-biobio01.png" alt="Logo PNL" style="max-height: 70px;">
+                <div class="flex flex-col">
+                    <span class="text-[9px] font-black uppercase text-[#fba931] leading-none mb-1">Gestión
+                        Regional</span>
+                    <span class="font-black text-lg uppercase leading-none">Academia Forja</span>
+                </div>
             </a>
+
+            <div class="h-8 w-[1px] bg-gray-200 hidden md:block"></div>
+
+            <!-- Accesos Rápidos de Navegación -->
+            <div class="hidden md:flex items-center gap-4">
+                <a href="admin-dashboard.html"
+                    class="flex items-center gap-1.5 text-[10px] font-black uppercase text-gray-400 hover:text-[#0f172a] transition-colors">
+                    <span class="material-symbols-outlined text-lg">dashboard</span> Panel Central
+                </a>
+                <a href="forja-academia.html" target="_blank"
+                    class="flex items-center gap-1.5 text-[10px] font-black uppercase text-gray-400 hover:text-blue-600 transition-colors">
+                    <span class="material-symbols-outlined text-lg">visibility</span> Vista Usuario
+                </a>
+            </div>
         </div>
-        <button onclick="logout()"
-            class="text-[10px] font-bold uppercase bg-gray-100 px-4 py-2 rounded-lg hover:bg-gray-200">Cerrar
-            Sesión</button>
+
+        <div id="user-menu-container" class="flex items-center gap-4">
+            <!-- Cargado dinámicamente por initNavbar() -->
+            <div class="w-10 h-10 rounded-full bg-gray-100 animate-pulse"></div>
+        </div>
     </nav>
 
     <main class="max-w-7xl mx-auto px-6 py-10">
         <div class="flex justify-between items-center mb-8">
             <h1 class="text-3xl font-900 uppercase text-[#0f172a]">Gestión de Cursos</h1>
             <div class="flex gap-3">
-                <button onclick="createNewEvent()"
-                    class="bg-white text-[#0f172a] border-2 border-[#0f172a] px-6 py-3 rounded-xl font-900 text-xs uppercase tracking-widest hover:bg-gray-50 flex items-center gap-2 transition-all">
-                    <span class="material-symbols-outlined">calendar_add_on</span> Nuevo Evento
-                </button>
                 <button onclick="openModal()"
-                    class="bg-[#fba931] text-[#0f172a] px-6 py-3 rounded-xl font-900 text-xs uppercase tracking-widest shadow-lg hover:brightness-110 flex items-center gap-2 transition-all">
-                    <span class="material-symbols-outlined">add</span> Nuevo Curso
+                    class="bg-[#fba931] text-[#0f172a] px-6 py-3 rounded-xl font-900 text-[10px] uppercase tracking-widest shadow-lg hover:brightness-110 flex items-center gap-2 transition-all">
+                    <span class="material-symbols-outlined">add_circle</span> Nuevo Curso
                 </button>
             </div>
         </div>
 
-        <div class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden mb-16">
             <table class="w-full text-left">
                 <thead class="bg-gray-50 border-b border-gray-100">
                     <tr>
-                        <th class="p-6 text-[10px] font-black uppercase text-gray-400 tracking-wider"></th>
-                        <th class="p-6 text-[10px] font-black uppercase text-gray-400 tracking-wider">Curso / Módulo
-                        </th>
+                        <th class="p-6 text-[10px] font-black uppercase text-gray-400 tracking-wider w-24">Imagen</th>
+                        <th class="p-6 text-[10px] font-black uppercase text-gray-400 tracking-wider">Categoría</th>
                         <th class="p-6 text-[10px] font-black uppercase text-gray-400 tracking-wider">Contenido</th>
-                        <th class="p-6 text-[10px] font-black uppercase text-gray-400 tracking-wider">Estado</th>
-                        <th class="p-6 text-[10px] font-black uppercase text-gray-400 tracking-wider">Última Modif.</th>
+                        <th class="p-6 text-[10px] font-black uppercase text-gray-400 tracking-wider text-center">Estado
+                        </th>
+                        <th class="p-6 text-[10px] font-black uppercase text-gray-400 tracking-wider text-center">
+                            Modificación</th>
                         <th class="p-6 text-[10px] font-black uppercase text-gray-400 tracking-wider text-right">
                             Acciones</th>
                     </tr>
@@ -99,141 +161,278 @@
                 </tbody>
             </table>
         </div>
+
+        <!-- SECCIÓN DE EVENTOS (Agenda Regional) -->
+        <div class="flex justify-between items-center mb-8">
+            <h2 class="text-3xl font-900 uppercase text-[#0f172a]">Gestión de <span
+                    class="bg-gray-100 px-3 py-1 rounded-xl">Eventos</span></h2>
+            <button onclick="openLessonModal()" id="btn-new-event"
+                class="bg-white text-purple-700 border-2 border-purple-200 px-6 py-3 rounded-xl font-900 text-[10px] uppercase tracking-widest hover:bg-purple-50 flex items-center gap-2 transition-all shadow-sm">
+                <span class="material-symbols-outlined">calendar_add_on</span> Nuevo Evento
+            </button>
+        </div>
+
+        <div class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden mb-20">
+            <table class="w-full text-left">
+                <thead class="bg-gray-50 border-b border-gray-100">
+                    <tr>
+                        <th class="p-6 text-[10px] font-black uppercase text-gray-400 tracking-wider text-center">Orden
+                        </th>
+                        <th class="p-6 text-[10px] font-black uppercase text-gray-400 tracking-wider">Título</th>
+                        <th class="p-6 text-[10px] font-black uppercase text-gray-400 tracking-wider">Tipo</th>
+                        <th class="p-6 text-[10px] font-black uppercase text-gray-400 tracking-wider">Programación</th>
+                        <th class="p-6 text-[10px] font-black uppercase text-gray-400 tracking-wider text-center">Cupos
+                        </th>
+                        <th class="p-6 text-[10px] font-black uppercase text-gray-400 tracking-wider text-right">
+                            Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="lesson-table-body" class="divide-y divide-gray-100">
+                    <tr>
+                        <td colspan="6" class="p-10 text-center text-gray-400 italic">Cargando eventos...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
     </main>
 
-    <!-- Modal Nuevo/Editar Curso -->
-    <div id="course-modal"
-        class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center backdrop-blur-sm">
-        <div class="bg-white rounded-3xl p-8 max-w-lg w-full shadow-2xl mx-4">
-            <h2 id="modal-title" class="text-2xl font-900 uppercase mb-6 text-[#0f172a]">Nuevo Curso</h2>
-            <form id="course-form" onsubmit="saveCourse(event)" class="space-y-4">
-                <input type="hidden" id="course-id">
-                <div>
-                    <label class="text-[10px] font-black uppercase text-gray-400 ml-1">Título del Curso</label>
-                    <input type="text" id="course-title" required
-                        class="w-full bg-gray-50 border border-gray-100 p-4 rounded-xl focus:ring-2 focus:ring-[#fba931] outline-none">
-                </div>
-                <div>
-                    <label class="text-[10px] font-black uppercase text-gray-400 ml-1">Descripción del Curso</label>
-                    <textarea id="course-description"
-                        class="w-full bg-gray-50 border border-gray-100 p-4 rounded-xl focus:ring-2 focus:ring-[#fba931] outline-none h-24"
-                        placeholder="De qué trata este curso..."></textarea>
-                </div>
-                <div>
-                    <label class="text-[10px] font-black uppercase text-gray-400 ml-1">Tipo de Contenedor /
-                        Módulo</label>
-                    <select id="course-level"
+    <!-- Modal Nuevo/Editar Lección (Evento) -->
+    <div id="lesson-modal"
+        class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center backdrop-blur-sm overflow-y-auto pt-10 pb-10">
+        <div class="bg-white rounded-3xl p-8 max-w-2xl w-full shadow-2xl mx-4">
+            <h2 id="lesson-modal-title" class="text-2xl font-900 uppercase mb-6 text-[#0f172a]">Detalle del Evento</h2>
+            <form id="lesson-form" onsubmit="saveLesson(event)" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <input type="hidden" id="lesson-id">
+                <div class="md:col-span-2">
+                    <label class="text-[10px] font-black uppercase text-gray-400 ml-1">Título del Evento</label>
+                    <input type="text" id="lesson-title" required
                         class="w-full bg-gray-50 border border-gray-100 p-4 rounded-xl focus:ring-2 focus:ring-[#fba931] outline-none font-bold">
-                        <option value="Módulo Básico">🎓 Módulo Básico (Academia)</option>
-                        <option value="Módulo Avanzado">📜 Módulo Avanzado (Academia)</option>
-                        <option value="Agenda Regional">📅 Agenda Regional (Eventos)</option>
-                        <option value="Especialización">💎 Especialización</option>
-                    </select>
-                    <p class="text-[9px] text-gray-400 mt-1 uppercase font-bold italic">* Usa "Agenda Regional" para
-                        agrupar talleres y webinars.</p>
+                </div>
+                <div class="md:col-span-2">
+                    <label class="text-[10px] font-black uppercase text-gray-400 ml-1">Descripción</label>
+                    <textarea id="lesson-desc"
+                        class="w-full bg-gray-50 border border-gray-100 p-4 rounded-xl focus:ring-2 focus:ring-[#fba931] outline-none h-24 placeholder:font-medium"
+                        placeholder="Escribe aquí los detalles..."></textarea>
                 </div>
                 <div>
-                    <label class="text-[10px] font-black uppercase text-gray-400 ml-1">Imagen URL</label>
-                    <input type="url" id="course-image" placeholder="https://..."
-                        class="w-full bg-gray-50 border border-gray-100 p-4 rounded-xl focus:ring-2 focus:ring-[#fba931] outline-none">
-                </div>
-                <div>
-                    <label class="text-[10px] font-black uppercase text-gray-400 ml-1">Estado</label>
-                    <select id="course-status"
+                    <label class="text-[10px] font-black uppercase text-gray-400 ml-1">Tipo</label>
+                    <select id="lesson-type" required onchange="toggleLessonFields()"
                         class="w-full bg-gray-50 border border-gray-100 p-4 rounded-xl focus:ring-2 focus:ring-[#fba931] outline-none font-bold">
-                        <option value="published">Publicado</option>
-                        <option value="draft">Borrador</option>
-                        <option value="archived">Archivado</option>
+                        <option value="recorded">🎥 Grabado</option>
+                        <option value="live">📡 En Vivo</option>
+                        <option value="in_person">🏛️ Presencial</option>
                     </select>
                 </div>
-                <div class="flex gap-4 pt-4">
-                    <button type="button" onclick="closeModal()"
+                <div>
+                    <label class="text-[10px] font-black uppercase text-gray-400 ml-1">Orden de Aparición</label>
+                    <input type="number" id="lesson-order" value="1"
+                        class="w-full bg-gray-50 border border-gray-100 p-4 rounded-xl focus:ring-2 focus:ring-[#fba931] outline-none font-bold">
+                </div>
+                <div id="field-url" class="md:col-span-2">
+                    <label id="label-url" class="text-[10px] font-black uppercase text-gray-400 ml-1">Link (YouTube /
+                        Zoom)</label>
+                    <input type="text" id="lesson-url" placeholder="https://..."
+                        class="w-full bg-gray-50 border border-gray-100 p-4 rounded-xl focus:ring-2 focus:ring-[#fba931] outline-none">
+                </div>
+                <div id="field-location" class="md:col-span-2 hidden">
+                    <label class="text-[10px] font-black uppercase text-gray-400 ml-1">Ubicación</label>
+                    <input type="text" id="lesson-location" placeholder="Sede, Dirección..."
+                        class="w-full bg-gray-50 border border-gray-100 p-4 rounded-xl focus:ring-2 focus:ring-[#fba931] outline-none">
+                </div>
+                <div id="field-date" class="hidden">
+                    <label class="text-[10px] font-black uppercase text-gray-400 ml-1">Fecha y Hora</label>
+                    <input type="datetime-local" id="lesson-date"
+                        class="w-full bg-gray-50 border border-gray-100 p-4 rounded-xl focus:ring-2 focus:ring-[#fba931] outline-none font-bold">
+                </div>
+                <div>
+                    <label class="text-[10px] font-black uppercase text-gray-400 ml-1">Cupos Máximos</label>
+                    <input type="number" id="lesson-capacity" value="0"
+                        class="w-full bg-gray-50 border border-gray-100 p-4 rounded-xl focus:ring-2 focus:ring-[#fba931] outline-none font-bold">
+                </div>
+                <div class="md:col-span-2 flex gap-4 pt-4">
+                    <button type="button" onclick="closeLessonModal()"
                         class="flex-1 bg-gray-100 text-gray-600 py-4 rounded-xl font-900 uppercase text-xs hover:bg-gray-200">Cancelar</button>
                     <button type="submit"
-                        class="flex-1 bg-[#fba931] text-[#0f172a] py-4 rounded-xl font-900 uppercase text-xs hover:brightness-110 shadow-lg">Guardar</button>
+                        class="flex-1 bg-[#fba931] text-[#0f172a] py-4 rounded-xl font-900 uppercase text-xs hover:brightness-110 shadow-lg">Guardar
+                        Evento</button>
                 </div>
             </form>
         </div>
     </div>
 
+    <!-- Modal Nuevo/Editar Contenido (Cursos) -->
+    <div id="course-modal"
+        class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center backdrop-blur-sm p-4 overflow-y-auto">
+        <div class="bg-white rounded-3xl p-8 max-w-lg w-full shadow-2xl my-10">
+            <div class="flex flex-col mb-6">
+                <h2 id="modal-title" class="text-2xl font-900 uppercase text-[#0f172a]">Configuración del Curso</h2>
+                <p class="text-[9px] font-bold text-gray-400 uppercase mt-1">Define los detalles académicos básicos</p>
+            </div>
+
+            <form id="course-form" onsubmit="saveCourse(event)" class="space-y-4">
+                <input type="hidden" id="course-id">
+                <input type="hidden" id="course-category" value="curso">
+
+                <div>
+                    <label class="text-[10px] font-black uppercase text-gray-400 ml-1">Título del Curso</label>
+                    <input type="text" id="course-title" required placeholder="Ej: Doctrina Libertaria II"
+                        class="w-full bg-gray-50 border border-gray-100 p-4 rounded-xl focus:ring-2 focus:ring-[#fba931] outline-none font-bold">
+                </div>
+
+                <div>
+                    <label class="text-[10px] font-black uppercase text-gray-400 ml-1">Nivel Académico</label>
+                    <select id="course-level" required
+                        class="w-full bg-gray-50 border border-gray-100 p-4 rounded-xl focus:ring-2 focus:ring-[#fba931] outline-none font-bold">
+                        <option value="Módulo Básico">🐣 Módulo Básico</option>
+                        <option value="Módulo Intermedio">🚀 Módulo Intermedio</option>
+                        <option value="Módulo Avanzado">🦅 Módulo Avanzado</option>
+                        <option value="Formación Política">🗳️ Formación Política</option>
+                        <option value="Taller Práctico">🛠️ Taller Práctico</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="text-[10px] font-black uppercase text-gray-400 ml-1">Descripción del Curso</label>
+                    <textarea id="course-desc" placeholder="¿De qué trata este curso? Breve resumen para el alumno..."
+                        class="w-full bg-gray-50 border border-gray-100 p-4 rounded-xl focus:ring-2 focus:ring-[#fba931] outline-none h-24 placeholder:font-medium"></textarea>
+                </div>
+
+                <div>
+                    <label class="text-[10px] font-black uppercase text-gray-400 ml-1">Imagen URL (Portada)</label>
+                    <input type="text" id="course-image" placeholder="https://..."
+                        class="w-full bg-gray-50 border border-gray-100 p-4 rounded-xl focus:ring-2 focus:ring-[#fba931] outline-none">
+                </div>
+
+                <div class="grid grid-cols-1 gap-2">
+                    <label class="text-[10px] font-black uppercase text-gray-400 ml-1">Estado de Visibilidad</label>
+                    <select id="course-status"
+                        class="w-full bg-gray-50 border border-gray-100 p-4 rounded-xl focus:ring-2 focus:ring-[#fba931] outline-none font-bold">
+                        <option value="draft">📝 Borrador (Solo tú lo ves)</option>
+                        <option value="published">🚀 Publicado (Visible en Academia)</option>
+                    </select>
+                    <p class="text-[8px] text-gray-400 italic px-1 font-medium">Usa "Borrador" mientras subes las
+                        lecciones para no mostrar un curso incompleto.</p>
+                </div>
+
+                <div class="pt-4 flex gap-4">
+                    <button type="button" onclick="closeModal()"
+                        class="flex-1 bg-gray-100 text-gray-600 py-4 rounded-xl font-900 uppercase text-xs">Cancelar</button>
+                    <button type="submit"
+                        class="flex-1 bg-[#fba931] text-[#0f172a] py-4 rounded-xl font-900 uppercase text-xs shadow-lg hover:brightness-110">Guardar
+                        Curso</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Listado Inscritos -->
+    <div id="reg-modal"
+        class="fixed inset-0 bg-black/50 z-[60] hidden flex items-center justify-center backdrop-blur-sm">
+        <div class="bg-white rounded-3xl p-8 max-w-xl w-full shadow-2xl mx-4">
+            <h2 id="reg-modal-title" class="text-2xl font-900 uppercase mb-6 text-[#0f172a]">Inscritos</h2>
+            <div id="reg-list" class="space-y-3 max-h-96 overflow-y-auto pr-2"></div>
+            <button onclick="document.getElementById('reg-modal').classList.add('hidden')"
+                class="w-full mt-6 bg-gray-100 text-gray-600 py-4 rounded-xl font-900 uppercase text-xs hover:bg-gray-200">Cerrar</button>
+        </div>
+    </div>
+
     <script>
         const tableBody = document.getElementById('course-table-body');
+        const lessonTableBody = document.getElementById('lesson-table-body');
         const modal = document.getElementById('course-modal');
+        const lessonModal = document.getElementById('lesson-modal');
 
         async function loadCourses() {
             try {
-                const { data, error } = await supabaseClient
-                    .from('courses')
-                    .select('*')
-                    .order('created_at', { ascending: false });
-
+                const { data, error } = await supabaseClient.from('courses').select('*').order('created_at', { ascending: false });
                 if (error) throw error;
 
-                if (data.length === 0) {
-                    tableBody.innerHTML = '<tr><td colspan="6" class="p-10 text-center text-gray-400">No hay cursos creados aún.</td></tr>';
+                const filteredCourses = data.filter(c => c.level !== 'Agenda Regional');
+
+                if (filteredCourses.length === 0) {
+                    tableBody.innerHTML = '<tr><td colspan="6" class="p-10 text-center text-gray-400 italic">No hay cursos creados aún.</td></tr>';
                     return;
                 }
 
-                // Obtener conteo de lecciones
-                const { data: lessonsCount } = await supabaseClient.from('lessons').select('course_id');
-                const counts = (lessonsCount || []).reduce((acc, l) => {
+                const { data: itemsCount } = await supabaseClient.from('lessons').select('course_id');
+                const countsMap = (itemsCount || []).reduce((acc, l) => {
                     acc[l.course_id] = (acc[l.course_id] || 0) + 1;
                     return acc;
                 }, {});
 
-                tableBody.innerHTML = data.map(course => `
-                    <tr class="hover:bg-gray-50 transition-colors group">
-                        <td class="p-6 w-24">
-                            <div class="w-16 h-10 rounded-lg overflow-hidden bg-gray-100 border border-gray-100">
-                                <img src="${course.image_url || 'https://images.unsplash.com/photo-1526628953301-3e589a6a8b74?auto=format&fit=crop&q=80&w=200'}" 
-                                     class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
+                tableBody.innerHTML = filteredCourses.map(course => {
+                    const itemCount = countsMap[course.id] || 0;
+                    const badgeClass = 'bg-blue-100 text-blue-700 border-blue-200';
+                    const badgeLabel = '📚 CURSO';
+
+                    return `
+                    <tr class="hover:bg-gray-50/50 transition-colors group">
+                        <td class="p-6"><div class="w-12 h-12 rounded-xl overflow-hidden bg-gray-100 border border-gray-100 shadow-sm relative">
+                            <img src="${course.image_url || 'https://images.unsplash.com/photo-1526628953301-3e589a6a8b74?auto=format&fit=crop&q=80&w=200'}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
+                        </div></td>
+                        <td class="p-6 text-center"><span class="px-3 py-1 rounded-full text-[8px] font-black uppercase ${badgeClass} tracking-widest border shadow-sm">${badgeLabel}</span></td>
+                        <td class="p-6">
+                            <div class="font-black text-sm uppercase text-[#0f172a] tracking-tight truncate max-w-xs">${course.title}</div>
+                            <div class="text-[9px] font-bold text-gray-400 uppercase flex items-center gap-1">${course.level}</div>
+                        </td>
+                        <td class="p-6 text-center"><span class="px-3 py-1 rounded-full text-[9px] font-black uppercase ${course.status === 'published' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'} tracking-widest border border-white">${course.status === 'published' ? 'Activo' : 'Borrador'}</span></td>
+                        <td class="p-6 text-center font-bold text-gray-400 text-xs">
+                          <div class="inline-flex flex-col items-center bg-gray-50 px-3 py-1 rounded-xl border border-gray-100">
+                                <span class="text-sm font-black text-[#0f172a]">${itemCount}</span>
+                                <span class="text-[7px] font-bold text-gray-400 uppercase tracking-tighter">Lecciones</span>
                             </div>
                         </td>
-                        <td class="p-6">
-                            <div class="font-bold uppercase text-sm" title="${course.description || ''}">${course.title}</div>
-                            <div class="text-[10px] font-black text-[#fba931] uppercase tracking-tighter">${course.level}</div>
-                        </td>
-                        <td class="p-6">
-                            <div class="flex flex-col">
-                                <span class="text-xs font-black text-[#0f172a]">${counts[course.id] || 0}</span>
-                                <span class="text-[8px] font-bold text-gray-400 uppercase tracking-tighter">Items</span>
+                        <td class="p-6 text-right">
+                            <div class="flex justify-end gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
+                                <a href="admin-lecciones.html?course_id=${course.id}" class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-all" title="Gestionar Contenido"><span class="material-symbols-outlined">settings_suggest</span></a>
+                                <button onclick='editCourse(${JSON.stringify(course)})' class="p-2 text-amber-600 hover:bg-amber-50 rounded-lg transition-all" title="Editar"><span class="material-symbols-outlined">edit</span></button>
+                                <button onclick="deleteCourse('${course.id}')" class="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-all" title="Eliminar"><span class="material-symbols-outlined">delete</span></button>
                             </div>
                         </td>
-                        <td class="p-6">
-                            <span class="px-3 py-1 rounded-full text-[9px] font-black uppercase ${course.status === 'published' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}">
-                                ${course.status === 'published' ? 'Publicado' : course.status === 'draft' ? 'Borrador' : 'Archivado'}
-                            </span>
-                        </td>
-                        <td class="p-6 text-xs text-gray-400 font-bold">${new Date(course.created_at).toLocaleDateString()}</td>
-                        <td class="p-6 text-right flex justify-end gap-2">
-                            <a href="admin-lecciones.html?course_id=${course.id}" 
-                               title="Gestionar Contenido"
-                               class="p-2 text-blue-500 hover:bg-blue-50 rounded-lg flex items-center justify-center transition-colors">
-                               <span class="material-symbols-outlined">menu_book</span>
-                            </a>
-                            <button onclick='editCourse(${JSON.stringify(course)})' 
-                                    title="Editar Propiedades"
-                                    class="p-2 text-[#0f172a] hover:bg-gray-100 rounded-lg transition-colors">
-                                <span class="material-symbols-outlined">edit</span>
-                            </button>
-                            <button onclick="deleteCourse('${course.id}')" 
-                                    title="Eliminar Curso"
-                                    class="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors">
-                                <span class="material-symbols-outlined">delete</span>
-                            </button>
-                        </td>
-                    </tr>
-                `).join('');
+                    </tr>`;
+                }).join('');
             } catch (err) {
                 console.error(err);
-                tableBody.innerHTML = '<tr><td colspan="6" class="p-10 text-center text-red-500 font-bold uppercase text-xs">Error de conexión con la nube.</td></tr>';
+                tableBody.innerHTML = '<tr><td colspan="6" class="p-20 text-center text-red-500">Error de conexión</td></tr>';
+            }
+        }
+
+        async function loadEvents() {
+            try {
+                const { data, error } = await supabaseClient.from('regional_events').select('*, regional_event_registrations(count)').order('event_date', { ascending: true });
+                if (error) throw error;
+                if (data.length === 0) {
+                    lessonTableBody.innerHTML = '<tr><td colspan="6" class="p-10 text-center text-gray-400 italic">No hay eventos regionales creados todavía.</td></tr>';
+                    return;
+                }
+                lessonTableBody.innerHTML = data.map(event => {
+                    const regCount = (event.regional_event_registrations && event.regional_event_registrations[0]) ? event.regional_event_registrations[0].count : 0;
+                    const available = event.max_capacity > 0 ? (event.max_capacity - regCount) : '∞';
+                    const cuposDisplay = event.max_capacity > 0 ? `<div class="flex flex-col items-center leading-none"><span class="text-[7px] font-black text-gray-300 uppercase tracking-widest mb-1">CUPOS</span><div class="font-black text-xs flex items-center gap-1"><span class="text-gray-400">${event.max_capacity}</span><span class="text-gray-300">/</span><span class="text-green-600">${available > 0 ? available : 0}</span></div><div class="flex gap-2 mt-1 text-[6px] font-black text-gray-300 uppercase tracking-tighter"><span>TOT.</span><span>DISP.</span></div></div>` : '<span class="text-[9px] font-black text-gray-300 italic uppercase">Ilimitado</span>';
+
+                    return `
+                    <tr class="hover:bg-gray-50/50 transition-colors group">
+                        <td class="p-6 font-black text-[#fba931] text-center">${event.order}</td>
+                        <td class="p-6"><div class="font-bold text-sm uppercase">${event.title}</div></td>
+                        <td class="p-6 text-center"><span class="px-2 py-1 rounded-md text-[8px] font-black uppercase bg-gray-100">${event.delivery_type === 'recorded' ? '🎥 Grabado' : event.delivery_type === 'live' ? '📡 En Vivo' : '🏛️ Presencial'}</span></td>
+                        <td class="p-6 text-[10px] font-bold text-gray-500 text-center">${event.event_date ? new Date(event.event_date).toLocaleString('es-CL', { dateStyle: 'short', timeStyle: 'short' }) : '---'}</td>
+                        <td class="p-6 text-center"><button onclick="viewRegistrations('${event.id}', '${event.title.replace(/'/g, "\\'")}')" class="hover:opacity-70">${cuposDisplay}</button></td>
+                        <td class="p-6 text-right"><div class="flex justify-end gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
+                            <button onclick='editLesson(${JSON.stringify(event)})' class="p-2 text-amber-600 hover:bg-amber-50 rounded-lg"><span class="material-symbols-outlined">edit</span></button>
+                            <button onclick="deleteLesson('${event.id}')" class="p-2 text-red-500 hover:bg-red-50 rounded-lg"><span class="material-symbols-outlined">delete</span></button>
+                        </div></td>
+                    </tr>`;
+                }).join('');
+            } catch (err) {
+                console.error(err);
+                lessonTableBody.innerHTML = '<tr><td colspan="6" class="p-10 text-center text-red-500">Error al cargar eventos independientes.</td></tr>';
             }
         }
 
         function openModal() {
             document.getElementById('course-form').reset();
             document.getElementById('course-id').value = '';
-            document.getElementById('modal-title').textContent = 'Nuevo Curso';
+            document.getElementById('modal-title').textContent = 'Nuevo Curso Academia';
             modal.classList.remove('hidden');
         }
 
@@ -244,31 +443,23 @@
             const id = document.getElementById('course-id').value;
             const courseData = {
                 title: document.getElementById('course-title').value,
-                description: document.getElementById('course-description').value,
                 level: document.getElementById('course-level').value,
+                description: document.getElementById('course-desc').value,
                 image_url: document.getElementById('course-image').value || null,
-                status: document.getElementById('course-status').value
+                status: document.getElementById('course-status').value,
+                category: 'curso'
             };
-
             try {
-                let error;
-                if (id) {
-                    ({ error } = await supabaseClient.from('courses').update(courseData).eq('id', id));
-                } else {
-                    ({ error } = await supabaseClient.from('courses').insert([courseData]));
-                }
-
+                const { error } = id ? await supabaseClient.from('courses').update(courseData).eq('id', id) : await supabaseClient.from('courses').insert([courseData]);
                 if (error) throw error;
-                alert('Curso guardado con éxito.');
+                alert('Guardado con éxito.');
                 closeModal();
                 loadCourses();
-            } catch (err) {
-                alert('Error al guardar: ' + err.message);
-            }
+            } catch (err) { alert('Error: ' + err.message); }
         }
 
         async function deleteCourse(id) {
-            if (!confirm('¿Seguro que deseas eliminar este curso? Se perderá toda la información asociada.')) return;
+            if (!confirm('¿Seguro que deseas eliminar este curso? Se perderá todo.')) return;
             try {
                 const { error } = await supabaseClient.from('courses').delete().eq('id', id);
                 if (error) throw error;
@@ -280,14 +471,113 @@
             openModal();
             document.getElementById('course-id').value = course.id;
             document.getElementById('course-title').value = course.title;
-            document.getElementById('course-description').value = course.description || '';
             document.getElementById('course-level').value = course.level;
+            document.getElementById('course-desc').value = course.description || '';
             document.getElementById('course-image').value = course.image_url || '';
             document.getElementById('course-status').value = course.status;
-            document.getElementById('modal-title').textContent = 'Editar Curso';
+            document.getElementById('modal-title').textContent = 'Editar Contenido';
+        }
+
+        function toggleLessonFields() {
+            const type = document.getElementById('lesson-type').value;
+            const fUrl = document.getElementById('field-url');
+            const fLoc = document.getElementById('field-location');
+            const fDate = document.getElementById('field-date');
+            const lUrl = document.getElementById('label-url');
+
+            fLoc.classList.add('hidden'); fDate.classList.add('hidden'); fUrl.classList.add('hidden');
+            if (type === 'recorded') { fUrl.classList.remove('hidden'); lUrl.textContent = 'URL del Video (YouTube)'; }
+            else if (type === 'live') { fUrl.classList.remove('hidden'); fDate.classList.remove('hidden'); lUrl.textContent = 'Link (Zoom/Meet)'; }
+            else if (type === 'in_person') { fLoc.classList.remove('hidden'); fDate.classList.remove('hidden'); }
+        }
+
+        function openLessonModal() {
+            document.getElementById('lesson-form').reset();
+            document.getElementById('lesson-id').value = '';
+            document.getElementById('lesson-modal-title').textContent = 'Nuevo Evento Regional';
+            toggleLessonFields();
+            lessonModal.classList.remove('hidden');
+        }
+
+        function closeLessonModal() { lessonModal.classList.add('hidden'); }
+
+        async function saveLesson(e) {
+            e.preventDefault();
+            const id = document.getElementById('lesson-id').value;
+            const eventData = {
+                title: document.getElementById('lesson-title').value,
+                description: document.getElementById('lesson-desc').value,
+                delivery_type: document.getElementById('lesson-type').value,
+                order: parseInt(document.getElementById('lesson-order').value),
+                content_url: document.getElementById('lesson-url').value || null,
+                location: document.getElementById('lesson-location').value || null,
+                event_date: document.getElementById('lesson-date').value || null,
+                max_capacity: parseInt(document.getElementById('lesson-capacity').value) || 0
+            };
+            try {
+                const { error } = id ? await supabaseClient.from('regional_events').update(eventData).eq('id', id) : await supabaseClient.from('regional_events').insert([eventData]);
+                if (error) throw error;
+                alert('Evento regional guardado.');
+                closeLessonModal();
+                loadEvents();
+            } catch (err) { alert('Error: ' + err.message); }
+        }
+
+        async function deleteLesson(id) {
+            if (!confirm('¿Seguro de eliminar este evento regional? Esta acción es irreversible.')) return;
+            try {
+                const { error } = await supabaseClient.from('regional_events').delete().eq('id', id);
+                if (error) throw error;
+                loadEvents();
+            } catch (err) { alert(err.message); }
+        }
+
+        function editLesson(event) {
+            openLessonModal();
+            document.getElementById('lesson-id').value = event.id;
+            document.getElementById('lesson-title').value = event.title;
+            document.getElementById('lesson-desc').value = event.description || '';
+            document.getElementById('lesson-type').value = event.delivery_type;
+            document.getElementById('lesson-order').value = event.order;
+            document.getElementById('lesson-url').value = event.content_url || '';
+            document.getElementById('lesson-location').value = event.location || '';
+            document.getElementById('lesson-capacity').value = event.max_capacity || 0;
+            if (event.event_date) document.getElementById('lesson-date').value = new Date(event.event_date).toISOString().slice(0, 16);
+            document.getElementById('lesson-modal-title').textContent = 'Editar Evento';
+            toggleLessonFields();
+        }
+
+        async function viewRegistrations(eventId, eventTitle) {
+            document.getElementById('reg-modal-title').textContent = `Inscritos: ${eventTitle}`;
+            const list = document.getElementById('reg-list');
+            list.innerHTML = '<p class="text-center text-gray-400 py-10 italic">Cargando...</p>';
+            document.getElementById('reg-modal').classList.remove('hidden');
+            try {
+                const { data, error } = await supabaseClient.from('regional_event_registrations').select('*, profiles(full_name, rut)').eq('event_id', eventId);
+                if (error) throw error;
+                if (data.length === 0) { list.innerHTML = '<p class="text-center text-gray-400 py-10">Sin inscritos.</p>'; return; }
+                list.innerHTML = data.map(reg => `
+                    <div class="flex justify-between items-center p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                        <div>
+                            <p class="font-black uppercase text-xs">${reg.profiles.full_name}</p>
+                            <p class="text-[9px] text-gray-400 font-bold">${reg.profiles.rut || 'SIN RUT'}</p>
+                        </div>
+                        <button onclick="toggleAttendance('${reg.id}', ${!reg.attended}, '${eventId}', '${eventTitle.replace(/'/g, "\\'")}')" 
+                                class="px-4 py-2 rounded-xl text-[9px] font-black uppercase transition-all ${reg.attended ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-600'}">
+                            ${reg.attended ? 'Asistió' : 'Marcar Asistencia'}
+                        </button>
+                    </div>`).join('');
+            } catch (err) { list.innerHTML = '<p class="text-red-500">Error al cargar inscritos.</p>'; }
+        }
+
+        async function toggleAttendance(regId, newState, eventId, eventTitle) {
+            try {
+                const { error } = await supabaseClient.from('regional_event_registrations').update({ attended: newState }).eq('id', regId);
+                if (error) throw error;
+                viewRegistrations(eventId, eventTitle);
+            } catch (err) { alert(err.message); }
         }
     </script>
-</body>
 </body>
 
 </html>

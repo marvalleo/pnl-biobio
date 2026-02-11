@@ -89,14 +89,24 @@
     <nav class="bg-white shadow-sm sticky top-0 z-50 border-b-4 border-[#fba931]">
         <div class="max-w-7xl mx-auto px-6 h-20 flex justify-between items-center">
             <div class="flex items-center gap-4">
-                <img src="wp-content/uploads/2026/pnl-del-biobio01.png" alt="PNL Biobío" class="h-14">
+                <a href="index.html"><img src="wp-content/uploads/2026/pnl-del-biobio01.png" alt="PNL Biobío"
+                        class="h-14"></a>
             </div>
             <div class="flex items-center gap-4 lg:gap-8">
                 <a href="forja-academia.html" class="nav-link text-gray-400">Academia</a>
                 <a href="forja-eventos.html" class="nav-link active">Eventos</a>
                 <a href="forja-votaciones.html" class="nav-link text-gray-400">Votaciones</a>
-                <button onclick="logout()"
-                    class="text-[9px] font-black uppercase bg-gray-100 px-3 py-2 rounded-lg hover:bg-gray-200 transition-colors">Salir</button>
+
+                <div id="admin-link-container" class="hidden">
+                    <a href="admin-dashboard.html"
+                        class="text-[9px] font-black uppercase bg-[#0f172a] text-white px-3 py-2 rounded-lg hover:bg-black transition-colors flex items-center gap-1.5">
+                        <span class="material-symbols-outlined text-sm">admin_panel_settings</span> Admin
+                    </a>
+                </div>
+
+                <div id="user-menu-container" class="flex items-center">
+                    <div class="w-10 h-10 rounded-full bg-gray-100 animate-pulse"></div>
+                </div>
             </div>
         </div>
     </nav>
@@ -186,13 +196,56 @@
             await Promise.all([loadEvents(), loadRegistrations()]);
             renderEvents();
             renderCalendar();
+            initNavbar();
+        });
+
+        async function initNavbar() {
+            const { data: { user } } = await supabaseClient.auth.getUser();
+            if (!user) return;
+
+            const { data: profile } = await supabaseClient.from('profiles').select('full_name, role').eq('auth_id', user.id).single();
+            const fullName = profile?.full_name || user.user_metadata?.full_name || user.email || 'Miembro';
+            const initials = fullName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+
+            // Mostrar link a administración si es admin
+            if (['super_admin', 'admin_forja', 'admin_votos', 'admin_foros', 'admin_usuarios'].includes(profile?.role)) {
+                document.getElementById('admin-link-container').classList.remove('hidden');
+            }
+
+            document.getElementById('user-menu-container').innerHTML = `
+                <div class="relative">
+                    <button onclick="toggleUserMenu()" class="w-10 h-10 rounded-full bg-[#fba931] text-[#0f172a] font-900 text-xs border-2 border-white shadow-sm hover:scale-105 transition-all flex items-center justify-center">
+                        ${initials}
+                    </button>
+                    <div id="user-dropdown" class="hidden absolute right-0 mt-3 w-56 bg-white rounded-2xl shadow-2xl border border-gray-100 py-3 z-[100]">
+                        <div class="px-5 py-3 border-b border-gray-50 mb-2">
+                            <p class="text-[8px] font-black uppercase text-[#fba931] tracking-widest leading-none mb-1">Sesión Iniciada</p>
+                            <p class="text-xs font-black text-[#0f172a] truncate">${fullName}</p>
+                        </div>
+                        <button onclick="logout()" class="w-full text-left px-5 py-3 text-[10px] font-black uppercase text-red-500 hover:bg-red-50 flex items-center gap-3 transition-colors">
+                            <span class="material-symbols-outlined text-lg">logout</span> Cerrar Sesión
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function toggleUserMenu() {
+            document.getElementById('user-dropdown').classList.toggle('hidden');
+        }
+
+        window.addEventListener('click', (e) => {
+            const dropdown = document.getElementById('user-dropdown');
+            const menuContainer = document.getElementById('user-menu-container');
+            if (dropdown && !dropdown.classList.contains('hidden') && !menuContainer.contains(e.target)) {
+                dropdown.classList.add('hidden');
+            }
         });
 
         async function loadEvents() {
             const { data, error } = await supabaseClient
-                .from('lessons')
-                .select('*, courses!inner(title)')
-                .eq('courses.title', 'Agenda Regional')
+                .from('regional_events')
+                .select('*, regional_event_registrations(count)')
                 .order('event_date', { ascending: true });
 
             if (!error) events = data;
@@ -200,8 +253,8 @@
 
         async function loadRegistrations() {
             const { data } = await supabaseClient
-                .from('lesson_registrations')
-                .select('lesson_id')
+                .from('regional_event_registrations')
+                .select('lesson_id:event_id')
                 .eq('profile_id', profileId);
 
             registrations = new Set(data.map(r => r.lesson_id));
@@ -251,13 +304,21 @@
                             <p class="text-xs text-gray-400 font-medium mb-4 line-clamp-2">${event.description || 'Sin descripción detallada.'}</p>
                             
                             <div class="flex flex-wrap items-center gap-6 mb-6">
-                                <div class="flex items-center gap-2">
+                                <div class="flex items-center gap-2 text-gray-400">
                                     <span class="material-symbols-outlined text-xs text-[#fba931]">calendar_today</span>
                                     <span class="text-[10px] font-black uppercase tracking-wider">${date.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' })} — ${date.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })} hrs</span>
                                 </div>
-                                <div class="flex items-center gap-2">
+                                <div class="flex items-center gap-2 text-gray-400">
                                     <span class="material-symbols-outlined text-xs text-[#fba931]">location_on</span>
                                     <span class="text-[10px] font-black uppercase tracking-wider">${event.location || 'Por definir'}</span>
+                                </div>
+                                <div class="flex items-center gap-2 text-gray-400">
+                                    <span class="material-symbols-outlined text-xs text-[#fba931]">group</span>
+                                    <span class="text-[10px] font-black uppercase tracking-wider">
+                                        ${event.max_capacity > 0
+                        ? `Cupos: ${(event.regional_event_registrations?.[0]?.count || 0)} / ${event.max_capacity}`
+                        : 'Ilimitado'}
+                                    </span>
                                 </div>
                             </div>
 
@@ -278,15 +339,33 @@
             try {
                 if (isRegistered) {
                     if (!confirm('¿Deseas cancelar tu inscripción a este evento?')) return;
-                    await supabaseClient.from('lesson_registrations').delete().eq('profile_id', profileId).eq('lesson_id', lessonId);
+                    const { error } = await supabaseClient.from('regional_event_registrations').delete().eq('profile_id', profileId).eq('event_id', lessonId);
+                    if (error) throw error;
                     registrations.delete(lessonId);
                 } else {
-                    await supabaseClient.from('lesson_registrations').insert({ profile_id: profileId, lesson_id: lessonId });
+                    // Verificar si hay cupo antes de inscribir
+                    const { data: currentLesson } = await supabaseClient.from('regional_events').select('max_capacity').eq('id', lessonId).single();
+                    const { count } = await supabaseClient.from('regional_event_registrations').select('*', { count: 'exact', head: true }).eq('event_id', lessonId);
+
+                    if (currentLesson.max_capacity > 0 && count >= currentLesson.max_capacity) {
+                        alert('Lo sentimos, este evento ya no tiene cupos disponibles.');
+                        return;
+                    }
+
+                    const { error } = await supabaseClient.from('regional_event_registrations').insert({ profile_id: profileId, event_id: lessonId });
+                    if (error) throw error;
                     registrations.add(lessonId);
                     alert('¡Inscripción exitosa! Te esperamos.');
                 }
+
+                // Forzar recarga completa de datos para ver los cupos actualizados
+                await loadEvents();
                 renderEvents();
-            } catch (err) { alert('Error al procesar inscripción.'); }
+                renderCalendar();
+            } catch (err) {
+                console.error(err);
+                alert('Error al procesar la solicitud.');
+            }
         }
 
         function renderCalendar() {
