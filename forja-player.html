@@ -64,6 +64,7 @@
     </style>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabase-config.js"></script>
+    <script src="shared.js"></script>
 </head>
 
 <body class="h-screen flex flex-col md:flex-row overflow-hidden">
@@ -216,8 +217,18 @@
             const { data: { user } } = await supabaseClient.auth.getUser();
             if (!user) { window.location.href = 'forja-login.html'; return; }
 
-            const { data: profile } = await supabaseClient.from('profiles').select('id').eq('auth_id', user.id).single();
-            if (!profile) { alert("Error: Perfil no encontrado."); return; }
+            // Usar cache de sesión si existe
+            let profile = JSON.parse(sessionStorage.getItem('pnl_profile'));
+            if (!profile) {
+                const { data } = await supabaseClient.from('profiles').select('id, role').eq('auth_id', user.id).single();
+                profile = data;
+                if (profile) sessionStorage.setItem('pnl_profile', JSON.stringify(profile));
+            }
+
+            if (!profile) {
+                showToast("Error: Perfil no encontrado.", 'error');
+                return;
+            }
             profileId = profile.id;
 
             await Promise.all([loadCourse(), loadLessons(), loadRegistrations()]);
@@ -394,14 +405,14 @@
             try {
                 const { error } = await supabaseClient.from('lesson_registrations').insert([{ profile_id: profileId, lesson_id: lesson.id }]);
                 if (error) {
-                    if (error.code === '23505') alert("Ya estás inscrito en este evento.");
+                    if (error.code === '23505') showToast("Ya estás inscrito en este evento.", 'info');
                     else throw error;
                 } else {
-                    alert("¡Te has inscrito con éxito!");
+                    showToast("¡Te has inscrito con éxito!", 'success');
                     registrations.add(lesson.id);
                     selectLesson(currentLessonIndex); // Refresh UI
                 }
-            } catch (err) { alert("Error al inscribirse: " + err.message); }
+            } catch (err) { showToast("Error al inscribirse: " + err.message, 'error'); }
         }
 
         function startAttendanceHeartbeat(lessonId) {

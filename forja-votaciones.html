@@ -115,7 +115,14 @@
             const { data: { user } } = await supabaseClient.auth.getUser();
             if (!user) { window.location.href = 'forja-login.html'; return; }
 
-            const { data: profile } = await supabaseClient.from('profiles').select('id').eq('auth_id', user.id).single();
+            // Usar cache de sesión si existe
+            let profile = JSON.parse(sessionStorage.getItem('pnl_profile'));
+            if (!profile) {
+                const { data } = await supabaseClient.from('profiles').select('id, role').eq('auth_id', user.id).single();
+                profile = data;
+                if (profile) sessionStorage.setItem('pnl_profile', JSON.stringify(profile));
+            }
+
             if (!profile) return;
             profileId = profile.id;
 
@@ -242,17 +249,11 @@
 
                 if (error) throw error;
 
-                alert('¡Voto emitido con éxito!');
+                showToast('¡Voto emitido con éxito!', 'success');
                 loadVotes();
             } catch (err) {
-                alert('Error al emitir voto: ' + err.message);
+                showToast('Error al emitir voto: ' + err.message, 'error');
             }
-        }
-
-        async function logout() {
-            await supabaseClient.auth.signOut();
-            localStorage.clear();
-            window.location.href = 'index.html';
         }
     </script>
 </body>

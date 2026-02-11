@@ -53,12 +53,6 @@
         <p class="text-gray-400 text-[10px] font-bold uppercase tracking-widest mb-8">Espacio Privado - Sede Biobío</p>
 
         <div id="login-container" class="space-y-4 text-left">
-            <!-- Alerta de Error -->
-            <div id="error-message" class="hidden bg-red-50 border-l-4 border-red-500 p-4 mb-4 rounded-lg">
-                <p class="text-red-700 text-[10px] font-black uppercase tracking-wider">Error: Credenciales Incorrectas
-                </p>
-            </div>
-
             <div>
                 <label class="text-[10px] font-black uppercase text-gray-400 ml-1">Correo Electrónico</label>
                 <input type="email" id="user-input" placeholder="Ej: militante@pnlbiobio.cl"
@@ -126,6 +120,7 @@
     <!-- Supabase SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabase-config.js"></script>
+    <script src="shared.js"></script>
 
     <script>
         // Cargar credenciales guardadas al cargar la página
@@ -148,8 +143,6 @@
         async function handleLogin() {
             const email = document.getElementById('user-input').value.trim();
             const password = document.getElementById('pass-input').value.trim();
-            const errorMsg = document.getElementById('error-message');
-            const errorText = errorMsg.querySelector('p');
             const loginContainer = document.getElementById('login-container');
 
             // Feedback Visual: Deshabilitar botón
@@ -187,6 +180,9 @@
                     return; // No redirigir todavía
                 }
 
+                // Limpiar caché de perfil previo para forzar recarga con el nuevo usuario
+                sessionStorage.removeItem('pnl_user_profile');
+
                 // 4. Guardar datos de sesión (compatibilidad con frontend existente)
                 localStorage.setItem('forja_username', email);
                 localStorage.setItem('pnl_user_role', profile.role);
@@ -198,9 +194,8 @@
             } catch (err) {
                 console.error("Login error:", err);
 
-                // Mostrar alerta de error
-                errorMsg.classList.remove('hidden');
-                errorText.textContent = `Error: ${err.message || 'Error desconocido'}`;
+                // Mostrar alerta de error con Toast
+                showToast(`Error: ${err.message || 'Error desconocido'}`, 'error');
 
                 loginContainer.classList.add('error-shake');
                 setTimeout(() => {
