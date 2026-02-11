@@ -1,0 +1,13 @@
+{
+    "name": "pnl-biobio-web",
+    "version": "1.0.0",
+    "description": "Plataforma Web PNL Biobío",
+    "scripts": {
+        "start": "npx serve ./",
+        "build": "node setup-env.js"
+    },
+    "dependencies": {},
+    "devDependencies": {
+        "serve": "^14.2.1"
+    }
+}

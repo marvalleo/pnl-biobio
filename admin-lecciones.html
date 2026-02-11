@@ -47,8 +47,14 @@
         });
 
         async function loadCourseInfo() {
-            const { data, error } = await supabaseClient.from('courses').select('title').eq('id', courseId).single();
-            if (data) document.getElementById('course-name').textContent = data.title;
+            const { data, error } = await supabaseClient.from('courses').select('title, level').eq('id', courseId).single();
+            if (data) {
+                document.getElementById('course-name').textContent = data.title;
+                if (data.level === 'Agenda Regional' || data.title === 'Agenda Regional') {
+                    document.getElementById('btn-new-item').innerHTML = '<span class="material-symbols-outlined">calendar_add_on</span> Nuevo Evento';
+                    document.getElementById('section-subtitle').textContent = 'Programación de Agenda';
+                }
+            }
         }
 
         async function logout() {
@@ -76,11 +82,12 @@
     <main class="max-w-7xl mx-auto px-6 py-10">
         <div class="flex justify-between items-center mb-8">
             <div>
-                <p class="text-[10px] font-black uppercase text-[#fba931] tracking-widest">Gestión de Contenido</p>
+                <p id="section-subtitle" class="text-[10px] font-black uppercase text-[#fba931] tracking-widest">Gestión
+                    de Contenido</p>
                 <h1 id="course-name" class="text-3xl font-900 uppercase text-[#0f172a]">Lecciones del Curso</h1>
             </div>
-            <button onclick="openModal()"
-                class="bg-[#fba931] text-[#0f172a] px-6 py-3 rounded-xl font-900 text-xs uppercase tracking-widest shadow-lg hover:brightness-110 flex items-center gap-2">
+            <button id="btn-new-item" onclick="openModal()"
+                class="bg-[#fba931] text-[#0f172a] px-6 py-3 rounded-xl font-900 text-xs uppercase tracking-widest shadow-lg hover:brightness-110 flex items-center gap-2 transition-all">
                 <span class="material-symbols-outlined">add</span> Nueva Lección
             </button>
         </div>

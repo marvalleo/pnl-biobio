@@ -65,17 +65,26 @@
     <main class="max-w-7xl mx-auto px-6 py-10">
         <div class="flex justify-between items-center mb-8">
             <h1 class="text-3xl font-900 uppercase text-[#0f172a]">Gestión de Cursos</h1>
-            <button onclick="openModal()"
-                class="bg-[#fba931] text-[#0f172a] px-6 py-3 rounded-xl font-900 text-xs uppercase tracking-widest shadow-lg hover:brightness-110 flex items-center gap-2">
-                <span class="material-symbols-outlined">add</span> Nuevo Curso
-            </button>
+            <div class="flex gap-3">
+                <button onclick="createNewEvent()"
+                    class="bg-white text-[#0f172a] border-2 border-[#0f172a] px-6 py-3 rounded-xl font-900 text-xs uppercase tracking-widest hover:bg-gray-50 flex items-center gap-2 transition-all">
+                    <span class="material-symbols-outlined">calendar_add_on</span> Nuevo Evento
+                </button>
+                <button onclick="openModal()"
+                    class="bg-[#fba931] text-[#0f172a] px-6 py-3 rounded-xl font-900 text-xs uppercase tracking-widest shadow-lg hover:brightness-110 flex items-center gap-2 transition-all">
+                    <span class="material-symbols-outlined">add</span> Nuevo Curso
+                </button>
+            </div>
         </div>
 
         <div class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
             <table class="w-full text-left">
                 <thead class="bg-gray-50 border-b border-gray-100">
                     <tr>
-                        <th class="p-6 text-[10px] font-black uppercase text-gray-400 tracking-wider">Curso</th>
+                        <th class="p-6 text-[10px] font-black uppercase text-gray-400 tracking-wider"></th>
+                        <th class="p-6 text-[10px] font-black uppercase text-gray-400 tracking-wider">Curso / Módulo
+                        </th>
+                        <th class="p-6 text-[10px] font-black uppercase text-gray-400 tracking-wider">Contenido</th>
                         <th class="p-6 text-[10px] font-black uppercase text-gray-400 tracking-wider">Estado</th>
                         <th class="p-6 text-[10px] font-black uppercase text-gray-400 tracking-wider">Última Modif.</th>
                         <th class="p-6 text-[10px] font-black uppercase text-gray-400 tracking-wider text-right">
@@ -84,7 +93,7 @@
                 </thead>
                 <tbody id="course-table-body" class="divide-y divide-gray-100">
                     <tr>
-                        <td colspan="4" class="p-10 text-center text-gray-400 italic">Cargando cursos desde la nube...
+                        <td colspan="6" class="p-10 text-center text-gray-400 italic">Cargando cursos desde la nube...
                         </td>
                     </tr>
                 </tbody>
@@ -161,36 +170,55 @@
                 if (error) throw error;
 
                 if (data.length === 0) {
-                    tableBody.innerHTML = '<tr><td colspan="4" class="p-10 text-center text-gray-400">No hay cursos creados aún.</td></tr>';
+                    tableBody.innerHTML = '<tr><td colspan="6" class="p-10 text-center text-gray-400">No hay cursos creados aún.</td></tr>';
                     return;
                 }
 
+                // Obtener conteo de lecciones
+                const { data: lessonsCount } = await supabaseClient.from('lessons').select('course_id');
+                const counts = (lessonsCount || []).reduce((acc, l) => {
+                    acc[l.course_id] = (acc[l.course_id] || 0) + 1;
+                    return acc;
+                }, {});
+
                 tableBody.innerHTML = data.map(course => `
-                    <tr class="hover:bg-gray-50 transition-colors">
+                    <tr class="hover:bg-gray-50 transition-colors group">
+                        <td class="p-6 w-24">
+                            <div class="w-16 h-10 rounded-lg overflow-hidden bg-gray-100 border border-gray-100">
+                                <img src="${course.image_url || 'https://images.unsplash.com/photo-1526628953301-3e589a6a8b74?auto=format&fit=crop&q=80&w=200'}" 
+                                     class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
+                            </div>
+                        </td>
                         <td class="p-6">
-                            <div class="font-bold uppercase text-sm">${course.title}</div>
+                            <div class="font-bold uppercase text-sm" title="${course.description || ''}">${course.title}</div>
                             <div class="text-[10px] font-black text-[#fba931] uppercase tracking-tighter">${course.level}</div>
                         </td>
                         <td class="p-6">
-                            <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase ${course.status === 'published' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}">
+                            <div class="flex flex-col">
+                                <span class="text-xs font-black text-[#0f172a]">${counts[course.id] || 0}</span>
+                                <span class="text-[8px] font-bold text-gray-400 uppercase tracking-tighter">Items</span>
+                            </div>
+                        </td>
+                        <td class="p-6">
+                            <span class="px-3 py-1 rounded-full text-[9px] font-black uppercase ${course.status === 'published' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}">
                                 ${course.status === 'published' ? 'Publicado' : course.status === 'draft' ? 'Borrador' : 'Archivado'}
                             </span>
                         </td>
                         <td class="p-6 text-xs text-gray-400 font-bold">${new Date(course.created_at).toLocaleDateString()}</td>
                         <td class="p-6 text-right flex justify-end gap-2">
                             <a href="admin-lecciones.html?course_id=${course.id}" 
-                               title="Gestionar Lecciones"
-                               class="p-2 text-blue-500 hover:bg-blue-50 rounded-lg flex items-center justify-center">
+                               title="Gestionar Contenido"
+                               class="p-2 text-blue-500 hover:bg-blue-50 rounded-lg flex items-center justify-center transition-colors">
                                <span class="material-symbols-outlined">menu_book</span>
                             </a>
                             <button onclick='editCourse(${JSON.stringify(course)})' 
-                                    title="Editar Curso"
-                                    class="p-2 text-[#0f172a] hover:bg-gray-100 rounded-lg">
+                                    title="Editar Propiedades"
+                                    class="p-2 text-[#0f172a] hover:bg-gray-100 rounded-lg transition-colors">
                                 <span class="material-symbols-outlined">edit</span>
                             </button>
                             <button onclick="deleteCourse('${course.id}')" 
                                     title="Eliminar Curso"
-                                    class="p-2 text-red-500 hover:bg-red-50 rounded-lg">
+                                    class="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors">
                                 <span class="material-symbols-outlined">delete</span>
                             </button>
                         </td>
@@ -198,7 +226,7 @@
                 `).join('');
             } catch (err) {
                 console.error(err);
-                tableBody.innerHTML = '<tr><td colspan="4" class="p-10 text-center text-red-500 font-bold uppercase text-xs">Error de conexión con la nube.</td></tr>';
+                tableBody.innerHTML = '<tr><td colspan="6" class="p-10 text-center text-red-500 font-bold uppercase text-xs">Error de conexión con la nube.</td></tr>';
             }
         }
 
