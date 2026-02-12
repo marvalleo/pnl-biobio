@@ -57,7 +57,13 @@ La plataforma ha completado su ciclo de desarrollo inicial con éxito. La sede r
 
 ---
 
-## 🛠️ Stack Tecnológico Actual
+## 🏛️ Fase 4: Comunidad y Foros (INICIANDO 🟢)
+*Objetivo: Fomentar la interacción soberana y la deliberación política.*
+
+- [x] **Arquitectura de Datos:** Creación de tablas para categorías, hilos, mensajes y votos (`sql_forum_system.sql`).
+- [ ] **Interfaz Vibrante:** Implementación de `forja-foros.html` con sistema de tiempo real.
+- [ ] **Moderación Inteligente:** Panel para administradores de foros.
+- [ ] **Sistema de Reputación:** Integración de badges de la Academia en los perfiles del foro.
 - **Backend/Auth:** Supabase (PostgreSQL + GoTrue)
 - **Frontend:** HTML5, TailwindCSS (CDN), Vanilla JS
 - **Hosting:** Netlify
