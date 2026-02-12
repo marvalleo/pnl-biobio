@@ -3,12 +3,23 @@ const FALLBACK_URL = "https://kjcwozzfzbizxurppxlf.supabase.co";
 const FALLBACK_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtqY3dvenpmemJpenh1cnBweGxmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA0NTMyNjgsImV4cCI6MjA4NjAyOTI2OH0.UEziql_VLY92Opgngmf-LBEYmFzduVMKFcwEviV99NE";
 
 function getCleanConfig() {
-    let url = window.supabaseUrl || localStorage.getItem('SUPABASE_URL') || FALLBACK_URL;
-    let key = window.supabaseKey || localStorage.getItem('SUPABASE_ANON_KEY') || FALLBACK_KEY;
+    let url = window.supabaseUrl || localStorage.getItem('SUPABASE_URL');
+    let key = window.supabaseKey || localStorage.getItem('SUPABASE_ANON_KEY');
 
-    // Limpiar posibles errores de inyección
-    if (!url || url === "undefined" || url.length < 10) url = FALLBACK_URL;
-    if (!key || key === "undefined" || key.length < 50) key = FALLBACK_KEY;
+    // Función de validación estricta
+    const isValidUrl = (u) => u && typeof u === 'string' && u.trim().startsWith('http') && u.length > 15;
+    const isValidKey = (k) => k && typeof k === 'string' && k.trim().length > 50;
+
+    // Si lo que hay en cache es basura, lo borramos
+    if (url && !isValidUrl(url)) {
+        console.warn("⚠️ URL corrupta detectada en cache, limpiando...");
+        localStorage.removeItem('SUPABASE_URL');
+        url = null;
+    }
+
+    // Aplicar fallbacks finales
+    url = url || FALLBACK_URL;
+    key = key || FALLBACK_KEY;
 
     return { url: url.trim(), key: key.trim() };
 }
