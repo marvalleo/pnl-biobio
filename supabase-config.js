@@ -8,6 +8,9 @@ window.supabaseClient = {
         getUser: async () => ({ data: { user: null }, error: null }),
         getSession: async () => ({ data: { session: null }, error: null }),
         onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => { } } } }),
+        signInWithPassword: async () => ({ data: { user: null, session: null }, error: { message: "Supabase no inicializado. Verifica la configuración." } }),
+        resetPasswordForEmail: async () => ({ data: null, error: { message: "Supabase no inicializado." } }),
+        updateUser: async () => ({ data: { user: null }, error: { message: "Supabase no inicializado." } }),
         signOut: async () => ({ error: null })
     },
     from: () => ({
