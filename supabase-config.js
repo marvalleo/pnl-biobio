@@ -1,51 +1,47 @@
 // --- CONFIGURACIÓN DE CREDENCIALES ---
-// Prioridad: 1. Snippets Netlify | 2. LocalStorage | 3. Hardcoded Fallback
-function getSupabaseConfig() {
-    const windowUrl = window.supabaseUrl;
-    const windowKey = window.supabaseKey;
+const FALLBACK_URL = "https://kjcwozzfzbizxurppxlf.supabase.co";
+const FALLBACK_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtqY3dvenpmemJpenh1cnBweGxmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA0NTMyNjgsImV4cCI6MjA4NjAyOTI2OH0.UEziql_VLY92Opgngmf-LBEYmFzduVMKFcwEviV99NE";
 
-    // Validar que no sean strings literales "undefined" o vacíos
-    const url = (windowUrl && windowUrl !== "undefined" && windowUrl.length > 10) ? windowUrl :
-        (localStorage.getItem('SUPABASE_URL') || "https://kjcwozzfzbizxurppxlf.supabase.co");
+function getCleanConfig() {
+    let url = window.supabaseUrl || localStorage.getItem('SUPABASE_URL') || FALLBACK_URL;
+    let key = window.supabaseKey || localStorage.getItem('SUPABASE_ANON_KEY') || FALLBACK_KEY;
 
-    const key = (windowKey && windowKey !== "undefined" && windowKey.length > 50) ? windowKey :
-        (localStorage.getItem('SUPABASE_ANON_KEY') || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtqY3dvenpmemJpenh1cnBweGxmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA0NTMyNjgsImV4cCI6MjA4NjAyOTI2OH0.UEziql_VLY92Opgngmf-LBEYmFzduVMKFcwEviV99NE");
+    // Limpiar posibles errores de inyección
+    if (!url || url === "undefined" || url.length < 10) url = FALLBACK_URL;
+    if (!key || key === "undefined" || key.length < 50) key = FALLBACK_KEY;
 
-    return { url, key };
+    return { url: url.trim(), key: key.trim() };
 }
 
-const { url: SUPABASE_URL, key: SUPABASE_ANON_KEY } = getSupabaseConfig();
 window.isSupabaseInit = false;
+window.supabaseClient = null;
 
-// --- INICIALIZACIÓN ---
 async function startSupabase() {
-    console.log("🚀 Iniciando conexión con Supabase...");
+    const { url, key } = getCleanConfig();
 
-    // 1. Esperar al SDK si aún no está (máximo 3 segundos)
-    let checks = 0;
-    while (typeof supabase === 'undefined' && checks < 6) {
+    // Esperar al SDK (Max 5s)
+    let attempts = 0;
+    while (typeof supabase === 'undefined' && attempts < 10) {
         await new Promise(r => setTimeout(r, 500));
-        checks++;
+        attempts++;
     }
 
-    if (typeof supabase !== 'undefined' && SUPABASE_URL && SUPABASE_ANON_KEY) {
+    if (typeof supabase !== 'undefined') {
         try {
-            window.supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            window.supabaseClient = supabase.createClient(url, key);
             window.isSupabaseInit = true;
-            console.log("✅ Supabase conectado exitosamente.");
+            console.log("✅ Supabase conectado.");
             setupSessionManagement();
         } catch (err) {
-            console.error("❌ Error de creación del cliente:", err);
-            activateStub("Error interno de inicialización.");
+            setupStub(`Error en createClient: ${err.message}`);
         }
     } else {
-        const reason = (typeof supabase === 'undefined') ? "SDK no disponible" : "Faltan credenciales";
-        console.error(`❌ Fallo en inicialización: ${reason}`);
-        activateStub(reason);
+        setupStub("El SDK de Supabase no cargó después de 5 segundos.");
     }
 }
 
-function activateStub(reason) {
+function setupStub(errorMsg) {
+    console.error("❌ Fallo Supabase:", errorMsg);
     window.supabaseClient = {
         auth: {
             getUser: async () => ({ data: { user: null }, error: null }),
@@ -53,7 +49,7 @@ function activateStub(reason) {
             onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => { } } } }),
             signInWithPassword: async () => ({
                 data: { user: null },
-                error: { message: `Sistema fuera de línea: ${reason}. Por favor, recarga la página.` }
+                error: { message: `ERROR CRÍTICO: ${errorMsg}. Por favor, contacta a soporte.` }
             }),
             signOut: async () => ({ error: null })
         },
@@ -63,24 +59,24 @@ function activateStub(reason) {
 
 function setupSessionManagement() {
     const INACTIVITY_LIMIT = 30 * 60 * 1000;
-    let inactivityTimer;
+    let timer;
     const reset = () => {
-        clearTimeout(inactivityTimer);
-        inactivityTimer = setTimeout(async () => {
-            if (window.isSupabaseInit) {
+        clearTimeout(timer);
+        timer = setTimeout(async () => {
+            if (window.isSupabaseInit && window.supabaseClient) {
                 await window.supabaseClient.auth.signOut();
                 window.location.href = 'forja-login.html';
             }
         }, INACTIVITY_LIMIT);
     };
-
-    window.supabaseClient.auth.onAuthStateChange((event, session) => {
-        if (session) {
-            ['mousedown', 'keydown', 'touchstart', 'scroll'].forEach(evt => window.addEventListener(evt, reset, true));
-            reset();
-        }
-    });
+    if (window.supabaseClient) {
+        window.supabaseClient.auth.onAuthStateChange((event, session) => {
+            if (session) {
+                ['mousedown', 'keydown', 'touchstart', 'scroll'].forEach(e => window.addEventListener(e, reset, true));
+                reset();
+            }
+        });
+    }
 }
 
-// Ejecutar inmediatamente
 startSupabase();
