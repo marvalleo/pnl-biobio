@@ -1,72 +1,60 @@
-// 1. Netlify Snippets (Producción) | 2. LocalStorage (Desarrollo) | 3. Hardcoded (No recomendado)
-const SUPABASE_URL = window.supabaseUrl || localStorage.getItem('SUPABASE_URL') || "";
-const SUPABASE_ANON_KEY = window.supabaseKey || localStorage.getItem('SUPABASE_ANON_KEY') || "";
+// 1. Netlify Snippets (Producción) | 2. LocalStorage (Desarrollo) | 3. Fallback Seguro
+const SUPABASE_URL = window.supabaseUrl || localStorage.getItem('SUPABASE_URL') || "https://kjcwozzfzbizxurppxlf.supabase.co";
+const SUPABASE_ANON_KEY = window.supabaseKey || localStorage.getItem('SUPABASE_ANON_KEY') || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtqY3dvenpmemJpenh1cnBweGxmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA0NTMyNjgsImV4cCI6MjA4NjAyOTI2OH0.UEziql_VLY92Opgngmf-LBEYmFzduVMKFcwEviV99NE";
 
-// Stubs para evitar errores de 'undefined' si Supabase falla al cargar
+window.isSupabaseInit = false;
+
+// Stubs iniciales para evitar errores inmediatos si la red es lenta
 window.supabaseClient = {
     auth: {
         getUser: async () => ({ data: { user: null }, error: null }),
         getSession: async () => ({ data: { session: null }, error: null }),
         onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => { } } } }),
-        signInWithPassword: async () => ({ data: { user: null, session: null }, error: { message: "Supabase no inicializado. Verifica la configuración." } }),
-        resetPasswordForEmail: async () => ({ data: null, error: { message: "Supabase no inicializado." } }),
-        updateUser: async () => ({ data: { user: null }, error: { message: "Supabase no inicializado." } }),
+        signInWithPassword: async () => ({ data: { user: null }, error: { message: "Conectando con la base de datos..." } }),
         signOut: async () => ({ error: null })
     },
-    from: () => ({
-        select: () => ({
-            eq: () => ({
-                single: async () => ({ data: null, error: null }),
-                order: async () => ({ data: [], error: null }),
-                match: () => ({ single: async () => ({ data: null, error: null }) })
-            }),
-            order: async () => ({ data: [], error: null }),
-            match: () => ({ single: async () => ({ data: null, error: null }) }),
-            insert: async () => ({ data: null, error: null }),
-            update: () => ({ eq: async () => ({ data: null, error: null }) }),
-            delete: () => ({ eq: async () => ({ data: null, error: null }) })
-        })
-    }),
-    channel: () => ({
-        on: () => ({ subscribe: () => { } }),
-        subscribe: () => { }
-    })
+    from: () => ({ select: () => ({ eq: () => ({ single: async () => ({ data: null, error: null }), order: async () => ({ data: [], error: null }) }) }) })
 };
 
-window.isSupabaseInit = false;
-
-if (SUPABASE_URL && SUPABASE_ANON_KEY) {
-    try {
-        const client = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        // Si llegamos aquí, el cliente se creó (aunque la red pueda fallar luego)
-        window.supabaseClient = client;
-        window.isSupabaseInit = true;
-        console.log("✅ Supabase inicializado correctamente.");
-    } catch (err) {
-        console.error("❌ Error crítico inicializando Supabase Client:", err);
+async function initSupabase() {
+    let retryCount = 0;
+    while (typeof supabase === 'undefined' && retryCount < 10) {
+        console.warn("Esperando SDK de Supabase...");
+        await new Promise(r => setTimeout(r, 500));
+        retryCount++;
     }
-} else {
-    console.warn("⚠️ Advertencia: No se encontraron credenciales de Supabase.");
+
+    if (typeof supabase !== 'undefined' && SUPABASE_URL && SUPABASE_ANON_KEY) {
+        try {
+            window.supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            window.isSupabaseInit = true;
+            console.log("✅ Supabase inicializado correctamente.");
+
+            // Re-disparar configuración de sesión una vez cargado
+            setupSessionManagement();
+        } catch (err) {
+            console.error("❌ Error crítico inicializando Supabase Client:", err);
+        }
+    } else {
+        console.error("❌ No se pudo cargar Supabase. Verifica la conexión y credenciales.");
+    }
 }
 
-if (window.isSupabaseInit) {
-    // --- GESTIÓN DE SESIÓN Y SEGURIDAD ---
+function setupSessionManagement() {
     const INACTIVITY_LIMIT = 30 * 60 * 1000;
-
     let inactivityTimer;
-    function resetInactivityTimer() {
+
+    const resetInactivityTimer = () => {
         clearTimeout(inactivityTimer);
         inactivityTimer = setTimeout(async () => {
-            if (supabaseClient) {
-                const { error } = await supabaseClient.auth.signOut();
-                if (!error) {
-                    window.location.href = 'forja-login.html';
-                }
+            if (window.supabaseClient && window.isSupabaseInit) {
+                await window.supabaseClient.auth.signOut();
+                window.location.href = 'forja-login.html';
             }
         }, INACTIVITY_LIMIT);
-    }
+    };
 
-    supabaseClient.auth.onAuthStateChange((event, session) => {
+    window.supabaseClient.auth.onAuthStateChange((event, session) => {
         if (session) {
             ['mousedown', 'keydown', 'touchstart', 'scroll'].forEach(evt => {
                 window.addEventListener(evt, resetInactivityTimer, true);
@@ -75,3 +63,6 @@ if (window.isSupabaseInit) {
         }
     });
 }
+
+// Arrancar inicialización
+initSupabase();
