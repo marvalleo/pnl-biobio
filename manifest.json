@@ -1,0 +1,22 @@
+{
+    "name": "PNL Biobío - Partido Nacional Libertario",
+    "short_name": "PNL Biobío",
+    "description": "Plataforma oficial del Partido Nacional Libertario - Región del Biobío. Acceso a formación, votaciones y eventos.",
+    "start_url": "/index.html",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#0f172a",
+    "icons": [
+        {
+            "src": "wp-content/uploads/2026/pnl-del-biobio01.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "wp-content/uploads/2024/10/favicon-100x100.jpg",
+            "sizes": "100x100",
+            "type": "image/jpeg"
+        }
+    ]
+}

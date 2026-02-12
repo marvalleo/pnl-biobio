@@ -50,6 +50,17 @@
             left: 0;
             background-color: var(--pnl-gold);
         }
+
+        .receipt-card {
+            background: linear-gradient(145deg, #ffffff 0%, #f9fafb 100%);
+            border: 2px solid #f3f4f6;
+        }
+
+        .hash-box {
+            background: #f1f5f9;
+            font-family: 'Courier New', Courier, monospace;
+            border: 1px dashed #cbd5e1;
+        }
     </style>
 </head>
 
@@ -99,6 +110,58 @@
         </div>
     </main>
 
+    <!-- Modal Comprobante -->
+    <div id="receipt-modal"
+        class="fixed inset-0 bg-black/60 z-[100] hidden flex items-center justify-center backdrop-blur-md p-4">
+        <div class="bg-white rounded-[2.5rem] p-8 max-w-md w-full shadow-2xl relative overflow-hidden text-center">
+            <div class="absolute top-0 left-0 w-full h-2 bg-[#fba931]"></div>
+
+            <div class="mb-6 mt-4">
+                <div
+                    class="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <span class="material-symbols-outlined text-4xl">verified</span>
+                </div>
+                <h2 class="serif text-3xl text-[#0f172a] uppercase">Voto Confirmado</h2>
+                <p class="text-[9px] font-black text-gray-400 uppercase tracking-widest mt-1">Comprobante de Sufragio
+                    Digital</p>
+            </div>
+
+            <div class="receipt-card p-6 rounded-3xl mb-6 text-left relative overflow-hidden">
+                <div class="absolute top-0 right-0 p-4 opacity-10">
+                    <img src="wp-content/uploads/2026/pnl-del-biobio01.png" class="h-12">
+                </div>
+                <p class="text-[8px] font-black text-gray-400 uppercase mb-4 tracking-tighter">Detalles del Comprobante
+                </p>
+                <div class="space-y-3">
+                    <div>
+                        <p class="text-[8px] font-black text-[#fba931] uppercase">Elección:</p>
+                        <p id="receipt-vote-title" class="text-xs font-bold text-[#0f172a] mt-0.5 truncate uppercase">
+                            ---</p>
+                    </div>
+                    <div>
+                        <p class="text-[8px] font-black text-[#fba931] uppercase">Hash de Verificación (Único):</p>
+                        <div class="hash-box p-3 rounded-lg mt-1 break-all text-[10px] font-bold text-gray-600 select-all"
+                            id="receipt-hash">
+                            ---
+                        </div>
+                    </div>
+                    <div>
+                        <p class="text-[8px] font-black text-[#fba931] uppercase">Fecha de Emisión:</p>
+                        <p id="receipt-date" class="text-xs font-bold text-[#0f172a] mt-0.5 uppercase">---</p>
+                    </div>
+                </div>
+            </div>
+
+            <p class="text-[9px] text-gray-400 mb-8 italic">Este comprobante garantiza que tu voto ha sido contabilizado
+                conservando el secreto del sufragio.</p>
+
+            <button onclick="closeReceipt()"
+                class="w-full bg-[#0f172a] text-white py-4 rounded-2xl font-900 uppercase text-xs tracking-[0.2em] shadow-lg hover:bg-black transition-all">
+                Cerrar Comprobante
+            </button>
+        </div>
+    </div>
+
     <footer class="bg-white border-t border-gray-100 py-10 mt-12">
         <div class="max-w-7xl mx-auto px-6 text-center">
             <p class="text-[9px] font-black text-gray-300 uppercase tracking-widest">Voto Secreto y Universal — PNL
@@ -142,13 +205,14 @@
                 // Traer votos abiertos y verificar si ya votó
                 const [votesRes, ballotsRes] = await Promise.all([
                     supabaseClient.from('votes').select('*, vote_options(*)').eq('status', 'open').gt('deadline', new Date().toISOString()),
-                    supabaseClient.from('ballots').select('vote_id').eq('profile_id', profileId)
+                    supabaseClient.from('ballots').select('id, vote_id, created_at').eq('profile_id', profileId)
                 ]);
 
                 if (votesRes.error) throw votesRes.error;
 
                 const votes = votesRes.data;
-                const votedIds = new Set(ballotsRes.data.map(b => b.vote_id));
+                const votedMap = new Map();
+                ballotsRes.data.forEach(b => votedMap.set(b.vote_id, b));
 
                 if (votes.length === 0) {
                     grid.innerHTML = '<div class="col-span-full py-20 text-center border-2 border-dashed rounded-[3rem] text-gray-400 font-bold uppercase">No hay votaciones activas en este momento.</div>';
@@ -156,7 +220,8 @@
                 }
 
                 grid.innerHTML = votes.map(vote => {
-                    const hasVoted = votedIds.has(vote.id);
+                    const myBallot = votedMap.get(vote.id);
+                    const hasVoted = !!myBallot;
                     const deadline = new Date(vote.deadline).toLocaleString();
 
                     return `
@@ -172,12 +237,18 @@
                             </p>
 
                             ${hasVoted ? `
-                                <div class="bg-green-50 border border-green-100 p-6 rounded-2xl flex items-center gap-4">
-                                    <span class="material-symbols-outlined text-green-500 text-3xl">verified</span>
-                                    <div>
-                                        <p class="text-xs font-black text-green-700 uppercase">Tu voto ha sido emitido</p>
-                                        <p class="text-[9px] font-bold text-green-600 uppercase">Gracias por participar en la democracia interna.</p>
+                                <div class="bg-green-50 border border-green-100 p-6 rounded-2xl flex items-center justify-between gap-4">
+                                    <div class="flex items-center gap-4">
+                                        <span class="material-symbols-outlined text-green-500 text-3xl">verified</span>
+                                        <div>
+                                            <p class="text-xs font-black text-green-700 uppercase">Tu voto ha sido emitido</p>
+                                            <p class="text-[9px] font-bold text-green-600 uppercase italic">ID Balota: ${myBallot.id.split('-')[0]}...</p>
+                                        </div>
                                     </div>
+                                    <button onclick="showReceipt('${vote.title}', '${myBallot.id}', '${myBallot.created_at}')" 
+                                            class="bg-white border-2 border-green-100 text-green-700 p-3 rounded-xl hover:bg-green-100 transition-all">
+                                        <span class="material-symbols-outlined text-xl">receipt_long</span>
+                                    </button>
                                 </div>
                             ` : `
                                 <div class="space-y-3">
@@ -204,19 +275,40 @@
             if (!confirm('¿Estás seguro de tu elección? El voto es secreto y no podrá ser modificado.')) return;
 
             try {
-                const { error } = await supabaseClient.from('ballots').insert({
+                const { data, error } = await supabaseClient.from('ballots').insert({
                     vote_id: voteId,
                     profile_id: profileId,
                     option_id: optionId
-                });
+                }).select().single();
 
                 if (error) throw error;
 
                 showToast('¡Voto emitido con éxito!', 'success');
+                showReceipt(currentVoteTitle(voteId), data.id, data.created_at);
                 loadVotes();
             } catch (err) {
                 showToast('Error al emitir voto: ' + err.message, 'error');
             }
+        }
+
+        function currentVoteTitle(voteId) {
+            // Helper simple para obtener el título del voto recién emitido
+            const elements = document.querySelectorAll('h2');
+            for (let el of elements) {
+                if (el.closest('.bg-white').innerHTML.includes(voteId)) return el.innerText;
+            }
+            return "Votación General";
+        }
+
+        function showReceipt(title, hash, date) {
+            document.getElementById('receipt-vote-title').innerText = title;
+            document.getElementById('receipt-hash').innerText = hash;
+            document.getElementById('receipt-date').innerText = new Date(date).toLocaleString();
+            document.getElementById('receipt-modal').classList.remove('hidden');
+        }
+
+        function closeReceipt() {
+            document.getElementById('receipt-modal').classList.add('hidden');
         }
     </script>
 </body>

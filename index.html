@@ -13,6 +13,13 @@
         type='text/css' media='all' />
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
     <link href="cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    <meta name="description"
+        content="Sitio oficial del Partido Nacional Libertario en la Región del Biobío. Formación política, democracia interna y eventos por la libertad.">
+    <meta name="keywords" content="PNL Biobío, Libertario Chile, Forja Libertaria, Partido Nacional Libertario">
+    <meta name="theme-color" content="#0f172a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="manifest" href="manifest.json">
     <link rel="icon" href="wp-content/uploads/2024/10/favicon-100x100.jpg" sizes="32x32" />
 
     <style>
@@ -539,6 +546,16 @@
             if (event.target == overlay) {
                 closeLogin();
             }
+        }
+    </script>
+    <script>
+        // Registrar Service Worker para PWA
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(reg => console.log('✅ PNL App: Service Worker registrado'))
+                    .catch(err => console.warn('❌ PNL App: Error SW', err));
+            });
         }
     </script>
 </body>

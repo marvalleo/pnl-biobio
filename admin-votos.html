@@ -10,6 +10,7 @@
         rel="stylesheet">
     <link rel="stylesheet"
         href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
             --pnl-blue: #0f172a;
@@ -121,8 +122,8 @@
             <h2 id="results-title" class="text-3xl font-900 uppercase mb-2 text-[#0f172a]">Acta de Escrutinio</h2>
             <p id="results-meta" class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-8"></p>
 
-            <div id="results-content" class="space-y-6">
-                <!-- Gráficos de barras -->
+            <div id="results-content" class="min-h-[300px] flex items-center justify-center">
+                <canvas id="resultsChart"></canvas>
             </div>
 
             <div class="mt-10 pt-6 border-t border-gray-100 flex justify-between items-center">
@@ -150,7 +151,43 @@
             }
             loadVotes();
             initNavbar();
+            setupRealtimeSubscription();
         });
+
+        let resultsChart = null;
+        let activeVoteId = null;
+        let realtimeChannel = null;
+
+        function setupRealtimeSubscription() {
+            realtimeChannel = supabaseClient.channel('realtime_ballots')
+                .on('postgres_changes', { event: 'INSERT', table: 'ballots' }, (payload) => {
+                    console.log('Nuevo voto recibido!', payload);
+                    // Actualizar lista principal en silencio
+                    silentRefreshVotes();
+
+                    // Si el modal de resultados está abierto para este voto, actualizar gráfico
+                    if (activeVoteId === payload.new.vote_id) {
+                        refreshActiveResults(activeVoteId);
+                    }
+                })
+                .subscribe();
+        }
+
+        async function silentRefreshVotes() {
+            try {
+                const { data: ballotsCount } = await supabaseClient.from('ballots').select('vote_id');
+                const counts = (ballotsCount || []).reduce((acc, b) => {
+                    acc[b.vote_id] = (acc[b.vote_id] || 0) + 1;
+                    return acc;
+                }, {});
+
+                // Actualizar contadores en la UI sin re-renderizar todo
+                Object.keys(counts).forEach(id => {
+                    const counterElem = document.getElementById(`count-${id}`);
+                    if (counterElem) counterElem.innerText = counts[id];
+                });
+            } catch (e) { console.warn(e); }
+        }
 
         function toggleUserMenu() {
             const dropdown = document.getElementById('user-dropdown');
@@ -222,18 +259,19 @@
                             </div>
                             <div class="text-right flex flex-col items-end gap-3 min-w-[200px]">
                                 <div class="text-center bg-gray-50 p-6 rounded-3xl border border-gray-100 w-full mb-2 group-hover:bg-[#0f172a] transition-all duration-500">
-                                    <div class="text-4xl font-900 leading-none group-hover:text-white transition-colors">${totalVotos}</div>
+                                    <div id="count-${vote.id}" class="text-4xl font-900 leading-none group-hover:text-white transition-colors">${totalVotos}</div>
                                     <div class="text-[9px] font-black text-gray-400 uppercase tracking-widest mt-2 group-hover:text-[#fba931]">Votos Totales</div>
                                 </div>
+                                <div class="flex flex-col w-full gap-2">
+                                <button onclick="showResults('${vote.id}', '${vote.title}')" class="w-full bg-white text-[#0f172a] border-2 border-gray-100 px-6 py-4 rounded-2xl font-900 text-xs uppercase shadow-sm flex items-center justify-center gap-2 hover:bg-gray-50 active:scale-95 transition-all">
+                                    <span class="material-symbols-outlined text-lg">${isOpen ? 'monitoring' : 'analytics'}</span> ${isOpen ? 'Monitoreo en Vivo' : 'Ver Acta Final'}
+                                </button>
                                 ${isOpen ? `
-                                    <button onclick="closeVote('${vote.id}')" class="w-full bg-red-50 text-red-600 px-6 py-4 rounded-2xl font-900 text-xs uppercase hover:bg-red-500 hover:text-white transition-all border border-red-100 flex items-center justify-center gap-2 group/btn">
-                                        <span class="material-symbols-outlined text-lg group-hover/btn:rotate-90 transition-transform">close</span> Cerrar Urna
+                                    <button onclick="closeVote('${vote.id}')" class="w-full bg-red-50 text-red-600 px-6 py-2 rounded-xl font-900 text-[10px] uppercase hover:bg-red-500 hover:text-white transition-all border border-red-100 flex items-center justify-center gap-2 group/btn">
+                                        <span class="material-symbols-outlined text-sm">close</span> Cerrar Urna
                                     </button>
-                                ` : `
-                                    <button onclick="showResults('${vote.id}', '${vote.title}')" class="w-full bg-[#fba931] text-[#0f172a] px-6 py-4 rounded-2xl font-900 text-xs uppercase shadow-lg flex items-center justify-center gap-2 hover:brightness-110 active:scale-95 transition-all">
-                                        <span class="material-symbols-outlined text-lg">analytics</span> Ver Acta Final
-                                    </button>
-                                `}
+                                ` : ''}
+                                </div>
                             </div>
                         </div>
                     `;
@@ -245,49 +283,78 @@
         }
 
         async function showResults(voteId, title) {
+            activeVoteId = voteId;
+            document.getElementById('results-title').innerText = title;
+            resultsModal.classList.remove('hidden');
+            await refreshActiveResults(voteId);
+        }
+
+        async function refreshActiveResults(voteId) {
             try {
-                // Obtener opciones y votos de esta urna
                 const [optionsRes, ballotsRes] = await Promise.all([
                     supabaseClient.from('vote_options').select('*').eq('vote_id', voteId),
                     supabaseClient.from('ballots').select('option_id').eq('vote_id', voteId)
                 ]);
 
                 const options = optionsRes.data;
-                const totalBallots = ballotsRes.data.length;
+                const ballots = ballotsRes.data;
+                const totalBallots = ballots.length;
 
-                // Contar por opción
-                const counts = ballotsRes.data.reduce((acc, b) => {
+                const counts = ballots.reduce((acc, b) => {
                     acc[b.option_id] = (acc[b.option_id] || 0) + 1;
                     return acc;
                 }, {});
 
-                document.getElementById('results-title').innerText = title;
-                document.getElementById('results-meta').innerText = `Escrutinio oficial — Urna ${voteId.split('-')[0]}`;
+                document.getElementById('results-meta').innerText = `Escrutinio — Urna ${voteId.split('-')[0]}`;
                 document.getElementById('total-results-votos').innerText = totalBallots;
 
-                const content = document.getElementById('results-content');
-                content.innerHTML = options.sort((a, b) => (counts[b.id] || 0) - (counts[a.id] || 0)).map(opt => {
-                    const count = counts[opt.id] || 0;
-                    const percent = totalBallots > 0 ? Math.round((count / totalBallots) * 100) : 0;
+                const sortedOptions = options.sort((a, b) => (counts[b.id] || 0) - (counts[a.id] || 0));
+                const labels = sortedOptions.map(o => o.option_text);
+                const dataValues = sortedOptions.map(o => counts[o.id] || 0);
 
-                    return `
-                        <div>
-                            <div class="flex justify-between items-end mb-2">
-                                <span class="text-xs font-black uppercase text-[#0f172a] tracking-wider">${opt.option_text}</span>
-                                <span class="text-[10px] font-black text-gray-400 capitalize">${count} votos (${percent}%)</span>
-                            </div>
-                            <div class="h-4 bg-gray-100 rounded-full overflow-hidden border border-gray-50 flex">
-                                <div class="bg-gradient-to-r from-[#0f172a] to-[#fba931] transition-all duration-1000" style="width: ${percent}%"></div>
-                            </div>
-                        </div>
-                    `;
-                }).join('');
-
-                resultsModal.classList.remove('hidden');
-            } catch (err) { alert(err.message); }
+                if (resultsChart) {
+                    resultsChart.data.labels = labels;
+                    resultsChart.data.datasets[0].data = dataValues;
+                    resultsChart.update();
+                } else {
+                    const ctx = document.getElementById('resultsChart').getContext('2d');
+                    resultsChart = new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: labels,
+                            datasets: [{
+                                label: 'Votos',
+                                data: dataValues,
+                                backgroundColor: sortedOptions.map((_, i) => i === 0 ? '#fba931' : '#0f172a'),
+                                borderRadius: 8,
+                                borderSkipped: false,
+                            }]
+                        },
+                        options: {
+                            indexAxis: 'y',
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: { display: false }
+                            },
+                            scales: {
+                                x: { beginAtZero: true, grid: { display: false }, ticks: { font: { weight: 'bold' } } },
+                                y: { grid: { display: false }, ticks: { font: { weight: 'bold' } } }
+                            }
+                        }
+                    });
+                }
+            } catch (err) { console.error(err); }
         }
 
-        function closeResultsModal() { resultsModal.classList.add('hidden'); }
+        function closeResultsModal() {
+            resultsModal.classList.add('hidden');
+            activeVoteId = null;
+            if (resultsChart) {
+                resultsChart.destroy();
+                resultsChart = null;
+            }
+        }
 
         function openVoteModal() {
             document.getElementById('vote-form').reset();

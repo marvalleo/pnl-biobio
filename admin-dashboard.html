@@ -52,12 +52,37 @@
     </nav>
 
     <main class="max-w-7xl mx-auto px-6 py-10">
-        <h1 class="text-3xl font-900 uppercase mb-8">Gestión Regional</h1>
+        <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
+            <div>
+                <span id="welcome-msg"
+                    class="text-[11px] font-black uppercase text-[#fba931] tracking-[0.3em]">Cargando...</span>
+                <h1 class="text-3xl font-900 uppercase">Gestión Central</h1>
+            </div>
+
+            <!-- Stats Summary -->
+            <div class="flex gap-4">
+                <div
+                    class="bg-white px-6 py-3 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center min-w-[120px]">
+                    <span id="stat-users" class="text-xl font-900 leading-none">...</span>
+                    <span class="text-[9px] font-black uppercase text-gray-400 mt-1">Militantes</span>
+                </div>
+                <div
+                    class="bg-white px-6 py-3 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center min-w-[120px]">
+                    <span id="stat-courses" class="text-xl font-900 leading-none">...</span>
+                    <span class="text-[9px] font-black uppercase text-gray-400 mt-1">Cursos</span>
+                </div>
+                <div
+                    class="bg-white px-6 py-3 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center min-w-[120px]">
+                    <span id="stat-ballots" class="text-xl font-900 leading-none">...</span>
+                    <span class="text-[9px] font-black uppercase text-gray-400 mt-1">Votaciones</span>
+                </div>
+            </div>
+        </div>
 
         <div class="grid md:grid-cols-3 gap-6">
             <!-- Módulo Forja -->
             <a href="admin-forja.html" id="mod-forja"
-                class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 hover:shadow-xl transition-all group">
+                class="bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-100 hover:shadow-2xl hover:scale-[1.02] transition-all group">
                 <div
                     class="w-14 h-14 bg-blue-50 rounded-2xl flex items-center justify-center mb-6 text-[#0f172a] group-hover:bg-[#0f172a] group-hover:text-white transition-colors">
                     <span class="material-symbols-outlined text-3xl">school</span>
@@ -68,7 +93,7 @@
 
             <!-- Módulo Votos -->
             <a href="admin-votos.html" id="mod-votos"
-                class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 hover:shadow-xl transition-all group">
+                class="bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-100 hover:shadow-2xl hover:scale-[1.02] transition-all group">
                 <div
                     class="w-14 h-14 bg-blue-50 rounded-2xl flex items-center justify-center mb-6 text-[#0f172a] group-hover:bg-[#0f172a] group-hover:text-white transition-colors">
                     <span class="material-symbols-outlined text-3xl">how_to_vote</span>
@@ -79,7 +104,7 @@
 
             <!-- Módulo Foros -->
             <a href="admin-foros.html" id="mod-foros"
-                class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 hover:shadow-xl transition-all group">
+                class="bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-100 hover:shadow-2xl hover:scale-[1.02] transition-all group">
                 <div
                     class="w-14 h-14 bg-blue-50 rounded-2xl flex items-center justify-center mb-6 text-[#0f172a] group-hover:bg-[#0f172a] group-hover:text-white transition-colors">
                     <span class="material-symbols-outlined text-3xl">forum</span>
@@ -90,7 +115,7 @@
 
             <!-- Módulo Usuarios (NUEVO) -->
             <a href="admin-usuarios.html" id="mod-usuarios"
-                class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 hover:shadow-xl transition-all group border-l-4 border-[#fba931]">
+                class="bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-100 hover:shadow-2xl hover:scale-[1.02] transition-all group border-l-4 border-[#fba931]">
                 <div
                     class="w-14 h-14 bg-yellow-50 rounded-2xl flex items-center justify-center mb-6 text-[#fba931] group-hover:bg-[#fba931] group-hover:text-white transition-colors">
                     <span class="material-symbols-outlined text-3xl">group</span>
@@ -140,7 +165,47 @@
             });
 
             initNavbar();
+            loadDashboardStats();
         });
+
+        async function loadDashboardStats() {
+            try {
+                // Total Militantes
+                const { count: userCount, error: userErr } = await supabaseClient
+                    .from('profiles')
+                    .select('*', { count: 'exact', head: true });
+
+                // Total Cursos
+                const { count: courseCount, error: courseErr } = await supabaseClient
+                    .from('courses')
+                    .select('*', { count: 'exact', head: true });
+
+                // Total Votaciones
+                const { count: ballotCount, error: ballotErr } = await supabaseClient
+                    .from('ballots')
+                    .select('*', { count: 'exact', head: true });
+
+                if (userErr) console.error("Error militantes:", userErr);
+                if (courseErr) console.error("Error cursos:", courseErr);
+                if (ballotErr) console.error("Error votaciones:", ballotErr);
+
+                document.getElementById('stat-users').innerText = userCount ?? 0;
+                document.getElementById('stat-courses').innerText = courseCount ?? 0;
+                document.getElementById('stat-ballots').innerText = ballotCount ?? 0;
+
+                // Saludo personalizado
+                const profile = JSON.parse(sessionStorage.getItem('pnl_profile'));
+                if (profile && profile.full_name) {
+                    const firstName = profile.full_name.split(' ')[0];
+                    document.getElementById('welcome-msg').innerText = `Hola, ${firstName} — Estado Regional`;
+                } else {
+                    document.getElementById('welcome-msg').innerText = `Estado Regional de la Gestión`;
+                }
+
+            } catch (err) {
+                console.error("Error cargando estadísticas:", err);
+            }
+        }
     </script>
 </body>
 

@@ -61,6 +61,43 @@
                 box-shadow: 0 0 0 0 rgba(251, 169, 49, 0);
             }
         }
+
+        .badge-bronze {
+            background: #cd7f32;
+            color: white;
+        }
+
+        .badge-silver {
+            background: #c0c0c0;
+            color: #333;
+        }
+
+        .badge-gold {
+            background: #ffd700;
+            color: #0f172a;
+        }
+
+        .certificate-btn {
+            background: linear-gradient(135deg, #fba931 0%, #d97706 100%);
+            box-shadow: 0 4px 15px rgba(251, 169, 49, 0.4);
+            animation: bounceIn 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        @keyframes bounceIn {
+            0% {
+                transform: scale(0.5);
+                opacity: 0;
+            }
+
+            70% {
+                transform: scale(1.1);
+            }
+
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
     </style>
 </head>
 
@@ -90,6 +127,14 @@
             </div>
         </div>
 
+        <div id="certificate-container" class="px-6 py-4 bg-yellow-50 border-b border-yellow-100 hidden">
+            <button onclick="generateCertificate()"
+                class="certificate-btn w-full py-3 rounded-xl flex items-center justify-center gap-3 text-[#0f172a] font-900 text-xs uppercase tracking-widest transition-all hover:scale-[1.02] active:scale-95">
+                <span class="material-symbols-outlined">military_tech</span>
+                Descargar Diploma
+            </button>
+        </div>
+
         <div id="lessons-list" class="flex-1 overflow-y-auto p-4 space-y-2 scrollbar-hide">
             <div class="p-8 text-center text-gray-400">
                 <div class="animate-spin h-6 w-6 border-2 border-gray-200 border-t-[#fba931] rounded-full mx-auto mb-4">
@@ -116,9 +161,7 @@
         <!-- Reproductor de Video -->
         <div id="video-wrapper" class="hidden flex-1 flex flex-col">
             <div class="bg-black flex-1 relative flex items-center justify-center">
-                <iframe id="video-player" class="w-full h-full" src="" frameborder="0"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowfullscreen></iframe>
+                <div id="video-player" class="w-full h-full"></div>
             </div>
         </div>
 
@@ -196,7 +239,10 @@
         </div>
     </main>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://www.youtube.com/iframe_api"></script>
     <script src="supabase-config.js"></script>
     <script src="shared.js"></script>
     <script>
@@ -207,6 +253,16 @@
         let profileId = null;
         let currentCourseId = localStorage.getItem('current_course_id');
         let heartbeatInterval = null;
+        let ytPlayer = null;
+        let videoProgressInterval = null;
+
+        function getYoutubeID(url) {
+            const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+            const match = url.match(regExp);
+            return (match && match[2].length === 11) ? match[2] : null;
+        }
+
+        window.onYouTubeIframeAPIReady = () => { console.log("📺 YouTube Player API Ready"); };
 
         window.addEventListener('DOMContentLoaded', async () => {
             if (!window.isSupabaseInit) {
@@ -265,16 +321,20 @@
 
                 const { data: progress } = await supabaseClient
                     .from('user_progress')
-                    .select('lesson_id, minutes_watched')
+                    .select('lesson_id, minutes_watched, last_video_second')
                     .eq('profile_id', profileId);
 
-                // Store minutes watched for the heartbeat
+                // Store progress maps
                 window.lessonProgressMap = {};
-                progress.forEach(p => {
-                    window.lessonProgressMap[p.lesson_id] = p.minutes_watched || 0;
-                });
+                window.videoSecondsMap = {};
 
-                completedLessonIds = new Set(progress.map(p => p.lesson_id));
+                if (progress) {
+                    progress.forEach(p => {
+                        window.lessonProgressMap[p.lesson_id] = p.minutes_watched || 0;
+                        window.videoSecondsMap[p.lesson_id] = p.last_video_second || 0;
+                    });
+                    completedLessonIds = new Set(progress.filter(p => (p.is_completed || false)).map(p => p.lesson_id));
+                }
 
                 renderLessons();
                 updateProgress();
@@ -292,6 +352,13 @@
                 const isCompleted = completedLessonIds.has(lesson.id);
                 const isActive = index === currentLessonIndex;
 
+                // Malla Curricular Visual (Badge por título de curso)
+                const courseTitle = document.getElementById('course-title').textContent.toLowerCase();
+                let levelBadge = '';
+                if (courseTitle.includes('bronce')) levelBadge = '<span class="px-2 py-0.5 rounded text-[7px] font-black uppercase tracking-widest badge-bronze">Bronce</span>';
+                else if (courseTitle.includes('plata')) levelBadge = '<span class="px-2 py-0.5 rounded text-[7px] font-black uppercase tracking-widest badge-silver">Plata</span>';
+                else if (courseTitle.includes('oro')) levelBadge = '<span class="px-2 py-0.5 rounded text-[7px] font-black uppercase tracking-widest badge-gold">Oro</span>';
+
                 return `
                     <div onclick="selectLesson(${index})" 
                          class="cursor-pointer p-4 rounded-2xl transition-all border-2 ${isActive ? 'bg-blue-50 border-[#fba931]' : 'bg-white border-transparent hover:border-blue-50 group'}">
@@ -300,7 +367,10 @@
                                 ${isCompleted ? 'check_circle' : 'radio_button_unchecked'}
                             </span>
                             <div class="flex-1 overflow-hidden">
-                                <p class="text-[8px] font-black ${isActive ? 'text-[#fba931]' : 'text-gray-300'} uppercase tracking-[0.2em] mb-0.5">Lección ${lesson.order}</p>
+                                <div class="flex items-center justify-between gap-2 mb-0.5">
+                                    <p class="text-[8px] font-black ${isActive ? 'text-[#fba931]' : 'text-gray-300'} uppercase tracking-[0.2em]">Lección ${lesson.order}</p>
+                                    ${levelBadge}
+                                </div>
                                 <h3 class="font-800 text-[11px] uppercase leading-tight truncate transition-colors ${isActive ? 'text-[#0f172a]' : 'text-gray-500 group-hover:text-[#0f172a]'}">
                                     ${lesson.title}
                                 </h3>
@@ -322,6 +392,14 @@
             if (bar) bar.style.width = `${percent}%`;
             const text = document.getElementById('course-progress-text');
             if (text) text.textContent = `${percent}% Completado`;
+
+            // Mostrar botón de certificado si está al 100%
+            const certBox = document.getElementById('certificate-container');
+            if (percent >= 100) {
+                certBox.classList.remove('hidden');
+            } else {
+                certBox.classList.add('hidden');
+            }
         }
 
         async function selectLesson(index) {
@@ -344,7 +422,14 @@
 
             if (lesson.delivery_type === 'recorded') {
                 document.getElementById('video-wrapper').classList.remove('hidden');
-                document.getElementById('video-player').src = lesson.content_url;
+                const ytId = getYoutubeID(lesson.content_url);
+                const startTime = window.videoSecondsMap[lesson.id] || 0;
+
+                if (ytId) {
+                    initYoutubePlayer(ytId, startTime);
+                } else {
+                    document.getElementById('video-player').innerHTML = `<iframe class="w-full h-full" src="${lesson.content_url}" frameborder="0" allowfullscreen></iframe>`;
+                }
                 startAttendanceHeartbeat(lesson.id);
             } else {
                 stopAttendanceHeartbeat();
@@ -440,11 +525,23 @@
 
                 // Sync with DB
                 try {
+                    const currentSec = (ytPlayer && typeof ytPlayer.getCurrentTime === 'function') ? Math.floor(ytPlayer.getCurrentTime()) : (window.videoSecondsMap[lessonId] || 0);
+
                     const { data: currentProg } = await supabaseClient.from('user_progress').select('id').match({ profile_id: profileId, lesson_id: lessonId }).single();
                     if (currentProg) {
-                        await supabaseClient.from('user_progress').update({ minutes_watched: minutes, last_heartbeat: new Date().toISOString() }).eq('id', currentProg.id);
+                        await supabaseClient.from('user_progress').update({
+                            minutes_watched: minutes,
+                            last_heartbeat: new Date().toISOString(),
+                            last_video_second: currentSec
+                        }).eq('id', currentProg.id);
                     } else {
-                        await supabaseClient.from('user_progress').insert([{ profile_id: profileId, lesson_id: lessonId, minutes_watched: minutes, is_completed: false }]);
+                        await supabaseClient.from('user_progress').insert([{
+                            profile_id: profileId,
+                            lesson_id: lessonId,
+                            minutes_watched: minutes,
+                            last_video_second: currentSec,
+                            is_completed: false
+                        }]);
                     }
                 } catch (e) { console.error("Heartbeat sync error", e); }
             }, 60000); // Cada 1 minuto
@@ -452,8 +549,67 @@
 
         function stopAttendanceHeartbeat() {
             if (heartbeatInterval) clearInterval(heartbeatInterval);
-            document.getElementById('attendance-tracking').classList.add('hidden');
+            if (videoProgressInterval) clearInterval(videoProgressInterval);
+            if (ytPlayer && typeof ytPlayer.destroy === 'function') {
+                ytPlayer.destroy();
+                ytPlayer = null;
+            }
         }
+
+        function initYoutubePlayer(videoId, startTime) {
+            if (ytPlayer && typeof ytPlayer.destroy === 'function') {
+                ytPlayer.destroy();
+            }
+
+            ytPlayer = new YT.Player('video-player', {
+                height: '100%',
+                width: '100%',
+                videoId: videoId,
+                playerVars: {
+                    'autoplay': 1,
+                    'start': startTime,
+                    'modestbranding': 1,
+                    'rel': 0
+                },
+                events: {
+                    'onStateChange': (event) => {
+                        if (event.data === YT.PlayerState.PLAYING) {
+                            startVideoProgressSync();
+                        } else if (event.data === YT.PlayerState.PAUSED || event.data === YT.PlayerState.ENDED) {
+                            stopVideoProgressSync();
+                            saveVideoSeconds();
+                        }
+                    }
+                }
+            });
+        }
+
+        function startVideoProgressSync() {
+            if (videoProgressInterval) clearInterval(videoProgressInterval);
+            videoProgressInterval = setInterval(saveVideoSeconds, 30000); // Guardar cada 30 segundos de reproducción
+        }
+
+        function stopVideoProgressSync() {
+            if (videoProgressInterval) clearInterval(videoProgressInterval);
+        }
+
+        async function saveVideoSeconds() {
+            if (!ytPlayer || typeof ytPlayer.getCurrentTime !== 'function' || currentLessonIndex === -1) return;
+
+            const lessonId = currentLessons[currentLessonIndex].id;
+            const currentSec = Math.floor(ytPlayer.getCurrentTime());
+            window.videoSecondsMap[lessonId] = currentSec;
+
+            try {
+                const { data: currentProg } = await supabaseClient.from('user_progress').select('id').match({ profile_id: profileId, lesson_id: lessonId }).single();
+                if (currentProg) {
+                    await supabaseClient.from('user_progress').update({ last_video_second: currentSec }).eq('id', currentProg.id);
+                } else {
+                    await supabaseClient.from('user_progress').insert([{ profile_id: profileId, lesson_id: lessonId, last_video_second: currentSec, is_completed: false }]);
+                }
+            } catch (e) { console.warn("Error guardando segundos de video:", e); }
+        }
+
 
         function updateButtonUI(isCompleted) {
             const btn = document.getElementById('btn-complete');
@@ -496,6 +652,78 @@
             const lesson = currentLessons[currentLessonIndex];
             if (lesson && lesson.location) {
                 window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(lesson.location)}`, '_blank');
+            }
+        }
+
+        async function generateCertificate() {
+            const { jsPDF } = window.jspdf;
+            const courseTitle = document.getElementById('course-title').textContent;
+            const profile = JSON.parse(sessionStorage.getItem('pnl_profile'));
+            const studentName = (profile?.full_name || 'Militante Libertario').toUpperCase();
+
+            showToast("Generando tu diploma premium...", "info");
+
+            // Crear un contenedor temporal para el renderizado
+            const certDiv = document.createElement('div');
+            certDiv.style.width = '1200px';
+            certDiv.style.height = '850px';
+            certDiv.style.position = 'fixed';
+            certDiv.style.top = '-5000px';
+            certDiv.style.left = '-5000px';
+            certDiv.style.background = '#fff';
+            certDiv.style.fontFamily = 'Montserrat, sans-serif';
+            certDiv.innerHTML = `
+                <div style="width: 100%; height: 100%; border: 40px solid #0f172a; padding: 60px; box-sizing: border-box; position: relative;">
+                    <div style="position: absolute; top: 0; right: 0; width: 300px; height: 300px; background: #fba931; clip-path: polygon(100% 0, 0 0, 100% 100%); opacity: 0.1;"></div>
+                    <div style="position: absolute; bottom: 0; left: 0; width: 300px; height: 300px; background: #0f172a; clip-path: polygon(0 100%, 0 0, 100% 100%); opacity: 0.05;"></div>
+                    
+                    <div style="text-align: center; border: 4px solid #fba931; height: 100%; padding: 40px; box-sizing: border-box;">
+                        <img src="wp-content/uploads/2026/pnl-del-biobio01.png" style="height: 120px; margin-bottom: 20px;">
+                        
+                        <h1 style="font-size: 24px; font-weight: 900; color: #0f172a; margin: 0; text-transform: uppercase; letter-spacing: 5px;">Certificado de Excelencia</h1>
+                        <p style="font-size: 14px; font-weight: 700; color: #fba931; text-transform: uppercase; margin-bottom: 40px;">Academia Forja Libertaria - Séptima Región</p>
+                        
+                        <p style="font-size: 18px; color: #666;">Por cuanto ha demostrado dedicación y compromiso con los ideales de libertad,</p>
+                        <p style="font-size: 18px; color: #666; margin-bottom: 30px;">se otorga el presente diploma a:</p>
+                        
+                        <h2 style="font-size: 48px; font-weight: 900; color: #0f172a; margin: 0 0 10px 0; font-family: 'Playfair Display', serif;">${studentName}</h2>
+                        <div style="width: 400px; height: 2px; background: #fba931; margin: 0 auto 40px auto;"></div>
+                        
+                        <p style="font-size: 18px; color: #666;">Por completar satisfactoriamente el programa de formación académica:</p>
+                        <h3 style="font-size: 28px; font-weight: 800; color: #0f172a; text-transform: uppercase;">${courseTitle}</h3>
+                        
+                        <div style="margin-top: 60px; display: flex; justify-content: space-around; align-items: flex-end;">
+                            <div style="text-align: center;">
+                                <div style="width: 200px; border-bottom: 1px solid #ccc; margin-bottom: 10px;"></div>
+                                <p style="font-size: 10px; font-weight: 900; color: #0f172a; text-transform: uppercase;">Directiva Regional</p>
+                            </div>
+                            <div style="text-align: center;">
+                                <img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=CERT-${Date.now()}" style="height: 80px; margin-bottom: 10px;">
+                                <p style="font-size: 8px; color: #999;">VALIDACIÓN DIGITAL</p>
+                            </div>
+                        </div>
+                        
+                        <p style="position: absolute; bottom: 80px; font-size: 12px; color: #999; left: 0; right: 0; text-align: center;">Fecha de emisión: ${new Date().toLocaleDateString('es-CL')}</p>
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(certDiv);
+
+            try {
+                const canvas = await html2canvas(certDiv, { scale: 2 });
+                const imgData = canvas.toDataURL('image/png');
+
+                const pdf = new jsPDF('l', 'px', [1200, 850]);
+                pdf.addImage(imgData, 'PNG', 0, 0, 1200, 850);
+                pdf.save(`DIPLOMA-PNL-${studentName.replace(/\s+/g, '-')}.pdf`);
+
+                showToast("¡Diploma descargado! Felicitaciones.", "success");
+            } catch (err) {
+                console.error("Error PDF:", err);
+                showToast("Error al generar el PDF.", "error");
+            } finally {
+                certDiv.remove();
             }
         }
     </script>
