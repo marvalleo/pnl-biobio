@@ -177,7 +177,7 @@
         let allUsers = [];
 
         window.addEventListener('DOMContentLoaded', async () => {
-            if (!window.supabaseClient) {
+            if (!window.isSupabaseInit) {
                 showToast("Error de acceso a datos centrales.", "error");
                 return;
             }

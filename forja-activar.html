@@ -102,6 +102,10 @@
 
     <script>
         async function handleActivation() {
+            if (!window.isSupabaseInit) {
+                showFeedback('Conectando con la base de datos... Por favor, intenta de nuevo en un momento.', 'info');
+                return;
+            }
             const email = document.getElementById('email-input').value.trim();
             const consent = document.getElementById('consent-check').checked;
             const btn = document.querySelector('button');

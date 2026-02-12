@@ -209,7 +209,7 @@
         let heartbeatInterval = null;
 
         window.addEventListener('DOMContentLoaded', async () => {
-            if (!window.supabaseClient) {
+            if (!window.isSupabaseInit) {
                 showToast("Error de inicialización del aula virtual.", "error");
                 return;
             }

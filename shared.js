@@ -137,11 +137,19 @@ window.addEventListener('click', (e) => {
 });
 
 async function logout() {
-    if (window.supabaseClient) {
-        await supabaseClient.auth.signOut();
+    try {
+        if (window.isSupabaseInit && window.supabaseClient) {
+            await window.supabaseClient.auth.signOut();
+        }
+    } catch (err) {
+        console.warn("Error durante signOut de Supabase:", err);
     }
+
+    // Limpieza total de almacenamiento
     localStorage.clear();
     sessionStorage.clear();
+
+    // Redirigir siempre al inicio
     window.location.href = 'index.html';
 }
 

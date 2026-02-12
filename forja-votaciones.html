@@ -113,7 +113,7 @@
         let profileId = null;
 
         window.addEventListener('DOMContentLoaded', async () => {
-            if (!window.supabaseClient) {
+            if (!window.isSupabaseInit) {
                 showToast("Error de inicialización de la urna digital.");
                 return;
             }
