@@ -78,6 +78,7 @@
                 <a href="forja-academia.html" class="nav-link text-gray-400">Academia</a>
                 <a href="forja-eventos.html" class="nav-link text-gray-400">Eventos</a>
                 <a href="forja-votaciones.html" class="nav-link active">Votaciones</a>
+                <a href="forja-foros.html" class="nav-link text-gray-400">Foros</a>
 
                 <div id="admin-link-container" class="hidden">
                     <a href="admin-dashboard.html"
@@ -176,6 +177,13 @@
         let profileId = null;
 
         window.addEventListener('DOMContentLoaded', async () => {
+            // Esperar a que Supabase se inicialice (máximo 2 segundos)
+            let attempts = 0;
+            while (!window.isSupabaseInit && attempts < 20) {
+                await new Promise(r => setTimeout(r, 100));
+                attempts++;
+            }
+
             if (!window.isSupabaseInit) {
                 showToast("Error de inicialización de la urna digital.");
                 return;

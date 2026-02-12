@@ -78,6 +78,7 @@
                 <a href="forja-academia.html" class="nav-link active">Academia</a>
                 <a href="forja-eventos.html" class="nav-link text-gray-400">Eventos</a>
                 <a href="forja-votaciones.html" class="nav-link text-gray-400">Votaciones</a>
+                <a href="forja-foros.html" class="nav-link text-gray-400">Foros</a>
 
                 <div id="admin-link-container" class="hidden">
                     <a href="admin-dashboard.html"
@@ -138,6 +139,13 @@
     <script src="shared.js"></script>
     <script>
         window.addEventListener('DOMContentLoaded', async () => {
+            // Esperar a que Supabase se inicialice (máximo 2 segundos)
+            let attempts = 0;
+            while (!window.isSupabaseInit && attempts < 20) {
+                await new Promise(r => setTimeout(r, 100));
+                attempts++;
+            }
+
             if (!window.isSupabaseInit) {
                 console.error("Supabase no inicializado.");
                 return;

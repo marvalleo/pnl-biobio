@@ -121,13 +121,38 @@
     <script src="supabase-config.js"></script>
     <script src="shared.js"></script>
     <script>
-        const urlParams = new URLSearchParams(window.location.search);
-        const topicId = urlParams.get('id');
+        let topicId = null;
         let userProfile = null;
 
         window.addEventListener('DOMContentLoaded', async () => {
-            if (!window.isSupabaseInit || !topicId) {
-                window.location.href = 'forja-foros.html';
+            const urlParams = new URLSearchParams(window.location.search);
+            topicId = urlParams.get('id');
+
+            if (!topicId) {
+                topicId = sessionStorage.getItem('current_topic_id');
+                console.log("🔄 Backup ID detectado:", topicId);
+            }
+
+            console.log("🔍 URL Search:", window.location.search);
+            console.log("🔍 Final Topic ID:", topicId);
+
+            // Esperar a que Supabase se inicialice (máximo 6 segundos)
+            let attempts = 0;
+            while (!window.isSupabaseInit && attempts < 60) {
+                await new Promise(r => setTimeout(r, 100));
+                attempts++;
+            }
+
+            if (!topicId || topicId === 'undefined' || topicId === 'null') {
+                showToast("Referencia al debate no encontrada (ID Inválido).", "error");
+                console.error("ID de debate no válido detectado:", topicId);
+                setTimeout(() => window.location.href = 'forja-foros.html', 2000);
+                return;
+            }
+
+            if (!window.isSupabaseInit) {
+                showToast("Error de conexión: El servidor no responde.", "warning");
+                setTimeout(() => window.location.href = 'forja-foros.html', 3000);
                 return;
             }
 
@@ -141,10 +166,12 @@
             await loadTopicDetails();
             await loadPosts();
 
-            // Suscripción a nuevos posts
-            supabaseClient.channel('new_posts')
-                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'forum_posts', filter: `topic_id=eq.${topicId}` }, () => loadPosts())
-                .subscribe();
+            // Suscripción a nuevos posts si supabaseClient está listo
+            if (window.isSupabaseInit && supabaseClient.channel) {
+                supabaseClient.channel('new_posts')
+                    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'forum_posts', filter: `topic_id=eq.${topicId}` }, () => loadPosts())
+                    .subscribe();
+            }
         });
 
         async function loadTopicDetails() {
@@ -231,7 +258,7 @@
             container.innerHTML = posts.map(post => {
                 const initials = post.profiles?.full_name?.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() || '??';
                 const isDirectiva = ['super_admin', 'admin_forja'].includes(post.profiles?.role);
-                const isMe = post.profile_id === userProfile.id;
+                const isMe = userProfile && post.profile_id === userProfile.id;
                 const userRank = ranks[post.profiles.id] || 'Iniciado';
 
                 return `

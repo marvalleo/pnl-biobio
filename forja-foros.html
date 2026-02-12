@@ -79,12 +79,19 @@
                 </div>
             </div>
 
-            <div class="flex items-center gap-8">
+            <div class="flex items-center gap-4 lg:gap-8">
+                <a href="forja-academia.html" class="nav-link text-gray-400">Academia</a>
+                <a href="forja-eventos.html" class="nav-link text-gray-400">Eventos</a>
+                <a href="forja-votaciones.html" class="nav-link text-gray-400">Votaciones</a>
+                <a href="forja-foros.html" class="nav-link active">Foros</a>
+
                 <div id="admin-link-container" class="hidden">
                     <a href="admin-dashboard.html"
-                        class="text-[10px] font-black uppercase text-[#fba931] hover:underline">Administración</a>
+                        class="text-[9px] font-black uppercase bg-[#0f172a] text-white px-3 py-2 rounded-lg hover:bg-black transition-colors flex items-center gap-1.5">
+                        <span class="material-symbols-outlined text-sm">admin_panel_settings</span> Admin
+                    </a>
                 </div>
-                <div id="user-menu-container" class="flex items-center gap-4">
+                <div id="user-menu-container" class="flex items-center">
                     <div class="w-10 h-10 rounded-full bg-gray-100 animate-pulse"></div>
                 </div>
             </div>
@@ -251,7 +258,20 @@
         let userProfile = null;
 
         window.addEventListener('DOMContentLoaded', async () => {
-            if (!window.isSupabaseInit) return;
+            // Esperar a que Supabase se inicialice (máximo 6 segundos)
+            let attempts = 0;
+            while (!window.isSupabaseInit && attempts < 60) {
+                await new Promise(r => setTimeout(r, 100));
+                attempts++;
+            }
+
+            if (!window.isSupabaseInit) {
+                showToast("Conexión lenta: Intentando reconectar...", "warning");
+                console.warn("Timeout de inicialización de Supabase en forja-foros.");
+                // Dar un margen extra antes de rendirse
+                await new Promise(r => setTimeout(r, 2000));
+                if (!window.isSupabaseInit) return;
+            }
 
             const { data: { user } } = await supabaseClient.auth.getUser();
             if (!user) { window.location.href = 'forja-login.html'; return; }
@@ -330,18 +350,24 @@
 
         async function loadTopics() {
             let query = supabaseClient.from('forum_topics').select(`
-                *,
-                profiles (id, full_name, role),
+                id, title, content, created_at, last_activity, category_id,
+                profiles:profile_id (id, full_name, role),
                 forum_votes (vote_type)
             `).order('last_activity', { ascending: false });
 
             if (currentCategoryId) query = query.eq('category_id', currentCategoryId);
 
             const { data, error } = await query;
-            if (error) { console.error(error); return; }
+            if (error) {
+                console.error("Error al cargar tópicos:", error);
+                showToast("Error al obtener debates.", "error");
+                return;
+            }
 
-            // Optimizador de Rangos: Obtener progreso de todos los autores en una sola pasada
-            const profileIds = [...new Set(data.map(t => t.profiles.id))];
+            console.log("🔍 Datos de debates recibidos:", data);
+
+            // Optimizador de Rangos: Obtener progreso de todos los autores de forma segura
+            const profileIds = [...new Set(data.map(t => t.profiles?.id).filter(id => !!id))];
             const ranks = await fetchProfilesRanks(profileIds);
 
             const feed = document.getElementById('topics-feed');
@@ -355,11 +381,17 @@
                 return;
             }
 
-            feed.innerHTML = data.map(topic => {
-                const voteCount = (topic.forum_votes || []).reduce((acc, v) => acc + v.vote_type, 0);
-                const initials = topic.profiles?.full_name?.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() || '??';
-                const isDirectiva = ['super_admin', 'admin_forja'].includes(topic.profiles?.role);
-                const userRank = ranks[topic.profiles.id] || 'Iniciado';
+            feed.innerHTML = data.map(t => {
+                const tid = t.id || t['id'];
+                if (!tid) {
+                    console.error("⚠️ Topic sin ID detectado:", t);
+                    return '';
+                }
+
+                const voteCount = (t.forum_votes || []).reduce((acc, v) => acc + v.vote_type, 0);
+                const initials = t.profiles?.full_name?.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() || '??';
+                const isDirectiva = ['super_admin', 'admin_forja'].includes(t.profiles?.role);
+                const userRank = (t.profiles?.id && ranks[t.profiles.id]) ? ranks[t.profiles.id] : 'Iniciado';
 
                 const rankStyles = {
                     'Oro': 'bg-amber-100 text-amber-600 border border-amber-200',
@@ -368,37 +400,42 @@
                     'Iniciado': 'bg-gray-50 text-gray-400'
                 };
 
+                const postUrl = `forja-foros-post.html?id=${tid}`;
+                console.log(`🔗 Generando link para "${t.title}": ${postUrl}`);
+
                 return `
                     <article class="premium-card p-8 flex gap-6 hover:shadow-2xl transition-all group">
                         <div class="flex flex-col items-center gap-1 shrink-0">
-                            <button onclick="vote('${topic.id}', 1)" class="material-symbols-outlined upvote-btn text-gray-300 transition-colors">arrow_drop_up</button>
+                            <button onclick="vote('${tid}', 1)" class="material-symbols-outlined upvote-btn text-gray-300 transition-colors">arrow_drop_up</button>
                             <span class="text-sm font-black text-[#0f172a]">${voteCount}</span>
-                            <button onclick="vote('${topic.id}', -1)" class="material-symbols-outlined downvote-btn text-gray-300 transition-colors">arrow_drop_down</button>
+                            <button onclick="vote('${tid}', -1)" class="material-symbols-outlined downvote-btn text-gray-300 transition-colors">arrow_drop_down</button>
                         </div>
                         
                         <div class="flex-1">
                             <div class="flex items-center gap-3 mb-3">
                                 <div class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-black text-slate-800">${initials}</div>
-                                <span class="text-[10px] font-black uppercase text-slate-800">${topic.profiles?.full_name || 'Desconocido'}</span>
+                                <span class="text-[10px] font-black uppercase text-slate-800">${t.profiles?.full_name || 'Desconocido'}</span>
                                 <span class="w-1.5 h-1.5 rounded-full bg-gray-200"></span>
-                                <span class="text-[10px] font-bold text-gray-400 uppercase">${new Date(topic.created_at).toLocaleDateString()}</span>
+                                <span class="text-[10px] font-bold text-gray-400 uppercase">${new Date(t.created_at).toLocaleDateString()}</span>
                                 
                                 <div class="flex gap-2 ml-auto">
                                     ${isDirectiva ? '<span class="bg-[#0f172a] text-[#fba931] text-[8px] font-black px-2 py-0.5 rounded uppercase tracking-tighter">Directiva</span>' : ''}
-                                    <span class="${rankStyles[userRank]} text-[8px] font-black px-2 py-0.5 rounded uppercase tracking-tighter flex items-center gap-1">
+                                    <span class="${rankStyles[userRank]} text-[8px] font-black px-3 py-1 rounded-full uppercase tracking-tighter flex items-center gap-1">
                                         <span class="material-symbols-outlined text-[10px]">workspace_premium</span> ${userRank}
                                     </span>
                                 </div>
                             </div>
-                            <h3 onclick="window.location.href='forja-foros-post.html?id=${topic.id}'" class="text-xl font-800 text-[#0f172a] mb-4 group-hover:text-[#fba931] transition-colors leading-tight cursor-pointer">
-                                ${topic.title}
-                            </h3>
-                            <p class="text-sm text-slate-500 leading-relaxed mb-6 line-clamp-3">${topic.content}</p>
+                            <a href="${postUrl}" onclick="sessionStorage.setItem('current_topic_id', '${tid}')" class="block group">
+                                <h3 class="text-xl font-800 text-[#0f172a] mb-4 group-hover:text-[#fba931] transition-colors leading-tight cursor-pointer">
+                                    ${t.title}
+                                </h3>
+                            </a>
+                            <p class="text-sm text-slate-500 leading-relaxed mb-6 line-clamp-3">${t.content}</p>
                             <div class="flex items-center gap-6">
-                                <div onclick="window.location.href='forja-foros-post.html?id=${topic.id}'" class="flex items-center gap-2 text-gray-400">
+                                <a href="${postUrl}" onclick="sessionStorage.setItem('current_topic_id', '${tid}')" class="flex items-center gap-2 text-gray-400 hover:text-[#fba931] transition-colors">
                                     <span class="material-symbols-outlined text-lg">chat_bubble</span>
                                     <span class="text-[10px] font-black uppercase tracking-widest cursor-pointer">Ver Debate</span>
-                                </div>
+                                </a>
                             </div>
                         </div>
                     </article>
