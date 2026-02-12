@@ -324,12 +324,26 @@
                 let errorCount = 0;
 
                 for (const row of rows) {
+                    // Sanitizar claves y valores (quitar espacios, saltos de línea, etc)
+                    const cleanRow = {};
+                    Object.keys(row).forEach(key => {
+                        const cleanKey = key.trim();
+                        let value = row[key];
+                        if (typeof value === 'string') value = value.trim();
+                        cleanRow[cleanKey] = value;
+                    });
+
                     const userData = {
-                        full_name: row['Nombre Completo'] || row.full_name || row.Nombre,
-                        email: row['Email'] || row.email || row.Correo,
-                        birth_date: row['Fecha de Nacimiento'] || row.birth_date,
-                        role: row['Rol'] || row.role || 'normal'
+                        full_name: cleanRow['Nombre Completo'] || cleanRow['full_name'] || cleanRow['Nombre'],
+                        email: cleanRow['Email'] || cleanRow['email'] || cleanRow['Correo'],
+                        birth_date: cleanRow['Fecha de Nacimiento'] || cleanRow['birth_date'],
+                        role: cleanRow['Rol'] || cleanRow['role'] || 'normal'
                     };
+
+                    // Limpieza específica para Email (quitar espacios internos si existen por error de formato)
+                    if (userData.email) {
+                        userData.email = userData.email.replace(/\s+/g, '').toLowerCase();
+                    }
 
                     if (userData.full_name && userData.email) {
                         try {

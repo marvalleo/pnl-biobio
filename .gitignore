@@ -17,3 +17,6 @@ test_course.json
 courses_test.json
 profiles_test.json
 lessons_test.json
+# Node y Dependencias
+node_modules/
+package-lock.json
