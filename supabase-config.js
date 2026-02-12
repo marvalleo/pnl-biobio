@@ -10,7 +10,10 @@ window.supabaseClient = {
         getUser: async () => ({ data: { user: null }, error: null }),
         getSession: async () => ({ data: { session: null }, error: null }),
         onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => { } } } }),
-        signInWithPassword: async () => ({ data: { user: null }, error: { message: "Conectando con la base de datos..." } }),
+        signInWithPassword: async () => {
+            const reason = typeof supabase === 'undefined' ? "El SDK de Supabase no ha cargado (posible bloqueo de red)." : "Credenciales inválidas o error de red.";
+            return { data: { user: null }, error: { message: `No se puede iniciar sesión: ${reason}` } };
+        },
         signOut: async () => ({ error: null })
     },
     from: () => ({ select: () => ({ eq: () => ({ single: async () => ({ data: null, error: null }), order: async () => ({ data: [], error: null }) }) }) })
