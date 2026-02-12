@@ -187,6 +187,11 @@
         let currentMonth = new Date(2026, 1, 1); // Empezar en Feb 2026
 
         window.addEventListener('DOMContentLoaded', async () => {
+            if (!window.isSupabaseInit) {
+                console.error("Supabase no inicializado.");
+                return;
+            }
+
             const { data: { user } } = await supabaseClient.auth.getUser();
             if (!user) { window.location.href = 'forja-login.html'; return; }
 

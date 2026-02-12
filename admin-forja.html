@@ -517,6 +517,11 @@
     <script>
         // Protección de Ruta
         window.addEventListener('DOMContentLoaded', async () => {
+            if (!window.isSupabaseInit) {
+                console.error("Supabase no inicializado.");
+                return;
+            }
+
             const role = localStorage.getItem('pnl_user_role');
             if (role !== 'super_admin' && role !== 'admin_forja') {
                 showToast('Acceso no autorizado', 'error');

@@ -97,6 +97,11 @@
     <script src="shared.js"></script>
     <script>
         window.addEventListener('DOMContentLoaded', () => {
+            if (!window.isSupabaseInit) {
+                console.error("Supabase no inicializado.");
+                return;
+            }
+
             const role = localStorage.getItem('pnl_user_role');
             if (role !== 'super_admin' && role !== 'admin_foros') {
                 alert('Acceso no autorizado');
