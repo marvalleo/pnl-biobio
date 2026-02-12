@@ -73,6 +73,17 @@
                 </p>
             </div>
 
+            <div class="flex items-start gap-3 p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                <input type="checkbox" id="consent-check"
+                    class="mt-1 w-4 h-4 rounded border-gray-300 text-[#fba931] focus:ring-[#fba931] cursor-pointer">
+                <label for="consent-check"
+                    class="text-[9px] font-bold text-gray-500 uppercase leading-relaxed cursor-pointer select-none">
+                    Doy mi consentimiento explícito para el tratamiento de mis <span class="text-[#fba931]">datos
+                        sensibles (opiniones políticas)</span> de acuerdo a la <a href="privacidad.html" target="_blank"
+                        class="underline hover:text-[#0f172a]">Política de Privacidad (Ley 21.719)</a>.
+                </label>
+            </div>
+
             <button onclick="handleActivation()"
                 class="w-full bg-[#fba931] text-[#0f172a] py-4 rounded-xl font-900 uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-all shadow-lg flex items-center justify-center gap-2">
                 <span class="material-symbols-outlined">send</span> Solicitar Link de Acceso
@@ -92,12 +103,17 @@
     <script>
         async function handleActivation() {
             const email = document.getElementById('email-input').value.trim();
+            const consent = document.getElementById('consent-check').checked;
             const btn = document.querySelector('button');
             const feedbackBox = document.getElementById('feedback-message');
-            const feedbackText = feedbackBox.querySelector('.feedback-text');
 
             if (!email || !email.includes('@')) {
                 showFeedback('Por favor, ingresa un correo válido.', 'error');
+                return;
+            }
+
+            if (!consent) {
+                showFeedback('Debes aceptar la política de privacidad para continuar.', 'error');
                 return;
             }
 
