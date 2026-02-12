@@ -21,6 +21,38 @@
             background-color: #f8fafc;
             color: var(--pnl-blue);
         }
+
+        /* Utilidades de tabla compacta */
+        .compact-td {
+            padding-top: 0.5rem !important;
+            padding-bottom: 0.5rem !important;
+        }
+
+        .sort-header {
+            cursor: pointer;
+            user-select: none;
+            transition: background-color 0.2s;
+        }
+
+        .sort-header:hover {
+            background-color: #f1f5f9;
+        }
+
+        .sort-icon {
+            font-size: 14px !important;
+            vertical-align: middle;
+            margin-left: 4px;
+            opacity: 0.5;
+        }
+
+        .sort-header.active {
+            color: var(--pnl-blue);
+        }
+
+        .sort-header.active .sort-icon {
+            opacity: 1;
+            color: var(--pnl-gold);
+        }
     </style>
 </head>
 
@@ -87,19 +119,44 @@
             <table class="w-full text-left border-collapse">
                 <thead class="bg-gray-50 border-b border-gray-100">
                     <tr>
-                        <th class="px-6 py-4 text-[10px] font-black uppercase text-gray-400">Nombre Completo</th>
-                        <th class="px-6 py-4 text-[10px] font-black uppercase text-gray-400">Email</th>
-                        <th class="px-6 py-4 text-[10px] font-black uppercase text-gray-400 text-center">Cumpleaños</th>
-                        <th class="px-6 py-4 text-[10px] font-black uppercase text-gray-400">Rol</th>
-                        <th class="px-6 py-4 text-[10px] font-black uppercase text-gray-400 text-right">Acciones</th>
+                        <th onclick="toggleSort('full_name')"
+                            class="sort-header px-6 py-3 text-[10px] font-black uppercase text-gray-400"
+                            id="th-full_name">
+                            Nombre Completo <span class="material-symbols-outlined sort-icon">unfold_more</span>
+                        </th>
+                        <th onclick="toggleSort('email')"
+                            class="sort-header px-6 py-3 text-[10px] font-black uppercase text-gray-400" id="th-email">
+                            Email <span class="material-symbols-outlined sort-icon">unfold_more</span>
+                        </th>
+                        <th onclick="toggleSort('birth_date')"
+                            class="sort-header px-6 py-3 text-[10px] font-black uppercase text-gray-400 text-center"
+                            id="th-birth_date">
+                            Cumpleaños <span class="material-symbols-outlined sort-icon">unfold_more</span>
+                        </th>
+                        <th onclick="toggleSort('role')"
+                            class="sort-header px-6 py-3 text-[10px] font-black uppercase text-gray-400" id="th-role">
+                            Rol <span class="material-symbols-outlined sort-icon">unfold_more</span>
+                        </th>
+                        <th class="px-6 py-3 text-[10px] font-black uppercase text-gray-400 text-right">Acciones</th>
                     </tr>
                 </thead>
                 <tbody id="users-table-body">
                     <tr>
-                        <td colspan="6" class="px-6 py-10 text-center text-gray-400 italic">Cargando militantes...</td>
+                        <td colspan="5" class="px-6 py-10 text-center text-gray-400 italic">Cargando militantes...</td>
                     </tr>
                 </tbody>
             </table>
+        </div>
+
+        <!-- Paginación -->
+        <div
+            class="mt-6 flex flex-col md:flex-row justify-between items-center gap-4 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest" id="pagination-info">
+                Mostrando 0-0 de 0 militantes
+            </p>
+            <div class="flex items-center gap-2" id="pagination-controls">
+                <!-- Botones generados por JS -->
+            </div>
         </div>
     </main>
 
@@ -175,6 +232,13 @@
         const tableBody = document.getElementById('users-table-body');
         const modal = document.getElementById('user-modal');
         let allUsers = [];
+        let filteredUsers = [];
+
+        // Estado de Paginación y Orden
+        let currentPage = 1;
+        const itemsPerPage = 50;
+        let sortColumn = 'created_at';
+        let sortDirection = 'desc';
 
         window.addEventListener('DOMContentLoaded', async () => {
             if (!window.isSupabaseInit) {
@@ -192,22 +256,86 @@
         });
 
         async function loadUsers() {
-            const { data, error } = await supabaseClient.from('profiles').select('*').order('created_at', { ascending: false });
-            if (!error) { allUsers = data; renderUsers(data); }
+            const { data, error } = await supabaseClient.from('profiles').select('*');
+            if (!error) {
+                allUsers = data;
+                filteredUsers = [...data];
+                applySortingAndRendering();
+            }
         }
 
-        function renderUsers(users) {
+        function toggleSort(column) {
+            if (sortColumn === column) {
+                sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+            } else {
+                sortColumn = column;
+                sortDirection = 'asc';
+            }
+            currentPage = 1;
+            updateSortHeaders();
+            applySortingAndRendering();
+        }
+
+        function updateSortHeaders() {
+            const headers = ['full_name', 'email', 'birth_date', 'role'];
+            headers.forEach(h => {
+                const el = document.getElementById(`th-${h}`);
+                if (!el) return;
+                el.classList.remove('active');
+                const icon = el.querySelector('.sort-icon');
+                icon.textContent = 'unfold_more';
+
+                if (h === sortColumn) {
+                    el.classList.add('active');
+                    icon.textContent = sortDirection === 'asc' ? 'arrow_upward' : 'arrow_downward';
+                }
+            });
+        }
+
+        function applySortingAndRendering() {
+            // 1. Ordenar
+            filteredUsers.sort((a, b) => {
+                let valA = a[sortColumn];
+                let valB = b[sortColumn];
+
+                // Manejo de nulos
+                if (valA === null || valA === undefined) valA = '';
+                if (valB === null || valB === undefined) valB = '';
+
+                if (typeof valA === 'string') valA = valA.toLowerCase();
+                if (typeof valB === 'string') valB = valB.toLowerCase();
+
+                if (valA < valB) return sortDirection === 'asc' ? -1 : 1;
+                if (valA > valB) return sortDirection === 'asc' ? 1 : -1;
+                return 0;
+            });
+
+            renderUsers();
+            renderPagination();
+        }
+
+        function renderUsers() {
             const today = new Date();
             const currentMonth = today.getMonth();
             const currentDay = today.getDate();
 
-            tableBody.innerHTML = users.map(u => {
+            // Slicing para paginación
+            const start = (currentPage - 1) * itemsPerPage;
+            const end = start + itemsPerPage;
+            const paginatedUsers = filteredUsers.slice(start, end);
+
+            if (paginatedUsers.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="5" class="px-6 py-10 text-center text-gray-400 italic">No se encontraron militantes.</td></tr>';
+                return;
+            }
+
+            tableBody.innerHTML = paginatedUsers.map(u => {
                 let birthdayDisplay = '---';
                 let isBirthdayMonth = false;
                 let isBirthdayToday = false;
 
                 if (u.birth_date) {
-                    const bdate = new Date(u.birth_date + 'T12:00:00'); // Evitar problemas de zona horaria
+                    const bdate = new Date(u.birth_date + 'T12:00:00');
                     birthdayDisplay = bdate.toLocaleDateString('es-CL', { day: '2-digit', month: 'short' });
                     isBirthdayMonth = bdate.getMonth() === currentMonth;
                     isBirthdayToday = isBirthdayMonth && bdate.getDate() === currentDay;
@@ -215,38 +343,85 @@
 
                 return `
                 <tr class="border-b border-gray-50 hover:bg-gray-50 transition-colors">
-                    <td class="px-6 py-4 font-bold uppercase text-xs">
+                    <td class="px-6 compact-td font-bold uppercase text-[11px]">
                         <div class="flex items-center gap-2">
                             ${u.full_name}
                             ${isBirthdayToday ? '<span class="animate-bounce" title="¡Hoy es su cumpleaños!">🎂</span>' : ''}
                         </div>
                     </td>
-                    <td class="px-6 py-4 text-[10px] text-gray-400 lowercase">${u.email}</td>
-                    <td class="px-6 py-4 text-center">
-                        <span class="text-[10px] font-bold ${isBirthdayMonth ? 'text-[#fba931] bg-yellow-50 px-2 py-1 rounded-lg' : 'text-gray-400'}">
+                    <td class="px-6 compact-td text-[10px] text-gray-400 lowercase">${u.email}</td>
+                    <td class="px-6 compact-td text-center">
+                        <span class="text-[10px] font-bold ${isBirthdayMonth ? 'text-[#fba931] bg-yellow-50 px-2 py-0.5 rounded-lg' : 'text-gray-400'}">
                             ${isBirthdayMonth && !isBirthdayToday ? '🎉 ' : ''}${birthdayDisplay}
                         </span>
                     </td>
-                    <td class="px-6 py-4">
-                        <span class="px-2 py-0.5 rounded-full text-[9px] font-black uppercase 
+                    <td class="px-6 compact-td">
+                        <span class="px-2 py-0.5 rounded-full text-[8px] font-black uppercase 
                             ${u.role === 'super_admin' ? 'bg-purple-100 text-purple-700' :
                         u.role.startsWith('admin_') ? 'bg-blue-100 text-blue-700' :
                             'bg-gray-100 text-gray-600'}">
                             ${u.role.replace('_', ' ')}
                         </span>
                     </td>
-                    <td class="px-6 py-4 text-right">
-                        <button onclick='editUser(${JSON.stringify(u)})' class="p-2 text-blue-500 hover:bg-blue-50 rounded-lg"><span class="material-symbols-outlined">edit</span></button>
-                        <button onclick="deleteUser('${u.auth_id}')" class="p-2 text-red-500 hover:bg-red-50 rounded-lg"><span class="material-symbols-outlined">delete</span></button>
+                    <td class="px-6 compact-td text-right">
+                        <button onclick='editUser(${JSON.stringify(u)})' class="p-1 text-blue-500 hover:bg-blue-50 rounded-lg"><span class="material-symbols-outlined text-lg">edit</span></button>
+                        <button onclick="deleteUser('${u.auth_id}')" class="p-1 text-red-500 hover:bg-red-50 rounded-lg"><span class="material-symbols-outlined text-lg">delete</span></button>
                     </td>
                 </tr>
             `;
             }).join('');
+
+            // Actualizar info de paginación
+            const total = filteredUsers.length;
+            const shownStart = total === 0 ? 0 : start + 1;
+            const shownEnd = Math.min(end, total);
+            document.getElementById('pagination-info').textContent = `Mostrando ${shownStart}-${shownEnd} de ${total} militantes`;
+        }
+
+        function renderPagination() {
+            const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
+            const container = document.getElementById('pagination-controls');
+            container.innerHTML = '';
+
+            if (totalPages <= 1) return;
+
+            // Botón Anterior
+            const prevBtn = document.createElement('button');
+            prevBtn.className = `p-2 rounded-xl transition-all ${currentPage > 1 ? 'hover:bg-gray-100 text-gray-600' : 'text-gray-200 cursor-not-allowed'}`;
+            prevBtn.innerHTML = '<span class="material-symbols-outlined">chevron_left</span>';
+            prevBtn.onclick = () => { if (currentPage > 1) { currentPage--; renderUsers(); renderPagination(); } };
+            container.appendChild(prevBtn);
+
+            // Números de página (simplificado: solo actual, primera, última si hay muchas)
+            let startPage = Math.max(1, currentPage - 2);
+            let endPage = Math.min(totalPages, startPage + 4);
+            if (endPage - startPage < 4) startPage = Math.max(1, endPage - 4);
+
+            for (let i = startPage; i <= endPage; i++) {
+                const pBtn = document.createElement('button');
+                pBtn.className = `w-8 h-8 rounded-xl text-[10px] font-black transition-all ${i === currentPage ? 'bg-[#fba931] text-[#0f172a] shadow-md' : 'text-gray-400 hover:bg-gray-50'}`;
+                pBtn.textContent = i;
+                pBtn.onclick = () => { currentPage = i; renderUsers(); renderPagination(); };
+                container.appendChild(pBtn);
+            }
+
+            // Botón Siguiente
+            const nextBtn = document.createElement('button');
+            nextBtn.className = `p-2 rounded-xl transition-all ${currentPage < totalPages ? 'hover:bg-gray-100 text-gray-600' : 'text-gray-200 cursor-not-allowed'}`;
+            nextBtn.innerHTML = '<span class="material-symbols-outlined">chevron_right</span>';
+            nextBtn.onclick = () => { if (currentPage < totalPages) { currentPage++; renderUsers(); renderPagination(); } };
+            container.appendChild(nextBtn);
         }
 
         function filterUsers() {
             const q = document.getElementById('search-input').value.toLowerCase();
-            renderUsers(allUsers.filter(u => u.full_name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q) || (u.rut && u.rut.toLowerCase().includes(q))));
+            filteredUsers = allUsers.filter(u =>
+                u.full_name.toLowerCase().includes(q) ||
+                u.email.toLowerCase().includes(q) ||
+                (u.rut && u.rut.toLowerCase().includes(q))
+            );
+            currentPage = 1;
+            applySortingAndRendering();
         }
 
         function openModal(mode = 'create') {
