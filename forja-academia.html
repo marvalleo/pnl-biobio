@@ -138,8 +138,8 @@
     <script src="shared.js"></script>
     <script>
         window.addEventListener('DOMContentLoaded', async () => {
-            if (typeof supabaseClient === 'undefined') {
-                console.error("supabaseClient no está definido. Reintentando...");
+            if (!window.isSupabaseInit) {
+                console.error("Supabase no inicializado.");
                 return;
             }
 

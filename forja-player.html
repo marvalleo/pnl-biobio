@@ -209,6 +209,11 @@
         let heartbeatInterval = null;
 
         window.addEventListener('DOMContentLoaded', async () => {
+            if (!window.supabaseClient) {
+                showToast("Error de inicialización del aula virtual.", "error");
+                return;
+            }
+
             if (!currentCourseId) {
                 window.location.href = 'forja-academia.html';
                 return;

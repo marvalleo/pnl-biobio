@@ -57,6 +57,24 @@ function showToast(message, type = 'info') {
 
 // --- GESTIÓN DE NAVBAR Y MENÚ DE USUARIO ---
 async function initNavbar() {
+    if (!window.isSupabaseInit) {
+        console.warn("initNavbar: Supabase no está configurado.");
+        if (!document.getElementById('pnl-config-warning')) {
+            const warning = document.createElement('div');
+            warning.id = 'pnl-config-warning';
+            warning.className = "fixed top-0 left-0 w-full bg-red-600 text-white text-[10px] font-black uppercase py-2 px-4 shadow-xl z-[9000] text-center flex justify-center items-center gap-4";
+            warning.innerHTML = `
+                <span>⚠️ Error de Configuración: Supabase no detectado en Local</span>
+                <button onclick="localStorage.setItem('SUPABASE_URL', prompt('URL Supabase:')); localStorage.setItem('SUPABASE_ANON_KEY', prompt('Anon Key:')); location.reload();" 
+                        class="bg-white text-red-600 px-3 py-1 rounded-full hover:bg-gray-100 transition-colors">
+                    Configurar Ahora
+                </button>
+            `;
+            document.body.appendChild(warning);
+        }
+        return;
+    }
+
     const navContainer = document.getElementById('user-menu-container');
     const adminLink = document.getElementById('admin-link-container');
     if (!navContainer) return;
@@ -64,6 +82,7 @@ async function initNavbar() {
     try {
         const { data: { user } } = await supabaseClient.auth.getUser();
         if (!user) return;
+        // ... (resto igual)
 
         // Intentar obtener de sessionStorage primero para optimizar
         let profile = JSON.parse(sessionStorage.getItem('pnl_profile'));
@@ -118,7 +137,9 @@ window.addEventListener('click', (e) => {
 });
 
 async function logout() {
-    await supabaseClient.auth.signOut();
+    if (window.supabaseClient) {
+        await supabaseClient.auth.signOut();
+    }
     localStorage.clear();
     sessionStorage.clear();
     window.location.href = 'index.html';

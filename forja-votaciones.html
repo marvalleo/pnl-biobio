@@ -113,6 +113,11 @@
         let profileId = null;
 
         window.addEventListener('DOMContentLoaded', async () => {
+            if (!window.supabaseClient) {
+                showToast("Error de inicialización de la urna digital.");
+                return;
+            }
+
             const { data: { user } } = await supabaseClient.auth.getUser();
             if (!user) { window.location.href = 'forja-login.html'; return; }
 

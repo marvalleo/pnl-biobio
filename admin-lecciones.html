@@ -204,6 +204,11 @@
         const courseId = getCourseId();
 
         window.addEventListener('DOMContentLoaded', async () => {
+            if (!window.supabaseClient) {
+                showToast("Error crítico: Base de datos no inicializada.", "error");
+                return;
+            }
+
             const role = localStorage.getItem('pnl_user_role');
             if (role !== 'super_admin' && role !== 'admin_forja') {
                 showToast('Acceso no autorizado', 'error');

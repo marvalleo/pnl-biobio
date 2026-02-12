@@ -177,6 +177,11 @@
         let allUsers = [];
 
         window.addEventListener('DOMContentLoaded', async () => {
+            if (!window.supabaseClient) {
+                showToast("Error de acceso a datos centrales.", "error");
+                return;
+            }
+
             const role = localStorage.getItem('pnl_user_role');
             if (role !== 'super_admin' && role !== 'admin_usuarios') {
                 window.location.href = 'forja-login.html';
