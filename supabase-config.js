@@ -1,9 +1,12 @@
-// Configuración de Supabase para PNL Biobío (Template)
-const SUPABASE_URL = "https://kjcwozzfzbizxurppxlf.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtqY3dvenpmemJpenh1cnBweGxmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA0NTMyNjgsImV4cCI6MjA4NjAyOTI2OH0.UEziql_VLY92Opgngmf-LBEYmFzduVMKFcwEviV99NE";
+// Configuración de Supabase - Carga dinámica desde Snippets de Netlify
+const url = window.supabaseUrl;
+const key = window.supabaseKey;
 
 // Inicializar el cliente
-const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+if (!url || !key) {
+    console.error("❌ Error: No se encontraron las credenciales de Supabase en window.supabaseUrl/Key.");
+}
+const supabaseClient = supabase.createClient(url, key);
 
 // --- GESTIÓN DE SESIÓN Y SEGURIDAD ---
 const INACTIVITY_LIMIT = 30 * 60 * 1000;

@@ -3,8 +3,7 @@
     "version": "1.0.0",
     "description": "Plataforma Web PNL Biobío",
     "scripts": {
-        "start": "npx serve ./",
-        "build": "node setup-env.js"
+        "start": "npx serve ./"
     },
     "dependencies": {},
     "devDependencies": {
