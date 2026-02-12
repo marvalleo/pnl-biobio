@@ -8,16 +8,21 @@ function getCleanConfig() {
 
     // Función de validación estricta
     const isValidUrl = (u) => u && typeof u === 'string' && u.trim().startsWith('http') && u.length > 15;
-    const isValidKey = (k) => k && typeof k === 'string' && k.trim().length > 50;
+    const isValidKey = (k) => k && typeof k === 'string' && k.trim().length > 50 && !k.includes(' ');
 
-    // Si lo que hay en cache es basura, lo borramos
+    // Limpiar cache si hay basura
     if (url && !isValidUrl(url)) {
-        console.warn("⚠️ URL corrupta detectada en cache, limpiando...");
+        console.warn("⚠️ URL inválida en cache, limpiando...");
         localStorage.removeItem('SUPABASE_URL');
         url = null;
     }
+    if (key && !isValidKey(key)) {
+        console.warn("⚠️ Anon Key inválida en cache, limpiando...");
+        localStorage.removeItem('SUPABASE_ANON_KEY');
+        key = null;
+    }
 
-    // Aplicar fallbacks finales
+    // Aplicar fallbacks finales (usando los del .env proporcionado)
     url = url || FALLBACK_URL;
     key = key || FALLBACK_KEY;
 
