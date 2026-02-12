@@ -22,66 +22,6 @@
             color: var(--pnl-blue);
         }
     </style>
-    <!-- Supabase SDK -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="supabase-config.js"></script>
-    <script>
-        // Protección de Ruta
-        window.addEventListener('DOMContentLoaded', async () => {
-            const role = localStorage.getItem('pnl_user_role');
-            if (role !== 'super_admin' && role !== 'admin_votos') {
-                alert('Acceso no autorizado');
-                window.location.href = 'forja-login.html';
-                return;
-            }
-            loadVotes();
-            initNavbar();
-        });
-
-        async function initNavbar() {
-            const { data: { user } } = await supabaseClient.auth.getUser();
-            if (!user) return;
-
-            const { data: profile } = await supabaseClient.from('profiles').select('full_name').eq('auth_id', user.id).single();
-            const fullName = profile?.full_name || user.user_metadata?.full_name || user.email || 'Miembro';
-            const initials = fullName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
-
-            document.getElementById('user-menu-container').innerHTML = `
-                <div class="relative">
-                    <button onclick="toggleUserMenu()" class="w-10 h-10 rounded-full bg-[#fba931] text-[#0f172a] font-900 text-xs border-2 border-white shadow-sm hover:scale-105 transition-all flex items-center justify-center">
-                        ${initials}
-                    </button>
-                    <div id="user-dropdown" class="hidden absolute right-0 mt-3 w-56 bg-white rounded-2xl shadow-2xl border border-gray-100 py-3 z-[100]">
-                        <div class="px-5 py-3 border-b border-gray-50 mb-2">
-                            <p class="text-[8px] font-black uppercase text-[#fba931] tracking-widest leading-none mb-1">Sesión Iniciada</p>
-                            <p class="text-xs font-black text-[#0f172a] truncate">${fullName}</p>
-                        </div>
-                        <button onclick="logout()" class="w-full text-left px-5 py-3 text-[10px] font-black uppercase text-red-500 hover:bg-red-50 flex items-center gap-3 transition-colors">
-                            <span class="material-symbols-outlined text-lg">logout</span> Cerrar Sesión
-                        </button>
-                    </div>
-                </div>
-            `;
-        }
-
-        function toggleUserMenu() {
-            document.getElementById('user-dropdown').classList.toggle('hidden');
-        }
-
-        window.addEventListener('click', (e) => {
-            const dropdown = document.getElementById('user-dropdown');
-            const menuContainer = document.getElementById('user-menu-container');
-            if (dropdown && !dropdown.classList.contains('hidden') && !menuContainer.contains(e.target)) {
-                dropdown.classList.add('hidden');
-            }
-        });
-
-        async function logout() {
-            await supabaseClient.auth.signOut();
-            localStorage.removeItem('pnl_user_role');
-            window.location.href = 'index.html';
-        }
-    </script>
 </head>
 
 <body class="min-h-screen">
@@ -196,7 +136,41 @@
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
+    <script src="shared.js"></script>
     <script>
+        // Protección de Ruta
+        window.addEventListener('DOMContentLoaded', async () => {
+            const role = localStorage.getItem('pnl_user_role');
+            if (role !== 'super_admin' && role !== 'admin_votos') {
+                showToast('Acceso no autorizado', 'error');
+                window.location.href = 'forja-login.html';
+                return;
+            }
+            loadVotes();
+            initNavbar();
+        });
+
+        function toggleUserMenu() {
+            const dropdown = document.getElementById('user-dropdown');
+            if (dropdown) dropdown.classList.toggle('hidden');
+        }
+
+        window.addEventListener('click', (e) => {
+            const dropdown = document.getElementById('user-dropdown');
+            const menuContainer = document.getElementById('user-menu-container');
+            if (dropdown && !dropdown.classList.contains('hidden') && menuContainer && !menuContainer.contains(e.target)) {
+                dropdown.classList.add('hidden');
+            }
+        });
+
+        async function logout() {
+            await supabaseClient.auth.signOut();
+            localStorage.clear();
+            window.location.href = 'index.html';
+        }
+
         const container = document.getElementById('votes-container');
         const modal = document.getElementById('vote-modal');
         const resultsModal = document.getElementById('results-modal');

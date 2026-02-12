@@ -79,8 +79,6 @@
             box-shadow: 0 4px 12px rgba(251, 169, 49, 0.3);
         }
     </style>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="supabase-config.js"></script>
 </head>
 
 <body class="min-h-screen flex flex-col">
@@ -89,8 +87,9 @@
     <nav class="bg-white shadow-sm sticky top-0 z-50 border-b-4 border-[#fba931]">
         <div class="max-w-7xl mx-auto px-6 h-20 flex justify-between items-center">
             <div class="flex items-center gap-4">
-                <a href="index.html"><img src="wp-content/uploads/2026/pnl-del-biobio01.png" alt="PNL Biobío"
-                        class="h-14"></a>
+                <a href="index.html">
+                    <img src="wp-content/uploads/2026/pnl-del-biobio01.png" alt="PNL Biobío" class="h-14">
+                </a>
             </div>
             <div class="flex items-center gap-4 lg:gap-8">
                 <a href="forja-academia.html" class="nav-link text-gray-400">Academia</a>
@@ -113,7 +112,6 @@
 
     <!-- CONTENT -->
     <main class="max-w-7xl mx-auto px-6 py-12 flex-1 w-full grid grid-cols-1 lg:grid-cols-3 gap-12">
-
         <!-- Listado de Eventos -->
         <div class="lg:col-span-2">
             <div class="mb-10">
@@ -154,6 +152,7 @@
                     <span class="text-[8px] font-black uppercase text-gray-300">Sa</span>
                     <span class="text-[8px] font-black uppercase text-gray-300">Do</span>
                 </div>
+
                 <div id="calendar-grid" class="grid grid-cols-7 gap-1">
                     <!-- Calendario dinámico -->
                 </div>
@@ -164,10 +163,9 @@
                     <span class="material-symbols-outlined text-[#fba931]">help</span>
                     <h4 class="font-900 uppercase text-[11px] tracking-widest">Sobre las inscripciones</h4>
                 </div>
-                <p class="text-[10px] font-bold text-gray-500 leading-relaxed uppercase">
-                    Para los eventos presenciales, el cupo es limitado para asegurar la calidad de la sesión. Si no
-                    puedes asistir, por favor cancela tu inscripción.
-                </p>
+                <p class="text-[10px] font-bold text-gray-500 leading-relaxed uppercase">Para los eventos presenciales,
+                    el cupo es limitado para asegurar la calidad de la sesión. Si no puedes asistir, por favor cancela
+                    tu inscripción.</p>
             </div>
         </div>
     </main>
@@ -179,6 +177,9 @@
         </div>
     </footer>
 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
+    <script src="shared.js"></script>
     <script>
         let events = [];
         let profileId = null;
@@ -203,7 +204,7 @@
             await Promise.all([loadEvents(), loadRegistrations()]);
             renderEvents();
             renderCalendar();
-            initNavbar(); // Call initNavbar from shared.js
+            initNavbar();
         });
 
         async function loadEvents() {
@@ -235,11 +236,10 @@
 
             if (filteredEvents.length === 0) {
                 list.innerHTML = `
-                    <div class="py-20 text-center border-2 border-dashed rounded-[3rem] border-gray-200">
-                        <p class="text-[10px] font-black text-gray-300 uppercase tracking-[0.2em]">No hay eventos para esta selección</p>
-                        <button onclick="renderEvents()" class="mt-4 text-[9px] font-black text-[#fba931] uppercase hover:underline">Ver todos los eventos</button>
-                    </div>
-                `;
+                <div class="py-20 text-center border-2 border-dashed rounded-[3rem] border-gray-200">
+                    <p class="text-[10px] font-black text-gray-300 uppercase tracking-[0.2em]">No hay eventos para esta selección</p>
+                    <button onclick="renderEvents()" class="mt-4 text-[9px] font-black text-[#fba931] uppercase hover:underline">Ver todos los eventos</button>
+                </div>`;
                 return;
             }
 
@@ -249,52 +249,50 @@
                 const isOnline = event.delivery_type !== 'in_person';
 
                 return `
-                    <div class="bg-white rounded-[2.5rem] p-8 shadow-sm border border-gray-100 flex flex-col md:flex-row gap-8 relative group hover:shadow-xl transition-all border-t-4 ${isOnline ? 'border-[#fba931]' : 'border-[#0f172a]'}">
-                        <div class="md:w-56 h-40 bg-gray-100 rounded-3xl overflow-hidden shrink-0 relative">
-                            <img src="https://images.unsplash.com/photo-${isOnline ? '1588196749597-9ff075ee6b5b' : '1540317580384-e5d43616b9aa'}?auto=format&fit=crop&q=80&w=400" 
-                                 class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000">
-                            <div class="absolute inset-0 bg-black/20"></div>
+                <div class="bg-white rounded-[2.5rem] p-8 shadow-sm border border-gray-100 flex flex-col md:flex-row gap-8 relative group hover:shadow-xl transition-all border-t-4 ${isOnline ? 'border-[#fba931]' : 'border-[#0f172a]'}">
+                    <div class="md:w-56 h-40 bg-gray-100 rounded-3xl overflow-hidden shrink-0 relative">
+                        <img src="https://images.unsplash.com/photo-${isOnline ? '1588196749597-9ff075ee6b5b' : '1540317580384-e5d43616b9aa'}?auto=format&fit=crop&q=80&w=400" 
+                             class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000">
+                        <div class="absolute inset-0 bg-black/20"></div>
+                    </div>
+                    
+                    <div class="flex-1 flex flex-col justify-center">
+                        <div class="flex items-center gap-3 mb-2">
+                            <span class="text-[8px] font-black uppercase tracking-[0.2em] px-3 py-1 rounded-full ${isOnline ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-700'}">
+                                ${event.delivery_type === 'live' ? 'En Vivo (Online)' : event.delivery_type === 'recorded' ? 'Taller Grabado' : 'Presencial'}
+                            </span>
+                            ${isRegistered ? '<span class="text-[8px] font-black text-green-500 uppercase tracking-widest flex items-center gap-1"><span class="material-symbols-outlined text-[12px]">check_circle</span> Inscrito</span>' : ''}
                         </div>
                         
-                        <div class="flex-1 flex flex-col justify-center">
-                            <div class="flex items-center gap-3 mb-2">
-                                <span class="text-[8px] font-black uppercase tracking-[0.2em] px-3 py-1 rounded-full ${isOnline ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-700'}">
-                                    ${event.delivery_type === 'live' ? 'En Vivo (Online)' : event.delivery_type === 'recorded' ? 'Taller Grabado' : 'Presencial'}
+                        <h3 class="serif text-2xl text-[#0f172a] mb-2">${event.title}</h3>
+                        <p class="text-xs text-gray-400 font-medium mb-4 line-clamp-2">${event.description || 'Sin descripción detallada.'}</p>
+                        
+                        <div class="flex flex-wrap items-center gap-6 mb-6">
+                            <div class="flex items-center gap-2 text-gray-400">
+                                <span class="material-symbols-outlined text-xs text-[#fba931]">calendar_today</span>
+                                <span class="text-[10px] font-black uppercase tracking-wider">${date.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' })} — ${date.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })} hrs</span>
+                            </div>
+                            <div class="flex items-center gap-2 text-gray-400">
+                                <span class="material-symbols-outlined text-xs text-[#fba931]">location_on</span>
+                                <span class="text-[10px] font-black uppercase tracking-wider">${event.location || 'Por definir'}</span>
+                            </div>
+                            <div class="flex items-center gap-2 text-gray-400">
+                                <span class="material-symbols-outlined text-xs text-[#fba931]">group</span>
+                                <span class="text-[10px] font-black uppercase tracking-wider">
+                                    ${event.max_capacity > 0 ? `Cupos: ${(event.regional_event_registrations?.[0]?.count || 0)} / ${event.max_capacity}` : 'Ilimitado'}
                                 </span>
-                                ${isRegistered ? '<span class="text-[8px] font-black text-green-500 uppercase tracking-widest flex items-center gap-1"><span class="material-symbols-outlined text-[12px]">check_circle</span> Inscrito</span>' : ''}
-                            </div>
-                            
-                            <h3 class="serif text-2xl text-[#0f172a] mb-2">${event.title}</h3>
-                            <p class="text-xs text-gray-400 font-medium mb-4 line-clamp-2">${event.description || 'Sin descripción detallada.'}</p>
-                            
-                            <div class="flex flex-wrap items-center gap-6 mb-6">
-                                <div class="flex items-center gap-2 text-gray-400">
-                                    <span class="material-symbols-outlined text-xs text-[#fba931]">calendar_today</span>
-                                    <span class="text-[10px] font-black uppercase tracking-wider">${date.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' })} — ${date.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })} hrs</span>
-                                </div>
-                                <div class="flex items-center gap-2 text-gray-400">
-                                    <span class="material-symbols-outlined text-xs text-[#fba931]">location_on</span>
-                                    <span class="text-[10px] font-black uppercase tracking-wider">${event.location || 'Por definir'}</span>
-                                </div>
-                                <div class="flex items-center gap-2 text-gray-400">
-                                    <span class="material-symbols-outlined text-xs text-[#fba931]">group</span>
-                                    <span class="text-[10px] font-black uppercase tracking-wider">
-                                        ${event.max_capacity > 0
-                        ? `Cupos: ${(event.regional_event_registrations?.[0]?.count || 0)} / ${event.max_capacity}`
-                        : 'Ilimitado'}
-                                    </span>
-                                </div>
-                            </div>
-
-                            <div class="flex items-center gap-4">
-                                <button onclick="handleRegistration('${event.id}', ${isRegistered})" 
-                                        class="${isRegistered ? 'bg-gray-100 text-gray-400' : isOnline ? 'bg-[#fba931] text-[#0f172a]' : 'bg-[#0f172a] text-white'} px-8 py-3 rounded-xl font-900 text-[10px] uppercase tracking-widest hover:brightness-110 transition-all shadow-lg active:scale-95">
-                                    ${isRegistered ? 'Cancelar Inscripción' : 'Inscribirse Ahora'}
-                                </button>
-                                ${isRegistered && event.content_url ? `<a href="${event.content_url}" target="_blank" class="text-[10px] font-black text-[#fba931] uppercase hover:underline">Ir a la sesión</a>` : ''}
                             </div>
                         </div>
+
+                        <div class="flex items-center gap-4">
+                            <button onclick="handleRegistration('${event.id}', ${isRegistered})" 
+                                    class="${isRegistered ? 'bg-gray-100 text-gray-400' : isOnline ? 'bg-[#fba931] text-[#0f172a]' : 'bg-[#0f172a] text-white'} px-8 py-3 rounded-xl font-900 text-[10px] uppercase tracking-widest hover:brightness-110 transition-all shadow-lg active:scale-95">
+                                ${isRegistered ? 'Cancelar Inscripción' : 'Inscribirse Ahora'}
+                            </button>
+                            ${isRegistered && event.content_url ? `<a href="${event.content_url}" target="_blank" class="text-[10px] font-black text-[#fba931] uppercase hover:underline">Ir a la sesión</a>` : ''}
+                        </div>
                     </div>
+                </div>
                 `;
             }).join('');
         }
@@ -308,7 +306,6 @@
                     registrations.delete(lessonId);
                     showToast('Inscripción cancelada', 'info');
                 } else {
-                    // Verificar si hay cupo antes de inscribir
                     const { data: currentLesson } = await supabaseClient.from('regional_events').select('max_capacity').eq('id', lessonId).single();
                     const { count } = await supabaseClient.from('regional_event_registrations').select('*', { count: 'exact', head: true }).eq('event_id', lessonId);
 
@@ -322,8 +319,6 @@
                     registrations.add(lessonId);
                     showToast('¡Inscripción exitosa! Te esperamos.', 'success');
                 }
-
-                // Forzar recarga completa de datos para ver los cupos actualizados
                 await loadEvents();
                 renderEvents();
                 renderCalendar();
@@ -337,38 +332,26 @@
             const grid = document.getElementById('calendar-grid');
             const monthLabel = document.getElementById('current-month-name');
             grid.innerHTML = '';
-
             const monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+
             monthLabel.textContent = `${monthNames[currentMonth.getMonth()]} ${currentMonth.getFullYear()}`;
 
             const year = currentMonth.getFullYear();
             const month = currentMonth.getMonth();
             const firstDay = new Date(year, month, 1).getDay();
             const totalDays = new Date(year, month + 1, 0).getDate();
-
-            // Ajuste para que empiece en lunes (0=Lun, 6=Dom)
             let startOffset = firstDay === 0 ? 6 : firstDay - 1;
 
-            for (let i = 0; i < startOffset; i++) {
-                grid.innerHTML += '<span></span>';
-            }
-
+            for (let i = 0; i < startOffset; i++) grid.innerHTML += '<span></span>';
             for (let day = 1; day <= totalDays; day++) {
                 const date = new Date(year, month, day);
                 const hasEvent = events.some(e => new Date(e.event_date).toDateString() === date.toDateString());
-
-                grid.innerHTML += `
-                    <div onclick="filterByDate(${year}, ${month}, ${day})" 
-                         class="calendar-day ${hasEvent ? 'has-event' : ''}">
-                        ${day}
-                    </div>
-                `;
+                grid.innerHTML += `<div onclick="filterByDate(${year}, ${month}, ${day})" class="calendar-day ${hasEvent ? 'has-event' : ''}">${day}</div>`;
             }
         }
 
         function filterByDate(y, m, d) {
             const selectedDate = new Date(y, m, d);
-            // Highlight selected day
             document.querySelectorAll('.calendar-day').forEach(el => {
                 el.classList.remove('selected');
                 if (parseInt(el.textContent) === d) el.classList.add('selected');

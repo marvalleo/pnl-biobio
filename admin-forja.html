@@ -22,32 +22,6 @@
             color: var(--pnl-blue);
         }
     </style>
-    <!-- Supabase SDK -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="supabase-config.js"></script>
-    <script src="shared.js"></script>
-    <script>
-        // Protección de Ruta
-        window.addEventListener('DOMContentLoaded', async () => {
-            const role = localStorage.getItem('pnl_user_role');
-            if (role !== 'super_admin' && role !== 'admin_forja') {
-                showToast('Acceso no autorizado', 'error');
-                window.location.href = 'forja-login.html';
-                return;
-            }
-            await loadCourses();
-            await loadEvents();
-            initNavbar();
-
-            // Suscripción en tiempo real para inscripciones a eventos
-            supabaseClient
-                .channel('registrations-updates-admin')
-                .on('postgres_changes', { event: '*', schema: 'public', table: 'regional_event_registrations' }, () => {
-                    loadEvents();
-                })
-                .subscribe();
-        });
-    </script>
 </head>
 
 <body class="min-h-screen">
@@ -536,6 +510,31 @@
                 viewRegistrations(eventId, eventTitle);
             } catch (err) { showToast(err.message, 'error'); }
         }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
+    <script src="shared.js"></script>
+    <script>
+        // Protección de Ruta
+        window.addEventListener('DOMContentLoaded', async () => {
+            const role = localStorage.getItem('pnl_user_role');
+            if (role !== 'super_admin' && role !== 'admin_forja') {
+                showToast('Acceso no autorizado', 'error');
+                window.location.href = 'forja-login.html';
+                return;
+            }
+            await loadCourses();
+            await loadEvents();
+            initNavbar();
+
+            // Suscripción en tiempo real para inscripciones a eventos
+            supabaseClient
+                .channel('registrations-updates-admin')
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'regional_event_registrations' }, () => {
+                    loadEvents();
+                })
+                .subscribe();
+        });
     </script>
 </body>
 

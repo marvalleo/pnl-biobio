@@ -63,8 +63,6 @@
             background-color: var(--pnl-gold);
         }
     </style>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="supabase-config.js"></script>
 </head>
 
 <body class="min-h-screen flex flex-col">
@@ -135,8 +133,16 @@
         </div>
     </footer>
 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
+    <script src="shared.js"></script>
     <script>
         window.addEventListener('DOMContentLoaded', async () => {
+            if (typeof supabaseClient === 'undefined') {
+                console.error("supabaseClient no está definido. Reintentando...");
+                return;
+            }
+
             const { data: { session } } = await supabaseClient.auth.getSession();
             if (!session) { window.location.href = 'forja-login.html'; return; }
 

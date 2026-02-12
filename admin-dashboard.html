@@ -22,43 +22,6 @@
             color: var(--pnl-blue);
         }
     </style>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="supabase-config.js"></script>
-    <script src="shared.js"></script>
-    <script>
-        // Protección de Ruta
-        window.addEventListener('DOMContentLoaded', async () => {
-            const { data: { session } } = await supabaseClient.auth.getSession();
-            const role = localStorage.getItem('pnl_user_role');
-
-            if (!session || !['super_admin', 'admin_forja', 'admin_votos', 'admin_foros', 'admin_usuarios'].includes(role)) {
-                window.location.href = 'forja-login.html';
-                return;
-            }
-
-            // Aplicar segregación de predios (Bloqueo visual)
-            const modules = {
-                'mod-forja': ['super_admin', 'admin_forja'],
-                'mod-votos': ['super_admin', 'admin_votos'],
-                'mod-foros': ['super_admin', 'admin_foros'],
-                'mod-usuarios': ['super_admin', 'admin_usuarios']
-            };
-
-            Object.entries(modules).forEach(([id, allowedRoles]) => {
-                const element = document.getElementById(id);
-                if (element && !allowedRoles.includes(role)) {
-                    element.classList.add('opacity-40', 'grayscale', 'cursor-not-allowed');
-                    element.onclick = (e) => {
-                        e.preventDefault();
-                        showToast('Acceso Denegado: Este predio está bajo otra administración.', 'warning');
-                        return false;
-                    };
-                }
-            });
-
-            initNavbar();
-        });
-    </script>
 </head>
 
 <body class="min-h-screen">
@@ -137,6 +100,43 @@
             </a>
         </div>
     </main>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
+    <script src="shared.js"></script>
+    <script>
+        // Protección de Ruta
+        window.addEventListener('DOMContentLoaded', async () => {
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            const role = localStorage.getItem('pnl_user_role');
+
+            if (!session || !['super_admin', 'admin_forja', 'admin_votos', 'admin_foros', 'admin_usuarios'].includes(role)) {
+                window.location.href = 'forja-login.html';
+                return;
+            }
+
+            // Aplicar segregación de predios (Bloqueo visual)
+            const modules = {
+                'mod-forja': ['super_admin', 'admin_forja'],
+                'mod-votos': ['super_admin', 'admin_votos'],
+                'mod-foros': ['super_admin', 'admin_foros'],
+                'mod-usuarios': ['super_admin', 'admin_usuarios']
+            };
+
+            Object.entries(modules).forEach(([id, allowedRoles]) => {
+                const element = document.getElementById(id);
+                if (element && !allowedRoles.includes(role)) {
+                    element.classList.add('opacity-40', 'grayscale', 'cursor-not-allowed');
+                    element.onclick = (e) => {
+                        e.preventDefault();
+                        showToast('Acceso Denegado: Este predio está bajo otra administración.', 'warning');
+                        return false;
+                    };
+                }
+            });
+
+            initNavbar();
+        });
+    </script>
 </body>
 
 </html>
