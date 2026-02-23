@@ -92,8 +92,8 @@
                 </a>
             </div>
             <div class="flex items-center gap-4 lg:gap-8">
-                <a href="forja-academia.html" class="nav-link text-gray-400">Academia</a>
                 <a href="forja-eventos.html" class="nav-link active">Eventos</a>
+                <a href="forja-academia.html" class="nav-link text-gray-400">Academia</a>
                 <a href="forja-votaciones.html" class="nav-link text-gray-400">Votaciones</a>
                 <a href="forja-foros.html" class="nav-link text-gray-400">Foros</a>
 
@@ -226,7 +226,22 @@
                 .select('*, regional_event_registrations(count)')
                 .order('event_date', { ascending: true });
 
-            if (!error) events = data;
+            if (!error) {
+                events = data;
+
+                // Inyectar evento "Jornada de la Libertad" como Mockup
+                events.push({
+                    id: 'mock-jornada-libertad',
+                    title: 'Jornada de la Libertad: 1 Año de Vida PNL',
+                    description: '¡Celebramos nuestro primer año! Te invitamos a una jornada histórica con invitados confirmados en el Teatro Coliseo. Busca tu entrada para la delegación de la Región del Biobío. Cupos limitados exclusivos para militantes.',
+                    event_date: '2026-03-28T10:00:00', // Fecha tentativa para aniversario (Marzo 2026)
+                    location: 'Teatro Coliseo, Nataniel Cox 59, Santiago',
+                    delivery_type: 'in_person',
+                    max_capacity: 500,
+                    content_url: 'https://forms.gle/2yYsN2evyCjG58m16',
+                    regional_event_registrations: [{ count: 0 }]
+                });
+            }
         }
 
         async function loadRegistrations() {
@@ -298,11 +313,11 @@
                         </div>
 
                         <div class="flex items-center gap-4">
-                            <button onclick="handleRegistration('${event.id}', ${isRegistered})" 
+                            <button onclick="${event.id === 'mock-jornada-libertad' ? `window.open('${event.content_url}', '_blank')` : `handleRegistration('${event.id}', ${isRegistered})`}" 
                                     class="${isRegistered ? 'bg-gray-100 text-gray-400' : isOnline ? 'bg-[#fba931] text-[#0f172a]' : 'bg-[#0f172a] text-white'} px-8 py-3 rounded-xl font-900 text-[10px] uppercase tracking-widest hover:brightness-110 transition-all shadow-lg active:scale-95">
-                                ${isRegistered ? 'Cancelar Inscripción' : 'Inscribirse Ahora'}
+                                ${event.id === 'mock-jornada-libertad' ? 'Registrarse en Google Forms' : isRegistered ? 'Cancelar Inscripción' : 'Inscribirse Ahora'}
                             </button>
-                            ${isRegistered && event.content_url ? `<a href="${event.content_url}" target="_blank" class="text-[10px] font-black text-[#fba931] uppercase hover:underline">Ir a la sesión</a>` : ''}
+                            ${isRegistered && event.content_url && event.id !== 'mock-jornada-libertad' ? `<a href="${event.content_url}" target="_blank" class="text-[10px] font-black text-[#fba931] uppercase hover:underline">Ir a la sesión</a>` : ''}
                         </div>
                     </div>
                 </div>

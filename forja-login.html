@@ -49,7 +49,7 @@
     <div class="max-w-md w-full bg-white rounded-3xl p-8 shadow-2xl text-center border-t-8 border-[#fba931] mx-auto">
         <img src="https://pnl-biobio.netlify.app/wp-content/uploads/2026/pnl-del-biobio01.png" alt="Logo PNL"
             class="h-20 mx-auto mb-6">
-        <h1 class="text-2xl font-900 uppercase mb-2 tracking-tighter">Acceso Academia</h1>
+        <h1 class="text-2xl font-900 uppercase mb-2 tracking-tighter">Acceso a la Forja</h1>
         <p class="text-gray-400 text-[10px] font-bold uppercase tracking-widest mb-8">Espacio Privado - Sede Biobío</p>
 
         <div id="login-container" class="space-y-4 text-left">
@@ -141,7 +141,7 @@
 
         // Mapeo de rutas por rol para redirección
         const ROLE_REDIRECTS = {
-            'normal': 'forja-academia.html',
+            'normal': 'forja-eventos.html',
             'super_admin': 'admin-dashboard.html',
             'admin_foros': 'admin-foros.html',
             'admin_votos': 'admin-votos.html',
@@ -196,7 +196,7 @@
                 localStorage.setItem('pnl_user_role', profile.role);
 
                 // 5. Redirección basada en rol
-                const redirectPath = ROLE_REDIRECTS[profile.role] || 'forja-academia.html';
+                const redirectPath = ROLE_REDIRECTS[profile.role] || 'forja-eventos.html';
                 window.location.href = redirectPath;
 
             } catch (err) {
@@ -279,7 +279,7 @@
                 localStorage.setItem('pnl_user_role', currentUserRole);
 
                 // 4. Redirigir según el rol
-                const redirectPath = ROLE_REDIRECTS[currentUserRole] || 'forja-academia.html';
+                const redirectPath = ROLE_REDIRECTS[currentUserRole] || 'forja-eventos.html';
                 window.location.href = redirectPath;
 
             } catch (err) {
