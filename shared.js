@@ -193,7 +193,7 @@ function showImpactModal(config) {
     overlay.className = "fixed inset-0 bg-black/80 backdrop-blur-md z-[5000] flex items-center justify-center p-4 opacity-0 transition-opacity duration-500 text-left";
 
     const modal = document.createElement('div');
-    modal.className = "bg-white w-full max-w-2xl rounded-[3rem] overflow-hidden shadow-2xl relative translate-y-20 transition-transform duration-500 border border-white/20";
+    modal.className = "bg-white w-full max-w-2xl rounded-2xl overflow-hidden shadow-2xl relative translate-y-20 transition-transform duration-500 border border-white/20";
 
     const closeIcon = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`;
     const arrowIcon = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>`;
@@ -229,17 +229,34 @@ function showImpactModal(config) {
             </div>
             
             <div class="flex flex-col gap-6 items-center">
+                ${cta_url ? `
                 <div class="flex flex-col sm:flex-row gap-4 w-full justify-center">
-                    <button onclick="closeImpactModal('${id}', false)" 
-                            class="px-8 py-4 bg-gray-100 text-[#0f172a] rounded-2xl font-900 text-[10px] uppercase tracking-widest hover:bg-gray-200 transition-all active:scale-95 min-w-[140px]">
-                        Cerrar
-                    </button>
-                    ${cta_url ? `
                     <a href="${cta_url}" target="_blank"
                        class="px-8 py-4 bg-[#fba931] text-[#0f172a] rounded-2xl font-900 text-[10px] uppercase tracking-widest hover:brightness-110 transition-all shadow-xl shadow-amber-500/20 active:scale-95 flex items-center justify-center gap-3 min-w-[140px]">
-                        ${cta_text || 'Participar'} ${arrowIcon}
+                        ${cta_text || 'Entrar al Enlace'} ${arrowIcon}
+                    </a>
+                </div>` : ''}
+
+                ${(config.contact_email || config.contact_whatsapp) ? `
+                <div class="flex flex-wrap items-center justify-center gap-4 border-t border-gray-100 pt-6 w-full mt-2">
+                    ${config.contact_email ? `
+                    <div class="flex items-center gap-3 bg-slate-50 border border-slate-100 px-4 py-2 rounded-xl text-left cursor-pointer hover:bg-slate-100 transition-colors active:scale-95" 
+                         onclick="navigator.clipboard.writeText('${config.contact_email}'); const s = this.querySelector('.email-val'); const o = '${config.contact_email}'; s.innerText='¡Copiado al portapapeles!'; setTimeout(() => s.innerText=o, 2000);"
+                         title="Clic para copiar">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" class="text-gray-400 shrink-0" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                        <div>
+                            <span class="block text-[8px] font-black uppercase text-gray-400 tracking-widest leading-none mb-1">Copiar Correo</span>
+                            <span class="email-val text-[11px] font-bold text-[#fba931]">${config.contact_email}</span>
+                        </div>
+                    </div>` : ''}
+
+                    ${config.contact_whatsapp ? `
+                    <a href="https://wa.me/${config.contact_whatsapp.replace(/\D/g, '')}?text=${encodeURIComponent('Hola, me comunico por este anuncio: ' + title)}" target="_blank"
+                       class="flex items-center gap-2 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-100 px-6 py-3 rounded-xl transition-all">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 1 1-7.6-10.4 8.38 8.38 0 0 1 3.9 1.1L21 4z"></path></svg>
+                        <span class="text-[10px] font-black uppercase tracking-widest">Enviar WhatsApp</span>
                     </a>` : ''}
-                </div>
+                </div>` : ''}
                 
                 <button onclick="closeImpactModal('${id}', true)" 
                         class="text-[9px] font-black uppercase tracking-widest text-gray-300 hover:text-red-400 transition-colors">
@@ -391,17 +408,8 @@ async function checkAndShowAnnouncements() {
             }
         }
 
-        // Preparar CTA según tipo
-        let finalUrl = announcement.cta_url;
-        if (announcement.cta_type === 'email' && finalUrl) {
-            finalUrl = `mailto:${finalUrl}?subject=Interés: ${encodeURIComponent(announcement.title)}`;
-        } else if (announcement.cta_type === 'whatsapp' && finalUrl) {
-            const phone = finalUrl.replace(/\D/g, '');
-            finalUrl = `https://wa.me/${phone}?text=${encodeURIComponent('Hola, me interesa el anuncio: ' + announcement.title)}`;
-        }
-
-        // Clonar y actualizar URL para el modal
-        const configForModal = { ...announcement, cta_url: finalUrl };
+        // Config de renderizado
+        const configForModal = { ...announcement };
 
         // Mostrar con un pequeño delay
         console.log("PNL Biobío: Disparando modal de impacto...");

@@ -73,7 +73,7 @@
     <div id="formModal"
         class="fixed inset-0 bg-black/80 backdrop-blur-md z-[500] hidden items-center justify-center p-4">
         <div
-            class="bg-white w-full max-w-xl rounded-[3rem] overflow-hidden shadow-2xl relative max-h-[90vh] flex flex-col">
+            class="bg-white w-full max-w-xl rounded-2xl overflow-hidden shadow-2xl relative max-h-[90vh] flex flex-col">
             <div class="bg-[#0f172a] p-8 text-white">
                 <h3 class="serif text-3xl" id="modalTitle">Nuevo Anuncio</h3>
             </div>
@@ -122,40 +122,47 @@
 
                 <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <label class="text-[9px] font-black uppercase text-gray-400 block mb-1">Tipo de Acción
-                            (CTA)</label>
-                        <select id="cta_type" onchange="updateCtaPlaceholder()"
-                            class="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-xs font-bold">
-                            <option value="link">Enlace Web</option>
-                            <option value="email">Enviar Correo</option>
-                            <option value="whatsapp">Mensaje WhatsApp</option>
-                        </select>
+                        <label class="text-[9px] font-black uppercase text-gray-400 block mb-1">Correo de
+                            Contacto</label>
+                        <input type="email" id="contact_email"
+                            class="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-xs font-bold"
+                            placeholder="contacto@pnl.cl">
                     </div>
                     <div>
-                        <label class="text-[9px] font-black uppercase text-gray-400 block mb-1">Dato de Acción
-                            (URL/Email/Tel)</label>
-                        <input type="text" id="cta_url"
+                        <label class="text-[9px] font-black uppercase text-gray-400 block mb-1">WhatsApp de
+                            Contacto</label>
+                        <input type="text" id="contact_whatsapp"
                             class="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-xs font-bold"
-                            placeholder="https://...">
+                            placeholder="+56912345678">
                     </div>
                 </div>
 
                 <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <label class="text-[9px] font-black uppercase text-gray-400 block mb-1">Texto del Botón</label>
-                        <input type="text" id="cta_text"
+                        <label class="text-[9px] font-black uppercase text-gray-400 block mb-1">Enlace Principal
+                            (Opcional)</label>
+                        <input type="text" id="cta_url"
                             class="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-xs font-bold"
-                            placeholder="Unirme Ahora">
+                            placeholder="https://...">
                     </div>
-                </div>
 
-                <div class="flex gap-4 pt-4">
-                    <button type="button" onclick="closeModal()"
-                        class="flex-1 px-8 py-3 rounded-xl font-900 text-[10px] uppercase bg-gray-100 text-gray-400">Cancelar</button>
-                    <button type="submit"
-                        class="flex-1 bg-[#0f172a] text-white px-8 py-3 rounded-xl font-900 text-[10px] uppercase hover:bg-black shadow-xl">Guardar
-                        Anuncio</button>
-                </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="text-[9px] font-black uppercase text-gray-400 block mb-1">Texto del
+                                Botón</label>
+                            <input type="text" id="cta_text"
+                                class="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-xs font-bold"
+                                placeholder="Unirme Ahora">
+                        </div>
+                    </div>
+
+                    <div class="flex gap-4 pt-4">
+                        <button type="button" onclick="closeModal()"
+                            class="flex-1 px-8 py-3 rounded-xl font-900 text-[10px] uppercase bg-gray-100 text-gray-400">Cancelar</button>
+                        <button type="submit"
+                            class="flex-1 bg-[#0f172a] text-white px-8 py-3 rounded-xl font-900 text-[10px] uppercase hover:bg-black shadow-xl">Guardar
+                            Anuncio</button>
+                    </div>
             </form>
         </div>
     </div>
@@ -209,9 +216,9 @@
 
             list.innerHTML = announcements.map(a => {
                 const isActive = a.is_active;
-                const ctaIcon = a.cta_type === 'whatsapp' ?
+                const ctaIcon = a.contact_whatsapp ?
                     `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 1 1-7.6-10.4 8.38 8.38 0 0 1 3.9 1.1L21 4z"></path></svg>` :
-                    a.cta_type === 'email' ?
+                    a.contact_email ?
                         `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>` :
                         `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>`;
 
@@ -246,13 +253,7 @@
             }).join('');
         }
 
-        function updateCtaPlaceholder() {
-            const type = document.getElementById('cta_type').value;
-            const input = document.getElementById('cta_url');
-            if (type === 'email') input.placeholder = 'ejemplo@correo.com';
-            else if (type === 'whatsapp') input.placeholder = '+56912345678';
-            else input.placeholder = 'https://...';
-        }
+        // Función `updateCtaPlaceholder` eliminada
 
         function updatePreview() {
             const url = document.getElementById('image_url').value;
@@ -272,7 +273,6 @@
             document.getElementById('announcementForm').reset();
             document.getElementById('announcementId').value = '';
             document.getElementById('image-preview-container').classList.add('hidden');
-            updateCtaPlaceholder();
             document.getElementById('formModal').style.display = 'flex';
         }
 
@@ -287,11 +287,11 @@
             document.getElementById('image_url').value = a.image_url || '';
             document.getElementById('cta_text').value = a.cta_text || '';
             document.getElementById('cta_url').value = a.cta_url || '';
-            document.getElementById('cta_type').value = a.cta_type || 'link';
+            document.getElementById('contact_email').value = a.contact_email || '';
+            document.getElementById('contact_whatsapp').value = a.contact_whatsapp || '';
             document.getElementById('target_audience').value = a.target_audience;
             document.getElementById('is_active').checked = a.is_active;
 
-            updateCtaPlaceholder();
             updatePreview();
             document.getElementById('formModal').style.display = 'flex';
         }
@@ -317,7 +317,8 @@
                 image_url: document.getElementById('image_url').value,
                 cta_text: document.getElementById('cta_text').value,
                 cta_url: document.getElementById('cta_url').value,
-                cta_type: document.getElementById('cta_type').value,
+                contact_email: document.getElementById('contact_email').value,
+                contact_whatsapp: document.getElementById('contact_whatsapp').value,
                 target_audience: document.getElementById('target_audience').value,
                 is_active: document.getElementById('is_active').checked
             };
