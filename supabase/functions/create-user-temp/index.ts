@@ -21,7 +21,10 @@ serve(async (req: Request) => {
     // 1. Generar contraseña aleatoria (Segura y simple)
     const tempPassword = `PNL-${Math.random().toString(36).slice(-6).toUpperCase()}`
 
-    // 2. Crear usuario en Auth
+    // 2. Intentar crear usuario en Auth
+    let userId: string
+    let isNew = false
+
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email,
       password: tempPassword,
@@ -29,25 +32,47 @@ serve(async (req: Request) => {
       user_metadata: { full_name, rut }
     })
 
-    if (authError) throw authError
+    if (authError) {
+      // Si el error es que ya existe, lo buscamos para obtener su ID
+      if (authError.message.includes('already registered') || authError.status === 422) {
+        // Buscamos en la tabla de perfiles primero (es más rápido y sin paginación de Auth)
+        const { data: prof } = await supabaseAdmin.from('profiles').select('auth_id').eq('email', email).maybeSingle()
+        
+        if (prof) {
+          userId = prof.auth_id
+        } else {
+          // Si no está en perfiles, lo buscamos en Auth (paginando si es necesario)
+          const { data: { users }, error: lError } = await supabaseAdmin.auth.admin.listUsers()
+          if (lError) throw lError
+          const u = users.find(user => user.email?.toLowerCase() === email.toLowerCase())
+          if (!u) throw new Error(`El usuario ya existe en Auth pero no se pudo recuperar su ID.`)
+          userId = u.id
+        }
+      } else {
+        throw authError
+      }
+    } else {
+      userId = authData.user.id
+      isNew = true
+    }
 
     // 3. Upsert Perfil (Role y Progress)
     const { error: profileError } = await supabaseAdmin
       .from('profiles')
       .upsert({
-        auth_id: authData.user.id,
+        auth_id: userId,
         full_name,
         rut: rut || null,
         email,
         phone_number: phone_number || null,
         role: role || 'normal',
-        must_change_password: true
+        must_change_password: isNew
       }, { onConflict: 'auth_id' })
 
     if (profileError) throw profileError
 
     return new Response(
-      JSON.stringify({ success: true, tempPassword, user: { full_name, email, role, phone_number } }),
+      JSON.stringify({ success: true, tempPassword, isNew, user: { full_name, email, role, phone_number } }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
     )
 

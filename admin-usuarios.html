@@ -228,6 +228,86 @@
         </div>
     </div>
 
+    <!-- Modal de Progreso de Importación -->
+    <div id="import-progress-modal"
+        class="fixed inset-0 bg-black/70 backdrop-blur-md hidden z-[60] flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-2xl rounded-[2.5rem] p-10 shadow-2xl border-4 border-[#fba931]">
+            <div id="import-ongoing">
+                <div class="flex justify-between items-end mb-6">
+                    <div>
+                        <h2 class="text-3xl font-900 uppercase tracking-tighter mb-1">Importando Militantes</h2>
+                        <p class="text-gray-400 font-bold uppercase text-[10px] tracking-widest">Procesando base de
+                            datos soberana...</p>
+                    </div>
+                    <div class="text-right">
+                        <span id="import-percent" class="text-4xl font-900 text-[#fba931]">0%</span>
+                    </div>
+                </div>
+
+                <div class="w-full bg-gray-100 h-4 rounded-full overflow-hidden mb-6 border border-gray-200">
+                    <div id="import-bar"
+                        class="bg-[#fba931] h-full w-0 transition-all duration-300 ease-out shadow-[0_0_15px_rgba(251,169,49,0.5)]">
+                    </div>
+                </div>
+
+                <div class="flex justify-between items-center bg-gray-50 p-6 rounded-2xl border border-gray-100">
+                    <div class="flex flex-col">
+                        <span class="text-[10px] font-black uppercase text-gray-400">Progreso</span>
+                        <span id="import-counter" class="font-900 text-xl italic uppercase">0 / 0</span>
+                    </div>
+                    <div class="flex gap-4">
+                        <div class="flex flex-col items-end">
+                            <span class="text-[10px] font-black uppercase text-green-500">Exitosos</span>
+                            <span id="import-success-total" class="font-900 text-xl text-green-600">0</span>
+                        </div>
+                        <div class="flex flex-col items-end">
+                            <span class="text-[10px] font-black uppercase text-red-500">Fallidos</span>
+                            <span id="import-error-total" class="font-900 text-xl text-red-600">0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <p id="import-status-msg"
+                    class="mt-6 text-center text-[11px] font-bold uppercase text-gray-400 animate-pulse">
+                    Iniciando motores de sincronización...
+                </p>
+            </div>
+
+            <div id="import-result" class="hidden">
+                <h2 class="text-3xl font-900 uppercase tracking-tighter mb-4 text-[#0f172a]">Resultado de Sincronización
+                </h2>
+
+                <div class="grid grid-cols-3 gap-4 mb-8">
+                    <div class="bg-green-50 p-4 rounded-2xl border border-green-100 text-center">
+                        <span class="block text-[9px] font-black uppercase text-green-600 mb-1">Nuevos</span>
+                        <span id="res-new" class="text-2xl font-900 text-green-700">0</span>
+                    </div>
+                    <div class="bg-blue-50 p-4 rounded-2xl border border-blue-100 text-center">
+                        <span class="block text-[9px] font-black uppercase text-blue-600 mb-1">Actualizados</span>
+                        <span id="res-updated" class="text-2xl font-900 text-blue-700">0</span>
+                    </div>
+                    <div class="bg-red-50 p-4 rounded-2xl border border-red-100 text-center">
+                        <span class="block text-[9px] font-black uppercase text-red-600 mb-1">Fallidos</span>
+                        <span id="res-failed" class="text-2xl font-900 text-red-700">0</span>
+                    </div>
+                </div>
+
+                <div id="error-log-container" class="hidden">
+                    <h3 class="text-[10px] font-black uppercase text-gray-400 mb-3 tracking-widest">Log de Errores:</h3>
+                    <div id="import-error-log"
+                        class="max-h-[200px] overflow-y-auto bg-gray-900 text-gray-300 p-4 rounded-xl font-mono text-[10px] leading-relaxed mb-6">
+                        <!-- Errores aquí -->
+                    </div>
+                </div>
+
+                <button onclick="location.reload()"
+                    class="w-full bg-[#0f172a] text-white py-5 rounded-2xl font-900 uppercase text-sm hover:bg-black transition-all shadow-xl">
+                    Finalizar y Ver Cambios
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script>
         const tableBody = document.getElementById('users-table-body');
         const modal = document.getElementById('user-modal');
@@ -488,63 +568,118 @@
                 const data = new Uint8Array(e.target.result);
                 const workbook = XLSX.read(data, { type: 'array' });
                 const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+
+                // Leer con cabeceras directas (header: 1 para inspeccionar primero)
+                const rowsRaw = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+                if (rowsRaw.length < 2) return showToast('El archivo está vacío o no tiene cabeceras', 'error');
+
+                const headersArr = rowsRaw[0];
                 const rows = XLSX.utils.sheet_to_json(firstSheet);
 
-                if (rows.length === 0) return showToast('El archivo está vacío', 'error');
+                // Mostrar Modal de Progreso
+                const progressModal = document.getElementById('import-progress-modal');
+                const ongoingDiv = document.getElementById('import-ongoing');
+                const resultDiv = document.getElementById('import-result');
+                const progressBar = document.getElementById('import-bar');
+                const percentText = document.getElementById('import-percent');
+                const counterText = document.getElementById('import-counter');
+                const successTotal = document.getElementById('import-success-total');
+                const errorTotal = document.getElementById('import-error-total');
+                const statusMsg = document.getElementById('import-status-msg');
 
-                showToast(`Procesando ${rows.length} registros...`, 'info');
-                document.body.style.cursor = 'wait';
+                progressModal.classList.remove('hidden');
+                ongoingDiv.classList.remove('hidden');
+                resultDiv.classList.add('hidden');
 
+                const total = rows.length;
+                let processed = 0;
                 let successCount = 0;
+                let updatedCount = 0;
+                let newCount = 0;
                 let errorCount = 0;
+                let failures = [];
 
-                for (const row of rows) {
-                    // Sanitizar claves y valores (quitar espacios, saltos de línea, etc)
-                    const cleanRow = {};
-                    Object.keys(row).forEach(key => {
-                        const cleanKey = key.trim();
-                        let value = row[key];
-                        if (typeof value === 'string') value = value.trim();
-                        cleanRow[cleanKey] = value;
-                    });
+                counterText.textContent = `0 / ${total}`;
 
-                    const userData = {
-                        full_name: cleanRow['Nombre Completo'] || cleanRow['full_name'] || cleanRow['Nombre'],
-                        email: cleanRow['Email'] || cleanRow['email'] || cleanRow['Correo'],
-                        birth_date: cleanRow['Fecha de Nacimiento'] || cleanRow['birth_date'],
-                        role: cleanRow['Rol'] || cleanRow['role'] || 'normal'
-                    };
+                // Configuración de Batch (5 peticiones concurrentes)
+                const BATCH_SIZE = 8;
+                const chunks = [];
+                for (let i = 0; i < rows.length; i += BATCH_SIZE) {
+                    chunks.push(rows.slice(i, i + BATCH_SIZE));
+                }
 
-                    // Limpieza específica para Email (quitar espacios internos si existen por error de formato)
-                    if (userData.email) {
-                        userData.email = userData.email.replace(/\s+/g, '').toLowerCase();
-                    }
+                for (const chunk of chunks) {
+                    await Promise.all(chunk.map(async (row) => {
+                        // Sanitizar cabeceras raras detectadas (\r\nNombre Completo)
+                        const cleanRow = {};
+                        Object.keys(row).forEach(key => {
+                            const cleanKey = key.trim().replace(/[\r\n]/g, '');
+                            let value = row[key];
+                            if (typeof value === 'string') value = value.trim();
+                            cleanRow[cleanKey] = value;
+                        });
 
-                    if (userData.full_name && userData.email) {
-                        try {
-                            const { error } = await supabaseClient.functions.invoke('create-user-temp', { body: userData });
-                            if (error) throw error;
-                            successCount++;
-                        } catch (err) {
-                            console.error(`Error importando ${userData.email}:`, err);
+                        const userData = {
+                            full_name: cleanRow['Nombre Completo'] || cleanRow['full_name'] || cleanRow['Nombre'],
+                            email: cleanRow['Email'] || cleanRow['email'] || cleanRow['Correo'],
+                            birth_date: cleanRow['Fecha de Nacimiento'] || cleanRow['birth_date'],
+                            role: cleanRow['Rol'] || cleanRow['role'] || 'normal'
+                        };
+
+                        if (userData.email) userData.email = userData.email.replace(/\s+/g, '').toLowerCase();
+
+                        if (userData.full_name && userData.email) {
+                            try {
+                                const { data, error } = await supabaseClient.functions.invoke('create-user-temp', { body: userData });
+                                if (error) throw error;
+
+                                successCount++;
+                                if (data.isNew) newCount++;
+                                else updatedCount++;
+
+                                successTotal.textContent = successCount;
+                            } catch (err) {
+                                console.error(`Error importando ${userData.email}:`, err);
+                                errorCount++;
+                                failures.push({ email: userData.email, reason: err.message || 'Error desconocido' });
+                                errorTotal.textContent = errorCount;
+                            }
+                        } else {
                             errorCount++;
+                            failures.push({ email: userData.email || 'DESCONOCIDO', reason: 'Falta nombre o email' });
+                            errorTotal.textContent = errorCount;
                         }
-                    } else {
-                        errorCount++;
-                    }
+
+                        processed++;
+                        const pct = Math.round((processed / total) * 100);
+                        progressBar.style.width = `${pct}%`;
+                        percentText.textContent = `${pct}%`;
+                        counterText.textContent = `${processed} / ${total}`;
+                        statusMsg.textContent = `Sincronizando a ${userData.full_name.split(' ')[0]}...`;
+                    }));
                 }
 
-                document.body.style.cursor = 'default';
-                if (successCount > 0) {
-                    showToast(`Éxito: ${successCount} usuarios creados.`, 'success');
-                    loadUsers();
-                }
-                if (errorCount > 0) {
-                    showToast(`${errorCount} registros fallaron o estaban incompletos.`, 'warning');
+                // Mostrar Resultado Final
+                ongoingDiv.classList.add('hidden');
+                resultDiv.classList.remove('hidden');
+
+                document.getElementById('res-new').textContent = newCount;
+                document.getElementById('res-updated').textContent = updatedCount;
+                document.getElementById('res-failed').textContent = errorCount;
+
+                if (failures.length > 0) {
+                    const container = document.getElementById('error-log-container');
+                    const log = document.getElementById('import-error-log');
+                    container.classList.remove('hidden');
+                    log.innerHTML = failures.map(f => `
+                        <div class="mb-2 p-2 border-b border-gray-800">
+                            <span class="text-red-400 font-bold">[${f.email}]</span><br>
+                            <span class="text-gray-500">${f.reason}</span>
+                        </div>
+                    `).join('');
                 }
             };
             reader.readAsArrayBuffer(file);
-            // Reset input
             event.target.value = '';
         }
     </script>

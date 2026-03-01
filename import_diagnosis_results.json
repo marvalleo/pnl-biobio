@@ -1,0 +1,11 @@
+{
+  "summary": {
+    "total_excel": 3437,
+    "uniques_excel": 0,
+    "duplicates_excel": 0,
+    "invalid_excel": 3437,
+    "total_db": 0,
+    "missing": 0
+  },
+  "missingEmails": []
+}
