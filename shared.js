@@ -175,3 +175,247 @@ function validateRUT(rut) {
 
     return dv === dvEsperado;
 }
+
+// --- SISTEMA DE ANUNCIOS DE IMPACTO (MODALES) ---
+
+/**
+ * Muestra un modal de impacto premium
+ * @param {Object} config - { title, content, image_url, cta_text, cta_url, id }
+ */
+function showImpactModal(config) {
+    const { title, content, image_url, cta_text, cta_url, id } = config;
+
+    // Evitar duplicados
+    if (document.getElementById('impact-modal-overlay')) return;
+
+    const overlay = document.createElement('div');
+    overlay.id = 'impact-modal-overlay';
+    overlay.className = "fixed inset-0 bg-black/80 backdrop-blur-md z-[5000] flex items-center justify-center p-4 opacity-0 transition-opacity duration-500 text-left";
+
+    const modal = document.createElement('div');
+    modal.className = "bg-white w-full max-w-2xl rounded-[3rem] overflow-hidden shadow-2xl relative translate-y-20 transition-transform duration-500 border border-white/20";
+
+    const closeIcon = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`;
+    const arrowIcon = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>`;
+
+    // Renderizado de bloque de imagen con log de depuración y fallback
+    const imageBlock = image_url ? `
+        <div class="h-64 sm:h-80 w-full relative overflow-hidden bg-slate-100 flex items-center justify-center">
+            <img src="${image_url}" 
+                 id="impact-modal-img"
+                 class="w-full h-full object-cover transition-opacity duration-700 opacity-0" 
+                 onload="this.classList.remove('opacity-0'); console.log('PNL Image: Imagen cargada con éxito')"
+                 onerror="handleModalImageError(this, '${image_url}')">
+            <div class="absolute inset-0 bg-gradient-to-t from-[#0f172a] via-transparent to-transparent"></div>
+            <!-- Spinner / Loader -->
+            <div id="img-loader" class="absolute inset-0 flex items-center justify-center bg-slate-50">
+                 <div class="w-8 h-8 border-4 border-[#fba931] border-t-transparent rounded-full animate-spin"></div>
+            </div>
+        </div>` : '<div class="h-10 bg-[#0f172a]"></div>';
+
+    modal.innerHTML = `
+        ${imageBlock}
+        
+        <button onclick="closeImpactModal('${id}', false)" 
+                title="Cerrar por ahora"
+                class="absolute top-6 right-6 w-10 h-10 bg-black/20 hover:bg-black/40 text-white rounded-full flex items-center justify-center backdrop-blur-md transition-all z-10">
+            ${closeIcon}
+        </button>
+
+        <div class="p-8 sm:p-10 text-center">
+            <h2 class="serif text-3xl sm:text-4xl text-[#0f172a] mb-6 leading-tight">${title}</h2>
+            <div class="text-xs sm:text-sm text-gray-500 mb-8 leading-relaxed font-medium max-h-48 overflow-y-auto custom-scrollbar">
+                ${content.replace(/\\n/g, '<br>').replace(/\n/g, '<br>')}
+            </div>
+            
+            <div class="flex flex-col gap-6 items-center">
+                <div class="flex flex-col sm:flex-row gap-4 w-full justify-center">
+                    <button onclick="closeImpactModal('${id}', false)" 
+                            class="px-8 py-4 bg-gray-100 text-[#0f172a] rounded-2xl font-900 text-[10px] uppercase tracking-widest hover:bg-gray-200 transition-all active:scale-95 min-w-[140px]">
+                        Cerrar
+                    </button>
+                    ${cta_url ? `
+                    <a href="${cta_url}" target="_blank"
+                       class="px-8 py-4 bg-[#fba931] text-[#0f172a] rounded-2xl font-900 text-[10px] uppercase tracking-widest hover:brightness-110 transition-all shadow-xl shadow-amber-500/20 active:scale-95 flex items-center justify-center gap-3 min-w-[140px]">
+                        ${cta_text || 'Participar'} ${arrowIcon}
+                    </a>` : ''}
+                </div>
+                
+                <button onclick="closeImpactModal('${id}', true)" 
+                        class="text-[9px] font-black uppercase tracking-widest text-gray-300 hover:text-red-400 transition-colors">
+                    No volver a ver este anuncio
+                </button>
+            </div>
+        </div>
+    `;
+
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+
+    // Animación de entrada
+    setTimeout(() => {
+        overlay.classList.remove('opacity-0');
+        modal.classList.remove('translate-y-20');
+        modal.classList.add('translate-y-0');
+    }, 100);
+
+    // Ocultar loader si hay imagen
+    if (image_url) {
+        const img = document.getElementById('impact-modal-img');
+        const loader = document.getElementById('img-loader');
+        if (img) {
+            if (img.complete) {
+                loader?.remove();
+                img.classList.remove('opacity-0');
+            } else {
+                img.onload = () => {
+                    loader?.remove();
+                    img.classList.remove('opacity-0');
+                    console.log("PNL Image: Imagen cargada (evento)");
+                };
+            }
+        }
+    }
+}
+
+function handleModalImageError(img, url) {
+    console.error("PNL Image Error: No se pudo cargar la imagen", url);
+    const parent = img.parentElement;
+    const loader = document.getElementById('img-loader');
+    loader?.remove();
+
+    // Fallback: Mostrar gradiente estético con el logo o simplemente ocultar
+    parent.innerHTML = `
+        <div class="w-full h-full bg-[#0f172a] flex items-center justify-center overflow-hidden">
+            <div class="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
+            <span class="serif text-4xl text-white opacity-20 italic">PNL Biobío</span>
+            <div class="absolute inset-0 bg-gradient-to-t from-[#0f172a] to-transparent"></div>
+        </div>
+    `;
+}
+
+function closeImpactModal(id, permanent = false) {
+    const overlay = document.getElementById('impact-modal-overlay');
+    const modal = overlay?.querySelector('div');
+
+    if (overlay && modal) {
+        modal.classList.add('translate-y-20');
+        overlay.classList.add('opacity-0');
+
+        if (id) {
+            if (permanent) {
+                // Registrar permanentemente
+                const viewed = JSON.parse(localStorage.getItem('pnl_viewed_announcements') || '[]');
+                if (!viewed.includes(id)) {
+                    viewed.push(id);
+                    localStorage.setItem('pnl_viewed_announcements', JSON.stringify(viewed));
+                }
+                console.log("PNL Biobío: Anuncio descartado permanentemente.");
+            } else {
+                // Registrar solo para la sesión actual
+                const sessionDismissed = JSON.parse(sessionStorage.getItem('pnl_session_dismissed') || '[]');
+                if (!sessionDismissed.includes(id)) {
+                    sessionDismissed.push(id);
+                    sessionStorage.setItem('pnl_session_dismissed', JSON.stringify(sessionDismissed));
+                }
+                console.log("PNL Biobío: Anuncio cerrado por ahora (sesión).");
+            }
+        }
+
+        setTimeout(() => overlay.remove(), 500);
+    }
+}
+
+/**
+ * Comprueba si hay anuncios activos y los muestra si no han sido vistos
+ */
+async function checkAndShowAnnouncements() {
+    // Reintentar si Supabase no está listo (hasta 10 segundos para conexiones lentas)
+    let attempts = 0;
+    while (!window.isSupabaseInit && attempts < 20) {
+        await new Promise(r => setTimeout(r, 500));
+        attempts++;
+    }
+
+    if (!window.isSupabaseInit || !window.supabaseClient) {
+        console.warn("Anuncios: Supabase no se inicializó a tiempo.");
+        return;
+    }
+
+    try {
+        console.log("PNL Biobío: Buscando anuncios activos...");
+        const { data: announcement, error } = await supabaseClient
+            .from('regional_announcements')
+            .select('*')
+            .eq('is_active', true)
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+        if (error) throw error;
+        if (!announcement) {
+            console.log("PNL Biobío: No hay anuncios activos ahora mismo.");
+            return;
+        }
+
+        console.log("PNL Biobío: Anuncio encontrado:", announcement.title);
+
+        const isTestMode = window.location.search.includes('test=1');
+
+        // Comprobar si ya se vio este anuncio específico
+        const viewed = JSON.parse(localStorage.getItem('pnl_viewed_announcements') || '[]');
+        if (viewed.includes(announcement.id) && !isTestMode) {
+            console.log("PNL Biobío: El usuario ya vio este anuncio (Permanente). No se muestra.");
+            return;
+        }
+
+        // Comprobar si se cerró en esta sesión
+        const sessionDismissed = JSON.parse(sessionStorage.getItem('pnl_session_dismissed') || '[]');
+        if (sessionDismissed.includes(announcement.id) && !isTestMode) {
+            console.log("PNL Biobío: El anuncio fue cerrado en esta sesión. No se muestra.");
+            return;
+        }
+
+        // Comprobar expiración
+        if (announcement.expires_at && new Date(announcement.expires_at) < new Date()) {
+            console.log("PNL Biobío: El anuncio ha expirado.");
+            return;
+        }
+
+        // Comprobar audiencia
+        if (announcement.target_audience === 'militants') {
+            const { data: { user } } = await supabaseClient.auth.getUser();
+            if (!user) {
+                console.log("PNL Biobío: Anuncio restringido a militantes (no logueado).");
+                return;
+            }
+        }
+
+        // Preparar CTA según tipo
+        let finalUrl = announcement.cta_url;
+        if (announcement.cta_type === 'email' && finalUrl) {
+            finalUrl = `mailto:${finalUrl}?subject=Interés: ${encodeURIComponent(announcement.title)}`;
+        } else if (announcement.cta_type === 'whatsapp' && finalUrl) {
+            const phone = finalUrl.replace(/\D/g, '');
+            finalUrl = `https://wa.me/${phone}?text=${encodeURIComponent('Hola, me interesa el anuncio: ' + announcement.title)}`;
+        }
+
+        // Clonar y actualizar URL para el modal
+        const configForModal = { ...announcement, cta_url: finalUrl };
+
+        // Mostrar con un pequeño delay
+        console.log("PNL Biobío: Disparando modal de impacto...");
+        setTimeout(() => showImpactModal(configForModal), 1500);
+
+    } catch (err) {
+        console.warn("Error al comprobar anuncios:", err);
+    }
+}
+
+// Inicialización automática de anuncios corregida
+if (document.readyState === 'loading') {
+    window.addEventListener('DOMContentLoaded', checkAndShowAnnouncements);
+} else {
+    // Si ya cargó el DOM, ejecutar de inmediato (mientras espera a Supabase internamente)
+    checkAndShowAnnouncements();
+}

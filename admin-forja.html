@@ -420,7 +420,7 @@
             fLoc.classList.add('hidden'); fDate.classList.add('hidden'); fUrl.classList.add('hidden');
             if (type === 'recorded') { fUrl.classList.remove('hidden'); lUrl.textContent = 'URL del Video (YouTube)'; }
             else if (type === 'live') { fUrl.classList.remove('hidden'); fDate.classList.remove('hidden'); lUrl.textContent = 'Link (Zoom/Meet)'; }
-            else if (type === 'in_person') { fLoc.classList.remove('hidden'); fDate.classList.remove('hidden'); }
+            else if (type === 'in_person') { fLoc.classList.remove('hidden'); fDate.classList.remove('hidden'); fUrl.classList.remove('hidden'); lUrl.textContent = 'Link de Insc. Externa (Google Forms)'; }
         }
 
         function openLessonModal() {

@@ -185,7 +185,8 @@
         let events = [];
         let profileId = null;
         let registrations = new Set();
-        let currentMonth = new Date(2026, 1, 1); // Empezar en Feb 2026
+        let currentMonth = new Date();
+        currentMonth.setDate(1); // Empezar en el mes actual
 
         window.addEventListener('DOMContentLoaded', async () => {
             // Esperar a que Supabase se inicialice (máximo 2 segundos)
@@ -224,23 +225,10 @@
             const { data, error } = await supabaseClient
                 .from('regional_events')
                 .select('*, regional_event_registrations(count)')
-                .order('event_date', { ascending: true });
+                .order('event_date', { ascending: false });
 
             if (!error) {
                 events = data;
-
-                // Inyectar evento "Jornada de la Libertad" como Mockup
-                events.push({
-                    id: 'mock-jornada-libertad',
-                    title: 'Jornada de la Libertad: 1 Año de Vida PNL',
-                    description: '¡Celebramos nuestro primer año! Te invitamos a una jornada histórica con invitados confirmados en el Teatro Coliseo. Busca tu entrada para la delegación de la Región del Biobío. Cupos limitados exclusivos para militantes.',
-                    event_date: '2026-03-28T10:00:00', // Fecha tentativa para aniversario (Marzo 2026)
-                    location: 'Teatro Coliseo, Nataniel Cox 59, Santiago',
-                    delivery_type: 'in_person',
-                    max_capacity: 500,
-                    content_url: 'https://forms.gle/2yYsN2evyCjG58m16',
-                    regional_event_registrations: [{ count: 0 }]
-                });
             }
         }
 
@@ -258,8 +246,10 @@
             let filteredEvents = events;
 
             if (dateToFilter) {
-                const dayStr = dateToFilter.toDateString();
-                filteredEvents = events.filter(e => new Date(e.event_date).toDateString() === dayStr);
+                // Formatting to YYYY-MM-DD for accurate comparison regardless of timezone shifts
+                const tzOffset = dateToFilter.getTimezoneOffset() * 60000;
+                const localISOTime = (new Date(dateToFilter.getTime() - tzOffset)).toISOString().split('T')[0];
+                filteredEvents = events.filter(e => e.event_date.startsWith(localISOTime));
             }
 
             if (filteredEvents.length === 0) {
@@ -275,6 +265,7 @@
                 const date = new Date(event.event_date);
                 const isRegistered = registrations.has(event.id);
                 const isOnline = event.delivery_type !== 'in_person';
+                const isExternalReg = !isOnline && event.content_url;
 
                 return `
                 <div class="bg-white rounded-[2.5rem] p-8 shadow-sm border border-gray-100 flex flex-col md:flex-row gap-8 relative group hover:shadow-xl transition-all border-t-4 ${isOnline ? 'border-[#fba931]' : 'border-[#0f172a]'}">
@@ -289,7 +280,7 @@
                             <span class="text-[8px] font-black uppercase tracking-[0.2em] px-3 py-1 rounded-full ${isOnline ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-700'}">
                                 ${event.delivery_type === 'live' ? 'En Vivo (Online)' : event.delivery_type === 'recorded' ? 'Taller Grabado' : 'Presencial'}
                             </span>
-                            ${isRegistered ? '<span class="text-[8px] font-black text-green-500 uppercase tracking-widest flex items-center gap-1"><span class="material-symbols-outlined text-[12px]">check_circle</span> Inscrito</span>' : ''}
+                            ${isRegistered && !isExternalReg ? '<span class="text-[8px] font-black text-green-500 uppercase tracking-widest flex items-center gap-1"><span class="material-symbols-outlined text-[12px]">check_circle</span> Inscrito</span>' : ''}
                         </div>
                         
                         <h3 class="serif text-2xl text-[#0f172a] mb-2">${event.title}</h3>
@@ -313,11 +304,11 @@
                         </div>
 
                         <div class="flex items-center gap-4">
-                            <button onclick="${event.id === 'mock-jornada-libertad' ? `window.open('${event.content_url}', '_blank')` : `handleRegistration('${event.id}', ${isRegistered})`}" 
-                                    class="${isRegistered ? 'bg-gray-100 text-gray-400' : isOnline ? 'bg-[#fba931] text-[#0f172a]' : 'bg-[#0f172a] text-white'} px-8 py-3 rounded-xl font-900 text-[10px] uppercase tracking-widest hover:brightness-110 transition-all shadow-lg active:scale-95">
-                                ${event.id === 'mock-jornada-libertad' ? 'Registrarse en Google Forms' : isRegistered ? 'Cancelar Inscripción' : 'Inscribirse Ahora'}
+                            <button onclick="${isExternalReg ? `window.open('${event.content_url}', '_blank')` : `handleRegistration('${event.id}', ${isRegistered})`}" 
+                                    class="${isRegistered && !isExternalReg ? 'bg-gray-100 text-gray-400' : isOnline ? 'bg-[#fba931] text-[#0f172a]' : 'bg-[#0f172a] text-white'} px-8 py-3 rounded-xl font-900 text-[10px] uppercase tracking-widest hover:brightness-110 transition-all shadow-lg active:scale-95">
+                                ${isExternalReg ? 'Formulario de Inscripción' : isRegistered ? 'Cancelar Inscripción' : 'Inscribirse Ahora'}
                             </button>
-                            ${isRegistered && event.content_url && event.id !== 'mock-jornada-libertad' ? `<a href="${event.content_url}" target="_blank" class="text-[10px] font-black text-[#fba931] uppercase hover:underline">Ir a la sesión</a>` : ''}
+                            ${isRegistered && !isExternalReg && event.content_url ? `<a href="${event.content_url}" target="_blank" class="text-[10px] font-black text-[#fba931] uppercase hover:underline">Ir a la sesión</a>` : ''}
                         </div>
                     </div>
                 </div>
@@ -373,7 +364,12 @@
             for (let i = 0; i < startOffset; i++) grid.innerHTML += '<span></span>';
             for (let day = 1; day <= totalDays; day++) {
                 const date = new Date(year, month, day);
-                const hasEvent = events.some(e => new Date(e.event_date).toDateString() === date.toDateString());
+                const tzOffsetStr = new Date(date.getTime() - (date.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
+                const hasEvent = events.some(e => {
+                    const eventDateObj = new Date(e.event_date);
+                    const eventISOLocal = new Date(eventDateObj.getTime() - (eventDateObj.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
+                    return eventISOLocal === tzOffsetStr;
+                });
                 grid.innerHTML += `<div onclick="filterByDate(${year}, ${month}, ${day})" class="calendar-day ${hasEvent ? 'has-event' : ''}">${day}</div>`;
             }
         }
