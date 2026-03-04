@@ -8,13 +8,13 @@
     "theme_color": "#0f172a",
     "icons": [
         {
-            "src": "wp-content/uploads/2026/pnl-del-biobio01.png",
+            "src": "/assets/images/logos/pnl-del-biobio01.png",
             "sizes": "512x512",
             "type": "image/png",
             "purpose": "any maskable"
         },
         {
-            "src": "wp-content/uploads/2024/10/favicon-100x100.jpg",
+            "src": "/assets/images/logos/favicon-100x100.jpg",
             "sizes": "100x100",
             "type": "image/jpeg"
         }

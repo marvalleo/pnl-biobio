@@ -4,7 +4,7 @@ const ASSETS = [
     '/index.html',
     '/shared.js',
     '/supabase-config.js',
-    '/wp-content/uploads/2026/pnl-del-biobio01.png'
+    '/assets/images/logos/pnl-del-biobio01.png'
 ];
 
 self.addEventListener('install', (event) => {
