@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Aula Virtual - Forja Libertaria</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/input.css">
     <link
         href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&family=Playfair+Display:wght@700&display=swap"
         rel="stylesheet">
@@ -111,8 +111,8 @@
                 <span class="material-symbols-outlined text-[#0f172a]">arrow_back</span>
             </a>
             <div class="overflow-hidden">
-                <h1 id="course-title" class="font-900 uppercase text-sm leading-tight text-[#0f172a] truncate">Cargando
-                    curso...</h1>
+                <h1 id="course-title" class="font-900 uppercase text-sm leading-tight text-[#0f172a] truncate">
+                    Sincronizando...</h1>
                 <div class="w-full bg-gray-100 h-1.5 rounded-full mt-2">
                     <div id="progress-bar" class="bg-[#fba931] h-full w-0 transition-all duration-1000"></div>
                 </div>
@@ -136,10 +136,32 @@
         </div>
 
         <div id="lessons-list" class="flex-1 overflow-y-auto p-4 space-y-2 scrollbar-hide">
-            <div class="p-8 text-center text-gray-400">
-                <div class="animate-spin h-6 w-6 border-2 border-gray-200 border-t-[#fba931] rounded-full mx-auto mb-4">
+            <!-- Skeletons UI -->
+            <div class="animate-pulse space-y-3 p-2">
+                <div class="h-20 bg-slate-100 rounded-2xl flex items-center p-4 gap-4">
+                    <div class="w-6 h-6 bg-slate-200 rounded-full shrink-0"></div>
+                    <div class="flex-1 space-y-2">
+                        <div class="h-2 bg-slate-200 rounded-full w-1/3"></div>
+                        <div class="h-3 bg-slate-200 rounded-lg w-3/4"></div>
+                        <div class="h-2 bg-slate-200 rounded-full w-1/4 mt-2"></div>
+                    </div>
                 </div>
-                <p class="text-[10px] uppercase font-bold">Sincronizando Malla...</p>
+                <div class="h-20 bg-slate-100 rounded-2xl flex items-center p-4 gap-4">
+                    <div class="w-6 h-6 bg-slate-200 rounded-full shrink-0"></div>
+                    <div class="flex-1 space-y-2">
+                        <div class="h-2 bg-slate-200 rounded-full w-1/3"></div>
+                        <div class="h-3 bg-slate-200 rounded-lg w-2/3"></div>
+                        <div class="h-2 bg-slate-200 rounded-full w-1/4 mt-2"></div>
+                    </div>
+                </div>
+                <div class="h-20 bg-slate-100 rounded-2xl flex items-center p-4 gap-4">
+                    <div class="w-6 h-6 bg-slate-200 rounded-full shrink-0"></div>
+                    <div class="flex-1 space-y-2">
+                        <div class="h-2 bg-slate-200 rounded-full w-1/3"></div>
+                        <div class="h-3 bg-slate-200 rounded-lg w-5/6"></div>
+                        <div class="h-2 bg-slate-200 rounded-full w-1/4 mt-2"></div>
+                    </div>
+                </div>
             </div>
         </div>
     </aside>
@@ -244,7 +266,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://www.youtube.com/iframe_api"></script>
     <script src="supabase-config.js"></script>
-    <script src="shared.js"></script>
+    <script type="module" src="/shared.js"></script>
     <script>
         let currentLessons = [];
         let completedLessonIds = new Set();
@@ -678,7 +700,7 @@
                     <div style="position: absolute; bottom: 0; left: 0; width: 300px; height: 300px; background: #0f172a; clip-path: polygon(0 100%, 0 0, 100% 100%); opacity: 0.05;"></div>
                     
                     <div style="text-align: center; border: 4px solid #fba931; height: 100%; padding: 40px; box-sizing: border-box;">
-                        <img src="wp-content/uploads/2026/pnl-del-biobio01.png" style="height: 120px; margin-bottom: 20px;">
+                        <img src="/assets/images/logos/pnl-del-biobio01.png" style="height: 120px; margin-bottom: 20px;">
                         
                         <h1 style="font-size: 24px; font-weight: 900; color: #0f172a; margin: 0; text-transform: uppercase; letter-spacing: 5px;">Certificado de Excelencia</h1>
                         <p style="font-size: 14px; font-weight: 700; color: #fba931; text-transform: uppercase; margin-bottom: 40px;">Academia Forja Libertaria - Sede Regional Biobío</p>

@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Forja - Gestión de Lecciones</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/input.css">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&display=swap"
         rel="stylesheet">
     <link rel="stylesheet"
@@ -29,7 +29,7 @@
         class="bg-white shadow-md border-b-4 border-[#fba931] px-6 py-1 flex justify-between items-center sticky top-0 z-50">
         <div class="flex items-center gap-6">
             <a href="admin-forja.html" class="flex items-center gap-3 hover:opacity-80 transition-all group">
-                <img src="wp-content/uploads/2026/pnl-del-biobio01.png" alt="Logo PNL" style="max-height: 70px;">
+                <img src="/assets/images/logos/pnl-del-biobio01.png" alt="Logo PNL" style="max-height: 70px;">
                 <div class="flex flex-col text-left">
                     <span class="text-[9px] font-black uppercase text-[#fba931] leading-none mb-1">Volver a Forja</span>
                     <span class="font-black text-lg uppercase leading-none">Gestión Lecciones</span>
@@ -85,7 +85,13 @@
                 </thead>
                 <tbody id="lesson-table-body" class="divide-y divide-gray-100">
                     <tr>
-                        <td colspan="5" class="p-10 text-center text-gray-400 italic">Cargando lecciones...</td>
+                        <td colspan="10" class="p-8">
+                            <div class="animate-pulse flex flex-col gap-4">
+                                <div class="h-10 bg-slate-100 rounded-xl w-full"></div>
+                                <div class="h-10 bg-slate-100 rounded-xl w-full"></div>
+                                <div class="h-10 bg-slate-100 rounded-xl w-full"></div>
+                            </div>
+                        </td>
                     </tr>
                 </tbody>
             </table>
@@ -186,7 +192,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabase-config.js"></script>
-    <script src="shared.js"></script>
+    <script type="module" src="/shared.js"></script>
     <script>
         // Obtener course_id de la URL
         function getCourseId() {
@@ -354,6 +360,9 @@
 
         async function saveLesson(e) {
             e.preventDefault();
+            const btn = e.target.querySelector('button[type="submit"]');
+            window.setButtonLoading(btn, true);
+
             const id = document.getElementById('lesson-id').value;
             const lessonData = {
                 course_id: courseId,
@@ -376,11 +385,13 @@
                     ({ error } = await supabaseClient.from('lessons').insert([lessonData]));
                 }
 
+                window.setButtonLoading(btn, false);
                 if (error) throw error;
                 showToast('Lección guardada con éxito.', 'success');
                 closeModal();
                 loadLessons();
             } catch (err) {
+                window.setButtonLoading(btn, false);
                 showToast('Error al guardar: ' + err.message, 'error');
             }
         }

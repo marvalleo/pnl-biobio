@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Forja Libertaria - Sede Biobío</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/input.css">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&display=swap"
         rel="stylesheet">
     <style>
@@ -140,7 +140,7 @@
     <!-- 1. PANTALLA DE ACCESO -->
     <section id="page-login" class="page-content active min-h-screen flex items-center justify-center bg-pnl-blue p-4">
         <div class="max-w-md w-full bg-white rounded-3xl p-8 shadow-2xl text-center border-t-8 border-pnl-gold mx-auto">
-            <img src="https://pnl-biobio.netlify.app/wp-content/uploads/2026/pnl-del-biobio01.png" alt="Logo PNL"
+            <img src="https://pnl-biobio.netlify.app/assets/images/logos/pnl-del-biobio01.png" alt="Logo PNL"
                 class="h-20 mx-auto mb-6">
             <h1 class="text-2xl font-900 uppercase mb-2 tracking-tighter">Acceso Academia</h1>
             <p class="text-gray-400 text-[10px] font-bold uppercase tracking-widest mb-8">Espacio Privado - Sede Biobío
@@ -174,28 +174,7 @@
     </section>
 
     <!-- 2. NAVEGACIÓN (Solo visible post-login) -->
-    <nav id="main-nav" class="hidden bg-white shadow-md sticky top-0 z-50 border-b-4 border-pnl-gold">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-24">
-                <div class="flex items-center gap-4 cursor-pointer" onclick="navigate('dashboard')">
-                    <img src="https://pnl-biobio.netlify.app/wp-content/uploads/2026/pnl-del-biobio01.png" alt="PNL"
-                        class="h-12">
-                    <div class="hidden sm:block">
-                        <span class="font-black text-lg tracking-tighter uppercase leading-none block">FORJA</span>
-                        <span class="text-pnl-gold text-xs font-bold tracking-widest uppercase">Biobío</span>
-                    </div>
-                </div>
-
-                <div class="flex items-center space-x-4 md:space-x-8">
-                    <span onclick="navigate('dashboard')" id="link-dashboard"
-                        class="nav-link text-pnl-blue active">Academia</span>
-                    <span onclick="navigate('eventos')" id="link-eventos" class="nav-link text-pnl-blue">Eventos</span>
-                    <button onclick="logout()"
-                        class="text-[9px] font-black uppercase bg-gray-100 px-3 py-2 rounded-lg hover:bg-gray-200 transition-colors">Salir</button>
-                </div>
-            </div>
-        </div>
-    </nav>
+    <pnl-navbar type="forja-dashboard"></pnl-navbar>
 
     <!-- 3. CONTENIDOS -->
     <main class="h-screen overflow-hidden">
@@ -322,10 +301,7 @@
 
     </main>
 
-    <footer id="main-footer" class="hidden bg-white border-t border-gray-200 py-6 text-center">
-        <p class="text-[9px] font-black text-gray-300 uppercase tracking-[0.3em]">Forja Biobío — Sistema Interno de
-            Capacitación</p>
-    </footer>
+    <pnl-footer></pnl-footer>
 
     <script>
         /**
@@ -379,6 +355,8 @@
             window.scrollTo(0, 0);
         }
     </script>
+    <script src="/assets/components/navbar.js"></script>
+    <script src="/assets/components/footer.js"></script>
 </body>
 
 </html>

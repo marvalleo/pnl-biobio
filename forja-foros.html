@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Foros Regionales - Forja Libertaria</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/input.css">
     <link
         href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&family=Playfair+Display:wght@700&display=swap"
         rel="stylesheet">
@@ -62,47 +62,15 @@
     </style>
 </head>
 
-<body class="h-screen flex flex-col overflow-hidden">
+<body class="flex flex-col min-h-screen bg-[#f8fafc]">
     <!-- Navbar -->
-    <nav class="bg-white shadow-sm border-b-4 border-[#fba931] shrink-0">
-        <div class="max-w-[1600px] mx-auto px-6 h-20 flex justify-between items-center">
-            <div class="flex items-center gap-6">
-                <a href="index.html">
-                    <img src="wp-content/uploads/2026/pnl-del-biobio01.png" alt="PNL Biobío" class="h-12">
-                </a>
-                <div class="h-8 w-[1px] bg-gray-100 hidden md:block"></div>
-                <div class="hidden md:flex flex-col">
-                    <span
-                        class="text-[9px] font-black uppercase text-[#fba931] leading-none mb-1 tracking-widest">Soberanía
-                        Digital</span>
-                    <span class="font-black text-lg uppercase leading-none tracking-tighter">Foros Regionales</span>
-                </div>
-            </div>
-
-            <div class="flex items-center gap-4 lg:gap-8">
-                <a href="forja-eventos.html" class="nav-link text-gray-400">Eventos</a>
-                <a href="forja-academia.html" class="nav-link text-gray-400">Academia</a>
-                <a href="forja-votaciones.html" class="nav-link text-gray-400">Votaciones</a>
-                <a href="forja-foros.html" class="nav-link active">Foros</a>
-
-                <div id="admin-link-container" class="hidden">
-                    <a href="admin-dashboard.html"
-                        class="text-[9px] font-black uppercase bg-[#0f172a] text-white px-3 py-2 rounded-lg hover:bg-black transition-colors flex items-center gap-1.5">
-                        <span class="material-symbols-outlined text-sm">admin_panel_settings</span> Admin
-                    </a>
-                </div>
-                <div id="user-menu-container" class="flex items-center">
-                    <div class="w-10 h-10 rounded-full bg-gray-100 animate-pulse"></div>
-                </div>
-            </div>
-        </div>
-    </nav>
+    <pnl-navbar type="forja"></pnl-navbar>
 
     <!-- App Layout -->
-    <div class="flex flex-1 overflow-hidden max-w-[1600px] mx-auto w-full">
+    <div class="flex flex-1 max-w-[1600px] mx-auto w-full">
 
         <!-- Sidebar -->
-        <aside class="w-72 bg-white border-r border-gray-100 overflow-y-auto hidden md:block p-6">
+        <aside class="w-72 bg-white border-r border-gray-100 hidden md:block p-6 shrink-0">
             <div class="mb-10">
                 <button onclick="openNewTopicModal()"
                     class="w-full bg-[#0f172a] text-white py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl hover:scale-[1.02] transition-all flex items-center justify-center gap-2">
@@ -125,7 +93,7 @@
         </aside>
 
         <!-- Main Feed -->
-        <main class="flex-1 overflow-y-auto bg-[#f8fafc] p-6 lg:p-10">
+        <main class="flex-1 p-6 lg:p-10">
             <div class="max-w-4xl mx-auto">
                 <div class="flex items-center justify-between mb-8">
                     <h2 id="current-category-title" class="serif text-3xl text-[#0f172a] uppercase italic">Debate <span
@@ -149,7 +117,7 @@
         </main>
 
         <!-- Sidebar Trends -->
-        <aside class="w-80 bg-white border-l border-gray-100 overflow-y-auto hidden xl:block p-8">
+        <aside class="w-80 bg-white border-l border-gray-100 hidden xl:block p-8 shrink-0">
             <div class="space-y-10">
                 <!-- Muro de Honor -->
                 <div>
@@ -251,7 +219,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabase-config.js"></script>
-    <script src="shared.js"></script>
+    <script type="module" src="/shared.js"></script>
     <script>
         let categories = [];
         let currentCategoryId = null;
@@ -517,8 +485,7 @@
         document.getElementById('topic-form').onsubmit = async (e) => {
             e.preventDefault();
             const btn = e.target.querySelector('button');
-            btn.disabled = true;
-            btn.innerHTML = "Publicando...";
+            window.setButtonLoading(btn, true);
 
             const topicData = {
                 category_id: document.getElementById('form-category').value,
@@ -529,6 +496,7 @@
 
             const { error } = await supabaseClient.from('forum_topics').insert([topicData]);
 
+            window.setButtonLoading(btn, false);
             if (error) {
                 showToast(error.message, 'error');
             } else {
@@ -537,8 +505,6 @@
                 e.target.reset();
                 await loadTopics();
             }
-            btn.disabled = false;
-            btn.innerHTML = '<span class="material-symbols-outlined">rocket_launch</span> Publicar Hilo';
         };
 
         function listenToVotes() {
@@ -548,6 +514,7 @@
                 .subscribe();
         }
     </script>
+    <script src="/assets/components/navbar.js"></script>
 </body>
 
 </html>

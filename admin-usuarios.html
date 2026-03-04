@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gestión de Militantes - PNL Biobío</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/input.css">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&display=swap"
         rel="stylesheet">
     <link rel="stylesheet"
@@ -61,7 +61,7 @@
         class="bg-white shadow-md border-b-4 border-[#fba931] px-6 py-1 flex justify-between items-center sticky top-0 z-50">
         <div class="flex items-center gap-6">
             <a href="admin-dashboard.html" class="flex items-center gap-3 hover:opacity-80 transition-all group">
-                <img src="wp-content/uploads/2026/pnl-del-biobio01.png" alt="Logo PNL" style="max-height: 70px;">
+                <img src="/assets/images/logos/pnl-del-biobio01.png" alt="Logo PNL" style="max-height: 70px;">
                 <div class="flex flex-col">
                     <span class="text-[9px] font-black uppercase text-[#fba931] leading-none mb-1">Base de Datos</span>
                     <span class="font-black text-lg uppercase leading-none">Militantes</span>
@@ -142,7 +142,13 @@
                 </thead>
                 <tbody id="users-table-body">
                     <tr>
-                        <td colspan="5" class="px-6 py-10 text-center text-gray-400 italic">Cargando militantes...</td>
+                        <td colspan="10" class="p-8">
+                            <div class="animate-pulse flex flex-col gap-4">
+                                <div class="h-10 bg-slate-100 rounded-xl w-full"></div>
+                                <div class="h-10 bg-slate-100 rounded-xl w-full"></div>
+                                <div class="h-10 bg-slate-100 rounded-xl w-full"></div>
+                            </div>
+                        </td>
                     </tr>
                 </tbody>
             </table>
@@ -515,6 +521,9 @@
 
         async function saveUser(e) {
             e.preventDefault();
+            const btn = e.target.querySelector('button[type="submit"]');
+            window.setButtonLoading(btn, true);
+
             const formData = {
                 full_name: document.getElementById('full_name').value,
                 email: document.getElementById('email').value,
@@ -525,11 +534,13 @@
             const isEdit = modal.dataset.mode === 'edit';
             if (isEdit) {
                 const { error } = await supabaseClient.from('profiles').update(formData).eq('id', document.getElementById('profile-id').value);
+                window.setButtonLoading(btn, false);
                 if (!error) { showToast('Militante actualizado', 'success'); setTimeout(() => location.reload(), 1500); }
             } else {
                 document.body.style.cursor = 'wait';
                 const { data, error } = await supabaseClient.functions.invoke('create-user-temp', { body: formData });
                 document.body.style.cursor = 'default';
+                window.setButtonLoading(btn, false);
                 if (!error) showWhatsAppModal(formData, data.tempPassword);
                 else showToast(error.message, 'error');
             }
@@ -686,7 +697,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
     <script src="supabase-config.js"></script>
-    <script src="shared.js"></script>
+    <script type="module" src="/shared.js"></script>
 </body>
 
 </html>

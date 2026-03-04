@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Debates - Forja Libertaria</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/input.css">
     <link
         href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&family=Playfair+Display:wght@700&display=swap"
         rel="stylesheet">
@@ -57,27 +57,8 @@
 </head>
 
 <body class="min-h-screen flex flex-col">
-    <!-- Navbar -->
-    <nav class="bg-white shadow-sm border-b-4 border-[#fba931] shrink-0 sticky top-0 z-50">
-        <div class="max-w-[1600px] mx-auto px-6 h-20 flex justify-between items-center">
-            <div class="flex items-center gap-6">
-                <a href="forja-foros.html" class="flex items-center gap-3">
-                    <span class="material-symbols-outlined text-3xl text-[#0f172a]">arrow_back</span>
-                </a>
-                <div class="h-8 w-[1px] bg-gray-100"></div>
-                <div class="flex flex-col">
-                    <span class="text-[9px] font-black uppercase text-[#fba931] mb-1 tracking-widest">Debate en
-                        Curso</span>
-                    <span id="nav-topic-title"
-                        class="font-black text-lg uppercase leading-none truncate max-w-[200px] md:max-w-md">Cargando...</span>
-                </div>
-            </div>
-
-            <div id="user-menu-container" class="flex items-center gap-4">
-                <div class="w-10 h-10 rounded-full bg-gray-100 animate-pulse"></div>
-            </div>
-        </div>
-    </nav>
+    <!-- Navbar Web Component -->
+    <pnl-navbar type="forja-post"></pnl-navbar>
 
     <main class="flex-1 max-w-4xl mx-auto w-full p-6 lg:p-10">
         <!-- Hilo Principal (Topic) -->
@@ -119,7 +100,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabase-config.js"></script>
-    <script src="shared.js"></script>
+    <script type="module" src="/shared.js"></script>
     <script>
         let topicId = null;
         let userProfile = null;
@@ -322,13 +303,13 @@
 
             if (!content) return;
 
-            btn.disabled = true;
-            btn.innerHTML = "Enviando...";
+            window.setButtonLoading(btn, true);
 
             const { error } = await supabaseClient.from('forum_posts').insert([
                 { topic_id: topicId, profile_id: userProfile.id, content: content }
             ]);
 
+            window.setButtonLoading(btn, false);
             if (error) {
                 showToast(error.message, 'error');
             } else {
@@ -337,10 +318,9 @@
                 await loadPosts();
                 window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
             }
-            btn.disabled = false;
-            btn.innerHTML = '<span class="material-symbols-outlined text-lg">send</span> Enviar Respuesta';
         };
     </script>
+    <script src="/assets/components/navbar.js"></script>
 </body>
 
 </html>

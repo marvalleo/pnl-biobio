@@ -2,6 +2,20 @@
 const FALLBACK_URL = "https://kjcwozzfzbizxurppxlf.supabase.co";
 const FALLBACK_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtqY3dvenpmemJpenh1cnBweGxmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA0NTMyNjgsImV4cCI6MjA4NjAyOTI2OH0.UEziql_VLY92Opgngmf-LBEYmFzduVMKFcwEviV99NE";
 
+// --- VALIDACIÓN DE ORÍGENES (PREVENCIÓN XSS/CSRF) ---
+const ALLOWED_ORIGINS = [
+    'localhost',
+    '127.0.0.1',
+    'pnl-biobio.netlify.app'
+];
+
+function isOriginAllowed() {
+    const hostname = window.location.hostname;
+    // Permite Netlify deploys previews si contienen pnl-biobio
+    if (hostname.includes('pnl-biobio') && hostname.includes('netlify.app')) return true;
+    return ALLOWED_ORIGINS.includes(hostname);
+}
+
 function getCleanConfig() {
     let url = window.supabaseUrl || localStorage.getItem('SUPABASE_URL');
     let key = window.supabaseKey || localStorage.getItem('SUPABASE_ANON_KEY');
@@ -33,6 +47,13 @@ window.isSupabaseInit = false;
 window.supabaseClient = null;
 
 async function startSupabase() {
+    // 🛡️ BARRERA DE SEGURIDAD 1: Validación de Origen
+    if (!isOriginAllowed()) {
+        console.error("⛔ SEGURIDAD: Inicialización de base de datos bloqueada. Origen no autorizado:", window.location.hostname);
+        setupStub("CORS/XSS Policy Violation - Origin not allowed.");
+        return;
+    }
+
     const { url, key } = getCleanConfig();
 
     // Esperar al SDK (Max 5s)

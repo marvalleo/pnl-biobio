@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Foros Regionales - Mockup Premium PNL</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/input.css">
     <link
         href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&family=Playfair+Display:wght@700&display=swap"
         rel="stylesheet">
@@ -69,38 +69,7 @@
 
 <body class="h-screen flex flex-col overflow-hidden">
     <!-- Navbar (Consistent with Forja) -->
-    <nav class="bg-white shadow-sm border-b-4 border-[#fba931] shrink-0">
-        <div class="max-w-[1600px] mx-auto px-6 h-20 flex justify-between items-center">
-            <div class="flex items-center gap-6">
-                <a href="index.html" class="flex items-center gap-3">
-                    <img src="wp-content/uploads/2026/pnl-del-biobio01.png" alt="PNL Biobío" class="h-12">
-                </a>
-                <div class="h-8 w-[1px] bg-gray-100 hidden md:block"></div>
-                <div class="hidden md:flex flex-col">
-                    <span
-                        class="text-[9px] font-black uppercase text-[#fba931] leading-none mb-1 tracking-widest">Soberanía
-                        Digital</span>
-                    <span class="font-black text-lg uppercase leading-none tracking-tighter">Foros Regionales</span>
-                </div>
-            </div>
-
-            <div class="flex items-center gap-8">
-                <div class="hidden lg:flex items-center gap-6">
-                    <a href="forja-academia.html"
-                        class="text-[10px] font-black uppercase text-gray-400 hover:text-[#0f172a] transition-all">Academia</a>
-                    <a href="forja-votaciones.html"
-                        class="text-[10px] font-black uppercase text-gray-400 hover:text-[#0f172a] transition-all">Votaciones</a>
-                </div>
-                <!-- Simulación User Menu -->
-                <div class="flex items-center gap-3 bg-gray-50 pl-4 pr-1 py-1 rounded-full border border-gray-100">
-                    <span class="text-[10px] font-black uppercase hidden sm:block">René Muñoz</span>
-                    <div
-                        class="w-10 h-10 rounded-full bg-[#fba931] text-[#0f172a] flex items-center justify-center font-black border-2 border-white shadow-sm">
-                        RM</div>
-                </div>
-            </div>
-        </div>
-    </nav>
+    <pnl-navbar type="forja"></pnl-navbar>
 
     <!-- App Layout -->
     <div class="flex flex-1 overflow-hidden max-w-[1600px] mx-auto w-full">
@@ -327,6 +296,7 @@
         <span class="text-[10px] font-black uppercase tracking-widest">Alguien respondió a tu hilo</span>
     </div>
 
+    <script src="/assets/components/navbar.js"></script>
 </body>
 
 </html>

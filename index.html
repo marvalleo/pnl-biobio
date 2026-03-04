@@ -12,7 +12,7 @@
         href='https://fonts.googleapis.com/css?family=Roboto:100,100italic,300,300italic,regular,italic,500,500italic,700,700italic,900,900italic&amp;subset=latin,latin-ext&amp;display=swap'
         type='text/css' media='all' />
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/input.css">
     <link href="cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
     <meta name="description"
         content="Sitio oficial del Partido Nacional Libertario en la Región del Biobío. Formación política, democracia interna y eventos por la libertad.">
@@ -21,7 +21,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="manifest" href="manifest.json">
-    <link rel="icon" href="wp-content/uploads/2024/10/favicon-100x100.jpg" sizes="32x32" />
+    <link rel="icon" href="/assets/images/logos/favicon-100x100.jpg" sizes="32x32" />
 
     <style>
         body {
@@ -73,10 +73,13 @@
         }
 
         #logo {
-            max-height: 78px;
-            /* Aumentado para topar bordes */
-            margin-top: 5px;
-            /* Ajuste fino */
+            max-height: 65px;
+            margin-top: 0;
+            transition: transform 0.3s ease;
+        }
+
+        #logo:hover {
+            transform: scale(1.02);
         }
 
         nav ul {
@@ -185,7 +188,7 @@
         }
 
         .interactions-section {
-            background-color: #182d56;
+            background-color: #0f172a;
             color: #fff;
             text-align: center;
         }
@@ -402,33 +405,13 @@
 
 <body>
 
-    <header id="main-header">
-        <div class="container header-content">
-            <a href="index.html">
-                <img src="wp-content/uploads/2026/pnl-del-biobio01.png" alt="Partido Nacional Libertario Biobío"
-                    id="logo">
-            </a>
-            <div class="menu-toggle" onclick="toggleMenu()">
-                <span class="material-symbols-outlined">menu</span>
-            </div>
-            <nav id="main-nav">
-                <ul>
-                    <li><a href="https://nacionallibertario.cl/" class="btn-back-main">VOLVER AL SITIO
-                            NACIONAL</a></li>
-                    <li><a href="index.html" class="active">Inicio</a></li>
-                    <li><a href="nosotros.html">Nosotros</a></li>
-                    <li><a href="publicaciones-oficiales.html">Publicaciones</a></li>
-                    <li><a href="contacto.html">Contacto</a></li>
-                </ul>
-            </nav>
-        </div>
-    </header>
+    <pnl-navbar type="public"></pnl-navbar>
 
     <section class="section">
         <div class="container">
             <div class="info-grid">
                 <div class="info-text">
-                    <img src="wp-content/uploads/2026/directiva-regional02.png" alt="Directiva Regional"
+                    <img src="/assets/images/backgrounds/directiva-regional02.png" alt="Directiva Regional"
                         style="max-width: 300px; margin: 0 auto 60px auto; display: block;">
                     <h1 class="section-title" style="text-align: left;">Bienvenido a la <strong>Sede Biobío</strong>
                     </h1>
@@ -442,7 +425,7 @@
                     </p>
                 </div>
                 <div class="info-image">
-                    <img src="wp-content/uploads/2025/06/Partido-Nacional-Libertario-Mobile-1.png" alt="Sede Biobío">
+                    <img src="/assets/images/backgrounds/Partido-Nacional-Libertario-Mobile-1.png" alt="Sede Biobío">
                 </div>
             </div>
         </div>
@@ -453,28 +436,28 @@
             <h2 class="section-title">Nuestra <strong>Directiva</strong></h2>
             <div class="directiva-grid">
                 <div class="card">
-                    <img src="wp-content/uploads/2026/rene-muñoz01.jpeg" alt="Presidente Regional"
+                    <img src="/assets/images/directiva/rene-muñoz01.jpeg" alt="Presidente Regional"
                         style="object-position: center 15%;">
                     <span>PRESIDENTE REGIONAL</span>
                     <h3>René Muñoz</h3>
                     <p>Defendiendo el liberalismo clásico y el patriotismo en la región del Biobío.</p>
                 </div>
                 <div class="card">
-                    <img src="wp-content/uploads/2026/marina00.jpeg" alt="Vicepresidente Regional"
+                    <img src="/assets/images/directiva/marina00.jpeg" alt="Vicepresidente Regional"
                         style="object-position: center 30%;">
                     <span>VICEPRESIDENTE REGIONAL</span>
                     <h3>Marina Aravena</h3>
                     <p>Apoyando la gestión y el crecimiento del partido en toda la zona del Biobío.</p>
                 </div>
                 <div class="card">
-                    <img src="wp-content/uploads/2026/doris-arredondo.png" alt="Secretaria Regional"
+                    <img src="/assets/images/directiva/doris-arredondo.png" alt="Secretaria Regional"
                         style="object-position: center 25%;">
                     <span>SECRETARIA REGIONAL</span>
                     <h3>Dorys Arredondo</h3>
                     <p>Encargada de la organización territorial y despliegue regional.</p>
                 </div>
                 <div class="card">
-                    <img src="wp-content/uploads/2026/lucio-ramirez.png" alt="Tesorero Regional"
+                    <img src="/assets/images/directiva/lucio-ramirez.png" alt="Tesorero Regional"
                         style="object-position: center 15%;">
                     <span>TESORERO REGIONAL</span>
                     <h3>Lucio Ramírez</h3>
@@ -508,12 +491,7 @@
         </div>
     </section>
 
-    <footer id="main-footer">
-        <div class="container">
-            <img src="wp-content/uploads/2024/10/logo-footer.png" alt="PNL" class="footer-logo">
-            <p>&copy; 2026 Partido Nacional Libertario - Sede Regional Biobío</p>
-        </div>
-    </footer>
+    <pnl-footer></pnl-footer>
 
     <div id="loginOverlay" class="overlay">
         <div class="login-box">
@@ -535,7 +513,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabase-config.js"></script>
-    <script src="shared.js"></script>
+    <script type="module" src="/shared.js"></script>
     <script>
         function openLogin(section) {
             document.getElementById('sectionName').innerText = section;
@@ -548,8 +526,13 @@
 
         function handleLogin(e) {
             e.preventDefault();
-            alert('Sede regional en modo de pruebas. El acceso estará disponible próximamente.');
-            closeLogin();
+            const btn = e.target.querySelector('button[type="submit"]');
+            window.setButtonLoading(btn, true);
+            setTimeout(() => {
+                window.setButtonLoading(btn, false);
+                alert('Sede regional en modo de pruebas. El acceso estará disponible próximamente.');
+                closeLogin();
+            }, 800);
         }
 
         function toggleMenu() {
@@ -574,6 +557,8 @@
             });
         }
     </script>
+    <script src="/assets/components/navbar.js"></script>
+    <script src="/assets/components/footer.js"></script>
 </body>
 
 </html>

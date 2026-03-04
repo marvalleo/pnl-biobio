@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Acceso - Forja Libertaria</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/input.css">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&display=swap"
         rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
@@ -48,8 +48,7 @@
 <body class="min-h-screen flex items-center justify-center p-4">
 
     <div class="max-w-md w-full bg-white rounded-3xl p-8 shadow-2xl text-center border-t-8 border-[#fba931] mx-auto">
-        <img src="https://pnl-biobio.netlify.app/wp-content/uploads/2026/pnl-del-biobio01.png" alt="Logo PNL"
-            class="h-20 mx-auto mb-6">
+        <img src="/assets/images/logos/pnl-del-biobio01.png" alt="Logo PNL" class="h-20 mx-auto mb-6">
         <h1 class="text-2xl font-900 uppercase mb-2 tracking-tighter">Acceso a la Forja</h1>
         <p class="text-gray-400 text-[10px] font-bold uppercase tracking-widest mb-8">Espacio Privado - Sede Biobío</p>
 
@@ -129,7 +128,7 @@
     <!-- Supabase SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabase-config.js"></script>
-    <script src="shared.js"></script>
+    <script type="module" src="/shared.js"></script>
 
     <script>
         // Cargar credenciales guardadas al cargar la página

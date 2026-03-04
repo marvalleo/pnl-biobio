@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Forja - Gestión de Cursos</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/input.css">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&display=swap"
         rel="stylesheet">
     <link rel="stylesheet"
@@ -29,7 +29,7 @@
         class="bg-white shadow-md border-b-4 border-[#fba931] px-6 py-1 flex justify-between items-center sticky top-0 z-50">
         <div class="flex items-center gap-6">
             <a href="admin-dashboard.html" class="flex items-center gap-3 hover:opacity-80 transition-all group">
-                <img src="wp-content/uploads/2026/pnl-del-biobio01.png" alt="Logo PNL" style="max-height: 70px;">
+                <img src="/assets/images/logos/pnl-del-biobio01.png" alt="Logo PNL" style="max-height: 70px;">
                 <div class="flex flex-col">
                     <span class="text-[9px] font-black uppercase text-[#fba931] leading-none mb-1">Gestión
                         Regional</span>
@@ -86,7 +86,12 @@
                 </thead>
                 <tbody id="course-table-body" class="divide-y divide-gray-100">
                     <tr>
-                        <td colspan="6" class="p-10 text-center text-gray-400 italic">Cargando cursos desde la nube...
+                        <td colspan="10" class="p-8">
+                            <div class="animate-pulse flex flex-col gap-4">
+                                <div class="h-10 bg-slate-100 rounded-xl w-full"></div>
+                                <div class="h-10 bg-slate-100 rounded-xl w-full"></div>
+                                <div class="h-10 bg-slate-100 rounded-xl w-full"></div>
+                            </div>
                         </td>
                     </tr>
                 </tbody>
@@ -120,7 +125,13 @@
                 </thead>
                 <tbody id="lesson-table-body" class="divide-y divide-gray-100">
                     <tr>
-                        <td colspan="6" class="p-10 text-center text-gray-400 italic">Cargando eventos...</td>
+                        <td colspan="10" class="p-8">
+                            <div class="animate-pulse flex flex-col gap-4">
+                                <div class="h-10 bg-slate-100 rounded-xl w-full"></div>
+                                <div class="h-10 bg-slate-100 rounded-xl w-full"></div>
+                                <div class="h-10 bg-slate-100 rounded-xl w-full"></div>
+                            </div>
+                        </td>
                     </tr>
                 </tbody>
             </table>
@@ -371,6 +382,9 @@
 
         async function saveCourse(e) {
             e.preventDefault();
+            const btn = e.target.querySelector('button[type="submit"]');
+            window.setButtonLoading(btn, true);
+
             const id = document.getElementById('course-id').value;
             const courseData = {
                 title: document.getElementById('course-title').value,
@@ -382,11 +396,15 @@
             };
             try {
                 const { error } = id ? await supabaseClient.from('courses').update(courseData).eq('id', id) : await supabaseClient.from('courses').insert([courseData]);
+                window.setButtonLoading(btn, false);
                 if (error) throw error;
                 showToast('Guardado con éxito.', 'success');
                 closeModal();
                 loadCourses();
-            } catch (err) { showToast('Error: ' + err.message, 'error'); }
+            } catch (err) {
+                window.setButtonLoading(btn, false);
+                showToast('Error: ' + err.message, 'error');
+            }
         }
 
         async function deleteCourse(id) {
@@ -417,10 +435,13 @@
             const fDate = document.getElementById('field-date');
             const lUrl = document.getElementById('label-url');
 
-            fLoc.classList.add('hidden'); fDate.classList.add('hidden'); fUrl.classList.add('hidden');
+            fLoc.classList.add('hidden');
+            fUrl.classList.add('hidden');
+            fDate.classList.remove('hidden'); // Siempre pedimos fecha para cualquier evento
+
             if (type === 'recorded') { fUrl.classList.remove('hidden'); lUrl.textContent = 'URL del Video (YouTube)'; }
-            else if (type === 'live') { fUrl.classList.remove('hidden'); fDate.classList.remove('hidden'); lUrl.textContent = 'Link (Zoom/Meet)'; }
-            else if (type === 'in_person') { fLoc.classList.remove('hidden'); fDate.classList.remove('hidden'); fUrl.classList.remove('hidden'); lUrl.textContent = 'Link de Insc. Externa (Google Forms)'; }
+            else if (type === 'live') { fUrl.classList.remove('hidden'); lUrl.textContent = 'Link (Zoom/Meet)'; }
+            else if (type === 'in_person') { fLoc.classList.remove('hidden'); fUrl.classList.remove('hidden'); lUrl.textContent = 'Link de Insc. Externa (Google Forms)'; }
         }
 
         function openLessonModal() {
@@ -435,6 +456,9 @@
 
         async function saveLesson(e) {
             e.preventDefault();
+            const btn = e.target.querySelector('button[type="submit"]');
+            window.setButtonLoading(btn, true);
+
             const id = document.getElementById('lesson-id').value;
             const eventData = {
                 title: document.getElementById('lesson-title').value,
@@ -448,11 +472,15 @@
             };
             try {
                 const { error } = id ? await supabaseClient.from('regional_events').update(eventData).eq('id', id) : await supabaseClient.from('regional_events').insert([eventData]);
+                window.setButtonLoading(btn, false);
                 if (error) throw error;
                 showToast('Evento regional guardado.', 'success');
                 closeLessonModal();
                 loadEvents();
-            } catch (err) { showToast('Error: ' + err.message, 'error'); }
+            } catch (err) {
+                window.setButtonLoading(btn, false);
+                showToast('Error: ' + err.message, 'error');
+            }
         }
 
         async function deleteLesson(id) {
@@ -475,7 +503,13 @@
             document.getElementById('lesson-url').value = event.content_url || '';
             document.getElementById('lesson-location').value = event.location || '';
             document.getElementById('lesson-capacity').value = event.max_capacity || 0;
-            if (event.event_date) document.getElementById('lesson-date').value = new Date(event.event_date).toISOString().slice(0, 16);
+            if (event.event_date) {
+                const d = new Date(event.event_date);
+                const localISOTime = new Date(d.getTime() - (d.getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
+                document.getElementById('lesson-date').value = localISOTime;
+            } else {
+                document.getElementById('lesson-date').value = '';
+            }
             document.getElementById('lesson-modal-title').textContent = 'Editar Evento';
             toggleLessonFields();
         }
@@ -483,7 +517,7 @@
         async function viewRegistrations(eventId, eventTitle) {
             document.getElementById('reg-modal-title').textContent = `Inscritos: ${eventTitle}`;
             const list = document.getElementById('reg-list');
-            list.innerHTML = '<p class="text-center text-gray-400 py-10 italic">Cargando...</p>';
+            list.innerHTML = '<div class="animate-pulse flex flex-col gap-4 p-8"><div class="h-10 bg-slate-100 rounded-xl w-full"></div><div class="h-10 bg-slate-100 rounded-xl w-full"></div></div>';
             document.getElementById('reg-modal').classList.remove('hidden');
             try {
                 const { data, error } = await supabaseClient.from('regional_event_registrations').select('*, profiles(full_name, rut)').eq('event_id', eventId);
@@ -513,7 +547,7 @@
     </script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabase-config.js"></script>
-    <script src="shared.js"></script>
+    <script type="module" src="/shared.js"></script>
     <script>
         // Protección de Ruta
         window.addEventListener('DOMContentLoaded', async () => {
