@@ -10,6 +10,7 @@ const inputFiles = files.reduce((acc, file) => {
 }, {});
 
 module.exports = defineConfig({
+    envPrefix: ['VITE_', 'SUPABASE_'],
     build: {
         outDir: 'dist',
         emptyOutDir: true,

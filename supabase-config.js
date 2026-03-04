@@ -1,6 +1,6 @@
 // --- CONFIGURACIÓN DE CREDENCIALES ---
-const FALLBACK_URL = "https://kjcwozzfzbizxurppxlf.supabase.co";
-const FALLBACK_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtqY3dvenpmemJpenh1cnBweGxmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA0NTMyNjgsImV4cCI6MjA4NjAyOTI2OH0.UEziql_VLY92Opgngmf-LBEYmFzduVMKFcwEviV99NE";
+const FALLBACK_URL = import.meta.env.SUPABASE_URL || import.meta.env.VITE_SUPABASE_URL || "";
+const FALLBACK_KEY = import.meta.env.SUPABASE_ANON_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY || "";
 
 // --- VALIDACIÓN DE ORÍGENES (PREVENCIÓN XSS/CSRF) ---
 const ALLOWED_ORIGINS = [
@@ -40,7 +40,7 @@ function getCleanConfig() {
     url = url || FALLBACK_URL;
     key = key || FALLBACK_KEY;
 
-    return { url: url.trim(), key: key.trim() };
+    return { url: url ? url.trim() : "", key: key ? key.trim() : "" };
 }
 
 window.isSupabaseInit = false;
