@@ -3,10 +3,10 @@
  * Actúa como punto de entrada (Entry Point) agrupando módulos ES6.
  */
 
-import { showToast, toggleUserMenu, setButtonLoading } from '/assets/js/modules/ui.js';
-import { logout, initNavbar } from '/assets/js/modules/auth.js';
-import { validateRUT } from '/assets/js/modules/validation.js';
-import { showImpactModal, handleModalImageError, closeImpactModal, checkAndShowAnnouncements } from '/assets/js/modules/announcements.js';
+import { showToast, toggleUserMenu, setButtonLoading } from '/public/assets/js/modules/ui.js';
+import { logout, initNavbar } from '/public/assets/js/modules/auth.js';
+import { validateRUT } from '/public/assets/js/modules/validation.js';
+import { showImpactModal, handleModalImageError, closeImpactModal, checkAndShowAnnouncements } from '/public/assets/js/modules/announcements.js';
 
 // --- EXPOSICIÓN GLOBAL AL OBJETO WINDOW ---
 // Esto permite que el código inline en varios archivos HTML 

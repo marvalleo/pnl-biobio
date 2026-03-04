@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eventos - Forja Libertaria</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&family=Playfair+Display:wght@700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+    <style>
+        :root {
+            --pnl-blue: #0f172a;
+            --pnl-gold: #fba931;
+        }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background-color: #f8fafc;
+            color: var(--pnl-blue);
+        }
+
+        .serif {
+            font-family: 'Playfair Display', serif;
+        }
+
+        .nav-link {
+            cursor: pointer;
+            position: relative;
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.05em;
+            transition: all 0.3s;
+        }
+
+        .nav-link:hover {
+            color: var(--pnl-gold);
+        }
+
+        .nav-link.active::after {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 3px;
+            bottom: -4px;
+            left: 0;
+            background-color: var(--pnl-gold);
+        }
+
+        .calendar-day {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .calendar-day:hover {
+            background-color: #f1f5f9;
+        }
+
+        .calendar-day.has-event {
+            background-color: #fef3c7;
+            color: #d97706;
+            border: 2px solid #fba931;
+        }
+
+        .calendar-day.selected {
+            background-color: #fba931 !important;
+            color: #0f172a !important;
+            box-shadow: 0 4px 12px rgba(251, 169, 49, 0.3);
+        }
+    </style>
+  <script type="module" crossorigin src="/assets/supabase-config-CulAxRdq.js"></script>
+  <script type="module" crossorigin src="/assets/shared-D4mVz3YT.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/input-vavycQ0p.css">
+</head>
+
+<body class="min-h-screen flex flex-col">
+
+    <!-- NAVEGACIÓN -->
+    <pnl-navbar type="forja"></pnl-navbar>
+
+    <!-- CONTENT -->
+    <main class="max-w-7xl mx-auto px-6 py-12 flex-1 w-full grid grid-cols-1 lg:grid-cols-3 gap-12">
+        <!-- Listado de Eventos -->
+        <div class="lg:col-span-2">
+            <div class="mb-10">
+                <h1 class="serif text-5xl text-[#0f172a] mb-2">Agenda Regional</h1>
+                <p class="text-gray-400 font-bold text-xs uppercase tracking-widest">Próximas Convocatorias y Talleres
+                </p>
+            </div>
+
+            <div id="events-list" class="space-y-6">
+                <!-- Loading State -->
+                <div class="animate-pulse space-y-4">
+                    <div class="h-40 bg-gray-100 rounded-[2.5rem]"></div>
+                    <div class="h-40 bg-gray-100 rounded-[2.5rem]"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar: Calendario y Filtros -->
+        <div class="space-y-8">
+            <div class="bg-white rounded-[2.5rem] p-8 shadow-xl border border-gray-100 border-t-8 border-[#fba931]">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="font-900 uppercase text-xs tracking-widest text-gray-400" id="current-month-name">Febrero
+                        2026</h3>
+                    <div class="flex gap-2 text-gray-400">
+                        <button class="material-symbols-outlined hover:text-[#fba931]"
+                            onclick="changeMonth(-1)">chevron_left</button>
+                        <button class="material-symbols-outlined hover:text-[#fba931]"
+                            onclick="changeMonth(1)">chevron_right</button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-7 gap-1 text-center mb-2">
+                    <span class="text-[8px] font-black uppercase text-gray-300">Lu</span>
+                    <span class="text-[8px] font-black uppercase text-gray-300">Ma</span>
+                    <span class="text-[8px] font-black uppercase text-gray-300">Mi</span>
+                    <span class="text-[8px] font-black uppercase text-gray-300">Ju</span>
+                    <span class="text-[8px] font-black uppercase text-gray-300">Vi</span>
+                    <span class="text-[8px] font-black uppercase text-gray-300">Sa</span>
+                    <span class="text-[8px] font-black uppercase text-gray-300">Do</span>
+                </div>
+
+                <div id="calendar-grid" class="grid grid-cols-7 gap-1">
+                    <!-- Calendario dinámico -->
+                </div>
+            </div>
+
+            <div class="bg-blue-50 rounded-[2.5rem] p-8 border border-blue-100">
+                <div class="flex items-center gap-3 mb-4">
+                    <span class="material-symbols-outlined text-[#fba931]">help</span>
+                    <h4 class="font-900 uppercase text-[11px] tracking-widest">Sobre las inscripciones</h4>
+                </div>
+                <p class="text-[10px] font-bold text-gray-500 leading-relaxed uppercase">Para los eventos presenciales,
+                    el cupo es limitado para asegurar la calidad de la sesión. Si no puedes asistir, por favor cancela
+                    tu inscripción.</p>
+            </div>
+        </div>
+    </main>
+
+    <pnl-footer></pnl-footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        let events = [];
+        let profileId = null;
+        let registrations = new Set();
+        let currentMonth = new Date();
+        currentMonth.setDate(1); // Empezar en el mes actual
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            // Esperar a que Supabase se inicialice (máximo 2 segundos)
+            let attempts = 0;
+            while (!window.isSupabaseInit && attempts < 20) {
+                await new Promise(r => setTimeout(r, 100));
+                attempts++;
+            }
+
+            if (!window.isSupabaseInit) {
+                console.error("Supabase no inicializado.");
+                return;
+            }
+
+            const { data: { user } } = await supabaseClient.auth.getUser();
+            if (!user) { window.location.href = 'forja-login.html'; return; }
+
+            // Usar cache de sesión si existe
+            let profile = JSON.parse(sessionStorage.getItem('pnl_profile'));
+            if (!profile) {
+                const { data } = await supabaseClient.from('profiles').select('id, role').eq('auth_id', user.id).single();
+                profile = data;
+                if (profile) sessionStorage.setItem('pnl_profile', JSON.stringify(profile));
+            }
+
+            if (!profile) return;
+            profileId = profile.id;
+
+            await Promise.all([loadEvents(), loadRegistrations()]);
+            renderEvents();
+            renderCalendar();
+            initNavbar();
+        });
+
+        async function loadEvents() {
+            const { data, error } = await supabaseClient
+                .from('regional_events')
+                .select('*, regional_event_registrations(count)')
+                .order('event_date', { ascending: false });
+
+            if (!error) {
+                events = data;
+            }
+        }
+
+        async function loadRegistrations() {
+            const { data } = await supabaseClient
+                .from('regional_event_registrations')
+                .select('lesson_id:event_id')
+                .eq('profile_id', profileId);
+
+            registrations = new Set(data.map(r => r.lesson_id));
+        }
+
+        function renderEvents(dateToFilter = null) {
+            const list = document.getElementById('events-list');
+            let filteredEvents = events;
+
+            if (dateToFilter) {
+                // Formatting to YYYY-MM-DD for accurate comparison regardless of timezone shifts
+                const tzOffset = dateToFilter.getTimezoneOffset() * 60000;
+                const localISOTime = (new Date(dateToFilter.getTime() - tzOffset)).toISOString().split('T')[0];
+                filteredEvents = events.filter(e => e.event_date && e.event_date.startsWith(localISOTime));
+            }
+
+            if (filteredEvents.length === 0) {
+                list.innerHTML = `
+                <div class="py-20 text-center border-2 border-dashed rounded-[3rem] border-gray-200">
+                    <p class="text-[10px] font-black text-gray-300 uppercase tracking-[0.2em]">No hay eventos para esta selección</p>
+                    <button onclick="renderEvents()" class="mt-4 text-[9px] font-black text-[#fba931] uppercase hover:underline">Ver todos los eventos</button>
+                </div>`;
+                return;
+            }
+
+            list.innerHTML = filteredEvents.map(event => {
+                const date = new Date(event.event_date);
+                const isRegistered = registrations.has(event.id);
+                const isOnline = event.delivery_type !== 'in_person';
+                const isExternalReg = !isOnline && event.content_url;
+
+                return `
+                <div class="bg-white rounded-[2.5rem] p-8 shadow-sm border border-gray-100 flex flex-col md:flex-row gap-8 relative group hover:shadow-xl transition-all border-t-4 ${isOnline ? 'border-[#fba931]' : 'border-[#0f172a]'}">
+                    <div class="md:w-56 h-40 bg-gray-100 rounded-3xl overflow-hidden shrink-0 relative">
+                        <img src="https://images.unsplash.com/photo-${isOnline ? '1588196749597-9ff075ee6b5b' : '1540317580384-e5d43616b9aa'}?auto=format&fit=crop&q=80&w=400" 
+                             class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000">
+                        <div class="absolute inset-0 bg-black/20"></div>
+                    </div>
+                    
+                    <div class="flex-1 flex flex-col justify-center">
+                        <div class="flex items-center gap-3 mb-2">
+                            <span class="text-[8px] font-black uppercase tracking-[0.2em] px-3 py-1 rounded-full ${isOnline ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-700'}">
+                                ${event.delivery_type === 'live' ? 'En Vivo (Online)' : event.delivery_type === 'recorded' ? 'Taller Grabado' : 'Presencial'}
+                            </span>
+                            ${isRegistered && !isExternalReg ? '<span class="text-[8px] font-black text-green-500 uppercase tracking-widest flex items-center gap-1"><span class="material-symbols-outlined text-[12px]">check_circle</span> Inscrito</span>' : ''}
+                        </div>
+                        
+                        <h3 class="serif text-2xl text-[#0f172a] mb-2">${event.title}</h3>
+                        <p class="text-xs text-gray-400 font-medium mb-4 line-clamp-2">${event.description || 'Sin descripción detallada.'}</p>
+                        
+                        <div class="flex flex-wrap items-center gap-6 mb-6">
+                            <div class="flex items-center gap-2 text-gray-400">
+                                <span class="material-symbols-outlined text-xs text-[#fba931]">calendar_today</span>
+                                <span class="text-[10px] font-black uppercase tracking-wider">${date.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' })} — ${date.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })} hrs</span>
+                            </div>
+                            <div class="flex items-center gap-2 text-gray-400">
+                                <span class="material-symbols-outlined text-xs text-[#fba931]">location_on</span>
+                                <span class="text-[10px] font-black uppercase tracking-wider">${event.location || 'Por definir'}</span>
+                            </div>
+                            <div class="flex items-center gap-2 text-gray-400">
+                                <span class="material-symbols-outlined text-xs text-[#fba931]">group</span>
+                                <span class="text-[10px] font-black uppercase tracking-wider">
+                                    ${event.max_capacity > 0 ? `Cupos: ${(event.regional_event_registrations?.[0]?.count || 0)} / ${event.max_capacity}` : 'Ilimitado'}
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-4">
+                            <button onclick="${isExternalReg ? `window.open('${event.content_url}', '_blank')` : `handleRegistration('${event.id}', ${isRegistered})`}" 
+                                    class="${isRegistered && !isExternalReg ? 'bg-gray-100 text-gray-400' : isOnline ? 'bg-[#fba931] text-[#0f172a]' : 'bg-[#0f172a] text-white'} px-8 py-3 rounded-xl font-900 text-[10px] uppercase tracking-widest hover:brightness-110 transition-all shadow-lg active:scale-95">
+                                ${isExternalReg ? 'Formulario de Inscripción' : isRegistered ? 'Cancelar Inscripción' : 'Inscribirse Ahora'}
+                            </button>
+                            ${isRegistered && !isExternalReg && event.content_url ? `<a href="${event.content_url}" target="_blank" class="text-[10px] font-black text-[#fba931] uppercase hover:underline">Ir a la sesión</a>` : ''}
+                        </div>
+                    </div>
+                </div>
+                `;
+            }).join('');
+        }
+
+        async function handleRegistration(lessonId, isRegistered) {
+            try {
+                if (isRegistered) {
+                    if (!confirm('¿Deseas cancelar tu inscripción a este evento?')) return;
+                    const { error } = await supabaseClient.from('regional_event_registrations').delete().eq('profile_id', profileId).eq('event_id', lessonId);
+                    if (error) throw error;
+                    registrations.delete(lessonId);
+                    showToast('Inscripción cancelada', 'info');
+                } else {
+                    const { data: currentLesson } = await supabaseClient.from('regional_events').select('max_capacity').eq('id', lessonId).single();
+                    const { count } = await supabaseClient.from('regional_event_registrations').select('*', { count: 'exact', head: true }).eq('event_id', lessonId);
+
+                    if (currentLesson.max_capacity > 0 && count >= currentLesson.max_capacity) {
+                        showToast('Lo sentimos, este evento ya no tiene cupos disponibles.', 'warning');
+                        return;
+                    }
+
+                    const { error } = await supabaseClient.from('regional_event_registrations').insert({ profile_id: profileId, event_id: lessonId });
+                    if (error) throw error;
+                    registrations.add(lessonId);
+                    showToast('¡Inscripción exitosa! Te esperamos.', 'success');
+                }
+                await loadEvents();
+                renderEvents();
+                renderCalendar();
+            } catch (err) {
+                console.error(err);
+                showToast('Error al procesar la solicitud.', 'error');
+            }
+        }
+
+        function renderCalendar() {
+            const grid = document.getElementById('calendar-grid');
+            const monthLabel = document.getElementById('current-month-name');
+            grid.innerHTML = '';
+            const monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+
+            monthLabel.textContent = `${monthNames[currentMonth.getMonth()]} ${currentMonth.getFullYear()}`;
+
+            const year = currentMonth.getFullYear();
+            const month = currentMonth.getMonth();
+            const firstDay = new Date(year, month, 1).getDay();
+            const totalDays = new Date(year, month + 1, 0).getDate();
+            let startOffset = firstDay === 0 ? 6 : firstDay - 1;
+
+            for (let i = 0; i < startOffset; i++) grid.innerHTML += '<span></span>';
+            for (let day = 1; day <= totalDays; day++) {
+                const date = new Date(year, month, day);
+                const tzOffsetStr = new Date(date.getTime() - (date.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
+                const hasEvent = events.some(e => {
+                    if (!e.event_date) return false;
+                    const eventDateObj = new Date(e.event_date);
+                    const eventISOLocal = new Date(eventDateObj.getTime() - (eventDateObj.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
+                    return eventISOLocal === tzOffsetStr;
+                });
+                grid.innerHTML += `<div onclick="filterByDate(${year}, ${month}, ${day})" class="calendar-day ${hasEvent ? 'has-event' : ''}">${day}</div>`;
+            }
+        }
+
+        function filterByDate(y, m, d) {
+            const selectedDate = new Date(y, m, d);
+            document.querySelectorAll('.calendar-day').forEach(el => {
+                el.classList.remove('selected');
+                if (parseInt(el.textContent) === d) el.classList.add('selected');
+            });
+            renderEvents(selectedDate);
+        }
+
+        function changeMonth(delta) {
+            currentMonth.setMonth(currentMonth.getMonth() + delta);
+            renderCalendar();
+            renderEvents();
+        }
+    </script>
+    <script src="/assets/components/navbar.js"></script>
+    <script src="/assets/components/footer.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Academia - Forja Libertaria</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&family=Playfair+Display:wght@700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+    <style>
+        :root {
+            --pnl-blue: #0f172a;
+            --pnl-gold: #fba931;
+        }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background-color: #f8fafc;
+            color: var(--pnl-blue);
+        }
+
+        .serif {
+            font-family: 'Playfair Display', serif;
+        }
+
+        .gold-glow {
+            box-shadow: 0 0 30px rgba(251, 169, 49, 0.15);
+        }
+
+        .card-gradient {
+            background: linear-gradient(180deg, rgba(15, 23, 42, 0) 0%, rgba(15, 23, 42, 0.95) 100%);
+        }
+
+        .nav-link {
+            cursor: pointer;
+            position: relative;
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.05em;
+            transition: all 0.3s;
+        }
+
+        .nav-link:hover {
+            color: var(--pnl-gold);
+        }
+
+        .nav-link.active {
+            color: var(--pnl-gold);
+        }
+
+        .nav-link.active::after {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 3px;
+            bottom: -4px;
+            left: 0;
+            background-color: var(--pnl-gold);
+        }
+    </style>
+  <script type="module" crossorigin src="/assets/supabase-config-CulAxRdq.js"></script>
+  <script type="module" crossorigin src="/assets/shared-D4mVz3YT.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/input-vavycQ0p.css">
+</head>
+
+<body class="min-h-screen flex flex-col">
+    <!-- Navbar -->
+    <pnl-navbar type="forja"></pnl-navbar>
+
+    <!-- Header -->
+    <header class="bg-[#0f172a] py-20 px-6 relative overflow-hidden">
+        <div class="absolute inset-0 opacity-10">
+            <div
+                class="absolute top-0 left-0 w-96 h-96 bg-[#fba931] rounded-full blur-[100px] -translate-x-1/2 -translate-y-1/2">
+            </div>
+            <div
+                class="absolute bottom-0 right-0 w-96 h-96 bg-blue-500 rounded-full blur-[100px] translate-x-1/2 translate-y-1/2">
+            </div>
+        </div>
+        <div class="max-w-7xl mx-auto relative z-10">
+            <p class="text-[#fba931] font-black uppercase text-[10px] tracking-[0.4em] mb-4">Plataforma de Formación
+                Política</p>
+            <h1 class="serif text-5xl md:text-7xl text-white mb-6">Malla Curricular</h1>
+            <p class="text-gray-400 font-bold text-sm max-w-xl leading-relaxed">Bienvenido a la academia de la Forja
+                Libertaria. Completa los niveles para avanzar en tu formación doctrinal y técnica.</p>
+        </div>
+    </header>
+
+    <!-- Grid de Cursos -->
+    <main class="max-w-7xl mx-auto px-6 py-16 w-full flex-1">
+        <div id="courses-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+            <!-- Loading -->
+            <div class="col-span-1 md:col-span-2 lg:col-span-3 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10 w-full animate-pulse">
+                <div class="h-[450px] bg-slate-100 rounded-[2.5rem] flex flex-col justify-end p-10 relative overflow-hidden xl:flex">
+                    <div class="w-16 h-6 bg-slate-200 rounded-full mb-4"></div>
+                    <div class="w-3/4 h-8 bg-slate-200 rounded-xl mb-6"></div>
+                    <div class="w-full h-2 bg-slate-200 rounded-full mb-4"></div>
+                    <div class="w-1/2 h-4 bg-slate-200 rounded-md"></div>
+                </div>
+                <div class="h-[450px] bg-slate-100 rounded-[2.5rem] flex flex-col justify-end p-10 relative overflow-hidden hidden md:flex">
+                    <div class="w-16 h-6 bg-slate-200 rounded-full mb-4"></div>
+                    <div class="w-3/4 h-8 bg-slate-200 rounded-xl mb-6"></div>
+                    <div class="w-full h-2 bg-slate-200 rounded-full mb-4"></div>
+                    <div class="w-1/2 h-4 bg-slate-200 rounded-md"></div>
+                </div>
+                <div class="h-[450px] bg-slate-100 rounded-[2.5rem] flex flex-col justify-end p-10 relative overflow-hidden hidden lg:flex">
+                    <div class="w-16 h-6 bg-slate-200 rounded-full mb-4"></div>
+                    <div class="w-3/4 h-8 bg-slate-200 rounded-xl mb-6"></div>
+                    <div class="w-full h-2 bg-slate-200 rounded-full mb-4"></div>
+                    <div class="w-1/2 h-4 bg-slate-200 rounded-md"></div>
+                </div>
+            </div>
+                <p class="text-xs font-black uppercase text-gray-400 mt-4 tracking-widest">Sincronizando con la nube...
+                </p>
+            </div>
+        </div>
+    </main>
+
+    <pnl-footer></pnl-footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        window.addEventListener('DOMContentLoaded', async () => {
+            // Esperar a que Supabase se inicialice (máximo 2 segundos)
+            let attempts = 0;
+            while (!window.isSupabaseInit && attempts < 20) {
+                await new Promise(r => setTimeout(r, 100));
+                attempts++;
+            }
+
+            if (!window.isSupabaseInit) {
+                console.error("Supabase no inicializado.");
+                return;
+            }
+
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            if (!session) { window.location.href = 'forja-login.html'; return; }
+
+            loadAcademy();
+            initNavbar();
+        });
+
+        async function loadAcademy() {
+            const grid = document.getElementById('courses-grid');
+            try {
+                // 1. Obtener Usuario y Perfil (usando cache si es posible)
+                const { data: { user } } = await supabaseClient.auth.getUser();
+                if (!user) return;
+
+                let profile = JSON.parse(sessionStorage.getItem('pnl_profile'));
+                if (!profile) {
+                    const { data } = await supabaseClient.from('profiles').select('id, role').eq('auth_id', user.id).single();
+                    profile = data;
+                    if (profile) sessionStorage.setItem('pnl_profile', JSON.stringify(profile));
+                }
+
+                if (!profile) return;
+
+                // 2. Obtener Cursos, Lecciones y Progreso al mismo tiempo
+                const [coursesRes, lessonsRes, progressRes] = await Promise.all([
+                    supabaseClient.from('courses').select('*').eq('status', 'published').neq('title', 'Agenda Regional').order('created_at', { ascending: false }),
+                    supabaseClient.from('lessons').select('id, course_id'),
+                    supabaseClient.from('user_progress').select('lesson_id').eq('profile_id', profile.id)
+                ]);
+
+                if (coursesRes.error) throw coursesRes.error;
+
+                const courses = coursesRes.data;
+                const lessons = lessonsRes.data || [];
+                const progressIds = new Set((progressRes.data || []).map(p => p.lesson_id));
+
+                if (courses.length === 0) {
+                    grid.innerHTML = '<div class="col-span-full py-20 text-center text-gray-400 font-bold uppercase border-2 border-dashed rounded-3xl">No hay cursos publicados aún.</div>';
+                    return;
+                }
+
+                grid.innerHTML = courses.map(course => {
+                    const courseLessons = lessons.filter(l => l.course_id === course.id);
+                    const total = courseLessons.length;
+                    const completed = courseLessons.filter(l => progressIds.has(l.id)).length;
+                    const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
+
+                    return `
+                    <div onclick="goToCourse('${course.id}')" 
+                         title="${course.description || 'Sin descripción disponible'}"
+                         class="group relative h-[450px] rounded-[2.5rem] overflow-hidden border border-white gold-glow transition-all hover:scale-[1.02] cursor-pointer shadow-xl">
+                        <img src="${course.image_url || 'https://images.unsplash.com/photo-1526628953301-3e589a6a8b74?auto=format&fit=crop&q=80&w=800'}" 
+                             class="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000 opacity-60">
+                        
+                        <div class="absolute inset-0 card-gradient"></div>
+
+                        <div class="absolute inset-0 p-10 flex flex-col justify-end">
+                            <span class="bg-[#fba931] text-[#0f172a] text-[10px] font-black px-4 py-1.5 rounded-full w-fit mb-4 shadow-lg uppercase tracking-widest">${course.level}</span>
+                            <h2 class="serif text-3xl text-white mb-6 group-hover:text-[#fba931] transition-colors leading-tight uppercase">${course.title}</h2>
+                            
+                            <div class="w-full bg-white/20 h-1.5 rounded-full mb-3 overflow-hidden">
+                                <div class="bg-[#fba931] h-full transition-all duration-1000" style="width: ${percent}%"></div>
+                            </div>
+                            
+                            <div class="flex justify-between items-center text-[10px] font-black tracking-widest text-gray-300 uppercase">
+                                <span>${percent}% Completado</span>
+                                <span class="bg-white/10 p-2 rounded-full material-symbols-outlined text-[14px] group-hover:bg-[#fba931] group-hover:text-[#0f172a] transition-all">arrow_forward</span>
+                            </div>
+                        </div>
+                    </div>
+                    `;
+                }).join('');
+
+            } catch (err) {
+                console.error(err);
+                grid.innerHTML = `<div class="col-span-full py-20 text-red-500 font-black uppercase text-center">Error al conectar con la base de datos de formación.</div>`;
+            }
+        }
+
+        function goToCourse(id) {
+            localStorage.setItem('current_course_id', id);
+            window.location.href = 'forja-player.html';
+        }
+    </script>
+    <script src="/assets/components/navbar.js"></script>
+    <script src="/assets/components/footer.js"></script>
+</body>
+
+</html>
