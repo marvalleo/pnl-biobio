@@ -52,7 +52,7 @@ class PnlNavbar extends HTMLElement {
 
         this.innerHTML = `
             <nav class="bg-white sticky top-0 z-50" style="box-shadow: 0 2px 16px rgba(15,23,42,0.08), 0 1px 3px rgba(251,169,49,0.1);">
-                <div class="max-w-[1360px] mx-auto px-6 lg:px-10 h-[84px] flex justify-between items-center">
+                <div class="max-w-[1360px] mx-auto px-10 h-[84px] flex justify-between items-center">
                     <div class="flex items-center gap-5">
                         <a href="index.html" class="flex items-center">
                             <img src="/assets/images/logos/pnl-del-biobio01.png" alt="PNL Biobío" class="h-[72px] py-1 transition-transform duration-300 hover:scale-[1.03]">
