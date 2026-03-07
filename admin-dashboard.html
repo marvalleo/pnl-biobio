@@ -135,6 +135,65 @@
                 <p class="text-sm text-gray-500 font-medium">Configurar modal de bienvenida y anuncios globales.</p>
             </a>
         </div>
+
+        <!-- SECCIÓN DE NOTIFICACIONES PUSH (NUEVO) -->
+        <div id="push-notification-panel"
+            class="mt-12 bg-white rounded-[3rem] shadow-sm border border-gray-100 overflow-hidden hidden">
+            <div class="bg-[#0f172a] px-10 py-6 flex items-center justify-between">
+                <div class="flex items-center gap-4 text-white">
+                    <div class="w-12 h-12 bg-[#fba931] rounded-2xl flex items-center justify-center text-[#0f172a]">
+                        <span class="material-symbols-outlined text-2xl font-bold">notifications_active</span>
+                    </div>
+                    <div>
+                        <h2 class="text-lg font-900 uppercase tracking-tight">Comunicación Directa</h2>
+                        <p class="text-[10px] uppercase font-black tracking-widest text-[#fba931]">Notificaciones Push
+                            en Tiempo Real</p>
+                    </div>
+                </div>
+                <div class="hidden md:block">
+                    <span
+                        class="text-[9px] font-black uppercase text-gray-500 tracking-widest border border-gray-800 px-3 py-1 rounded-full">Sistema
+                        Nativo PWA</span>
+                </div>
+            </div>
+
+            <div class="p-10 grid md:grid-cols-2 gap-10">
+                <div class="space-y-6">
+                    <div>
+                        <label class="block text-[10px] font-black uppercase text-gray-400 mb-2 tracking-widest">Título
+                            de la Notificación</label>
+                        <input id="push-title" type="text" placeholder="Ej: ¡Nueva votación regional disponible!"
+                            class="w-full bg-gray-50 border-none rounded-2xl px-6 py-4 text-sm font-bold focus:ring-2 focus:ring-[#fba931] outline-none transition-all">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-black uppercase text-gray-400 mb-2 tracking-widest">Mensaje
+                            (Cuerpo)</label>
+                        <textarea id="push-body" rows="3"
+                            placeholder="Escribe el mensaje que verán los usuarios en sus dispositivos..."
+                            class="w-full bg-gray-50 border-none rounded-2xl px-6 py-4 text-sm font-bold focus:ring-2 focus:ring-[#fba931] outline-none transition-all resize-none"></textarea>
+                    </div>
+                </div>
+
+                <div class="space-y-6">
+                    <div>
+                        <label class="block text-[10px] font-black uppercase text-gray-400 mb-2 tracking-widest">URL de
+                            Destino (Opcional)</label>
+                        <input id="push-url" type="text" placeholder="/forja-votaciones.html" value="/index.html"
+                            class="w-full bg-gray-50 border-none rounded-2xl px-6 py-4 text-sm font-bold focus:ring-2 focus:ring-[#fba931] outline-none transition-all">
+                    </div>
+
+                    <div class="pt-2">
+                        <button id="send-push-btn" onclick="sendPushNotification()"
+                            class="group w-full bg-[#fba931] text-[#0f172a] py-5 rounded-2xl font-900 text-xs uppercase tracking-widest hover:bg-yellow-400 transition-all flex items-center justify-center gap-3 shadow-lg shadow-yellow-500/20">
+                            <span
+                                class="material-symbols-outlined text-xl group-hover:translate-x-1 transition-transform">send</span>
+                            Enviar a todos los militantes
+                        </button>
+                        <p id="push-result" class="text-[10px] font-bold text-center mt-4 hidden"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
     </main>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script type="module" src="supabase-config.js"></script>
@@ -205,6 +264,12 @@
                 document.getElementById('stat-courses').innerText = courseCount ?? 0;
                 document.getElementById('stat-ballots').innerText = ballotCount ?? 0;
 
+                // Habilitar panel de notificaciones solo para super_admin o admins autorizados
+                const role = localStorage.getItem('pnl_user_role');
+                if (role === 'super_admin') {
+                    document.getElementById('push-notification-panel').classList.remove('hidden');
+                }
+
                 // Saludo personalizado
                 const profile = JSON.parse(sessionStorage.getItem('pnl_profile'));
                 if (profile && profile.full_name) {
@@ -216,6 +281,56 @@
 
             } catch (err) {
                 console.error("Error cargando estadísticas:", err);
+            }
+        }
+
+        async function sendPushNotification() {
+            const title = document.getElementById('push-title').value.trim();
+            const body = document.getElementById('push-body').value.trim();
+            const url = document.getElementById('push-url').value.trim();
+            const btn = document.getElementById('send-push-btn');
+            const result = document.getElementById('push-result');
+
+            if (!title || !body) {
+                showToast('Debes completar el título y el mensaje.', 'warning');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = `<span class="material-symbols-outlined animate-spin">sync</span> Procesando envío...`;
+
+            try {
+                const { data: { session } } = await supabaseClient.auth.getSession();
+                if (!session) throw new Error('Sesión no válida');
+
+                const response = await fetch('/.netlify/functions/send-push', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${session.access_token}`
+                    },
+                    body: JSON.stringify({ title, body, url })
+                });
+
+                const data = await response.json();
+
+                result.classList.remove('hidden');
+                if (data.success) {
+                    showToast(`✅ Despacho exitoso: ${data.sent} notificaciones enviadas.`, 'success');
+                    result.innerHTML = `<span class="text-green-600 uppercase tracking-widest">✅ Notificación enviada exitosamente a ${data.sent} dispositivos.</span>`;
+                    // Limpiar campos
+                    document.getElementById('push-title').value = '';
+                    document.getElementById('push-body').value = '';
+                } else {
+                    result.innerHTML = `<span class="text-red-500 uppercase tracking-widest">❌ ERROR: ${data.error || 'Fallo en el servidor'}</span>`;
+                }
+            } catch (err) {
+                console.error("Error en Push:", err);
+                result.classList.remove('hidden');
+                result.innerHTML = `<span class="text-red-500 uppercase tracking-widest">❌ ERROR DE RED: ${err.message}</span>`;
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = `<span class="material-symbols-outlined text-xl transition-transform">send</span> Enviar a todos los militantes`;
             }
         }
     </script>
