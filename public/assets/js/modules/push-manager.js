@@ -3,7 +3,7 @@
  * PNL Biobío - Digital Platform
  */
 
-const VAPID_PUBLIC_KEY = 'BGtD-VEDbVy8QcX5v1zTV52rCaM9ogSoGENlRJgD9djfzryjEBqyinyNnnes0NzJB-DRO357Hxh6nvCxPXlU_MQ';
+const VAPID_PUBLIC_KEY = 'BG5gsJgsZ0t3Tu1GfWFYuHtDNAlkJXrMq0m_-3vPobewZaTzdqoHC8jC0elHKSyyhZ9_1Ov4VZacPUgwxEXcLuw';
 
 export class PushNotificationManager {
     constructor() {
