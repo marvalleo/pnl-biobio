@@ -21,13 +21,13 @@ exports.handler = async (event) => {
 
     // 1. Solo permitir métodos POST
     if (event.httpMethod !== 'POST') {
-        return { statusCode: 405, body: 'Método no permitido' };
+        return { statusCode: 405, body: JSON.stringify({ error: 'Método no permitido' }) };
     }
 
     // 2. Verificar autenticación del administrador
     const authHeader = event.headers.authorization;
     if (!authHeader) {
-        return { statusCode: 401, body: 'No autorizado: Falta token' };
+        return { statusCode: 401, body: JSON.stringify({ error: 'No autorizado: Falta token' }) };
     }
 
     try {
@@ -36,11 +36,10 @@ exports.handler = async (event) => {
         // Obtener el usuario desde el auth de Supabase
         const { data: { user }, error: authError } = await supabase.auth.getUser(token);
         if (authError || !user) {
-            return { statusCode: 401, body: 'Token inválido o expirado' };
+            return { statusCode: 401, body: JSON.stringify({ error: 'Token inválido o expirado' }) };
         }
 
         // Verificar si el usuario tiene rol administrativo
-        // Consultamos directamente la tabla profiles usando el auth_id del usuario
         const { data: profile, error: roleError } = await supabase
             .from('profiles')
             .select('role')
@@ -49,13 +48,13 @@ exports.handler = async (event) => {
 
         const allowedRoles = ['super_admin', 'admin', 'admin_usuarios'];
         if (roleError || !profile || !allowedRoles.includes(profile.role)) {
-            return { statusCode: 403, body: 'Prohibido: Se requiere rol administrativo' };
+            return { statusCode: 403, body: JSON.stringify({ error: 'Prohibido: Se requiere rol administrativo' }) };
         }
 
         // 3. Parsear el cuerpo de la notificación
         const { title, body, url, icon, tag } = JSON.parse(event.body);
         if (!title || !body) {
-            return { statusCode: 400, body: 'Título y mensaje son obligatorios' };
+            return { statusCode: 400, body: JSON.stringify({ error: 'Título y mensaje son obligatorios' }) };
         }
 
         // 4. Obtener las suscripciones activas de la base de datos
