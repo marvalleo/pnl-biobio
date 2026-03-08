@@ -1,20 +1,24 @@
 const webpush = require('web-push');
 const { createClient } = require('@supabase/supabase-js');
 
-// Configurar VAPID usando las variables de entorno de Netlify
-webpush.setVapidDetails(
-    process.env.VAPID_SUBJECT,
-    process.env.VAPID_PUBLIC_KEY,
-    process.env.VAPID_PRIVATE_KEY
-);
-
-// Cliente Supabase con Service Role (permite saltar RLS para leer todas las suscripciones)
-const supabase = createClient(
-    process.env.SUPABASE_URL,
-    process.env.SUPABASE_SERVICE_ROLE_KEY
-);
-
 exports.handler = async (event) => {
+    // 0. Validar variables de entorno críticas al inicio del handler
+    const { VAPID_SUBJECT, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY } = process.env;
+    if (!VAPID_SUBJECT || !VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY) {
+        console.error('Error: Variables de entorno VAPID no configuradas.');
+        return { statusCode: 500, body: JSON.stringify({ error: 'Configuración VAPID incompleta en el servidor.' }) };
+    }
+    if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+        console.error('Error: Variables de entorno de Supabase no configuradas.');
+        return { statusCode: 500, body: JSON.stringify({ error: 'Configuración de base de datos incompleta.' }) };
+    }
+
+    // Inicializar web-push con VAPID DENTRO del handler (evita crash en módulo global)
+    webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
+
+    // Cliente Supabase con Service Role (permite saltar RLS para leer todas las suscripciones)
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+
     // 1. Solo permitir métodos POST
     if (event.httpMethod !== 'POST') {
         return { statusCode: 405, body: 'Método no permitido' };
