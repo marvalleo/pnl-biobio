@@ -120,6 +120,15 @@ class PnlNavbar extends HTMLElement {
         });
 
         this.innerHTML = `
+            <style>
+                #forja-desktop-links { display: none !important; }
+                #forja-hamburger-btn { display: flex !important; }
+                @media (min-width: 768px) {
+                    #forja-desktop-links { display: flex !important; }
+                    #forja-hamburger-btn { display: none !important; }
+                    #forja-mobile-menu { display: none !important; }
+                }
+            </style>
              <nav class="bg-white shadow-sm sticky top-0 z-50 border-b-4 border-[#fba931]">
                 <div class="max-w-[1360px] mx-auto px-3 md:px-10 h-16 md:h-20 flex justify-between items-center gap-3">
                     <!-- Logo -->
@@ -133,15 +142,15 @@ class PnlNavbar extends HTMLElement {
                         </a>
                     </div>
                     
-                    <!-- Links desktop (ocultos en mobile) -->
-                    <div class="hidden md:flex flex-1 items-center justify-end gap-6 mx-8">
+                    <!-- Links desktop (controlados por media query) -->
+                    <div id="forja-desktop-links" class="flex-1 items-center justify-end gap-6 mx-8">
                         ${desktopLinksHTML}
                     </div>
 
                     <!-- Controles derechos: avatar + hamburguesa mobile -->
                     <div class="flex items-center gap-3 shrink-0">
-                        <!-- Hamburguesa solo en mobile -->
-                        <button id="forja-hamburger-btn" class="md:hidden flex items-center justify-center w-9 h-9 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
+                        <!-- Hamburguesa (controlado por media query) -->
+                        <button id="forja-hamburger-btn" class="items-center justify-center w-9 h-9 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
                             <span class="material-symbols-outlined text-[#0f172a]" style="font-size:22px;">menu</span>
                         </button>
 
@@ -153,7 +162,7 @@ class PnlNavbar extends HTMLElement {
                 </div>
 
                 <!-- Menú mobile desplegable (oculto por defecto) -->
-                <div id="forja-mobile-menu" class="hidden md:hidden bg-white border-t border-gray-100 shadow-lg absolute w-full left-0 z-40">
+                <div id="forja-mobile-menu" class="hidden bg-white border-t border-gray-100 shadow-lg absolute w-full left-0 z-40">
                     <div class="flex flex-col py-2">
                         ${mobileLinksHTML}
                     </div>

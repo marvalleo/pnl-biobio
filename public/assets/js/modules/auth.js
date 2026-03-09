@@ -186,33 +186,60 @@ function bindPushToggle(isCurrentlyOn, permStatus) {
         if (!btn) return;
         btn.addEventListener('click', async (e) => {
             e.stopPropagation();
+            console.log('PNL Push: [MOBILE DEBUG] Toggle presionado.');
+            console.log('PNL Push: Estado actual de variables -> toggleState:', toggleState, '| permStatus:', permStatus);
+
             if (permStatus === 'denied') {
+                console.log('PNL Push: Permiso está denegado. Informando al usuario...');
                 const st = document.getElementById('push-toggle-status');
                 if (st) { st.textContent = 'Ve a Configuración del navegador'; st.style.color = '#f59e0b'; }
                 return;
             }
+
             const track = document.getElementById('push-toggle-btn');
             const thumb = document.getElementById('push-toggle-thumb');
             const statusEl = document.getElementById('push-toggle-status');
+
             if (track) track.style.opacity = '0.5';
-            if (toggleState) {
-                await window.pushManager.unsubscribe();
-                if (thumb) thumb.style.transform = 'translateX(2px)';
-                if (track) { track.style.background = '#e2e8f0'; track.style.opacity = '1'; }
-                if (statusEl) { statusEl.textContent = 'Inactivo'; statusEl.style.color = '#94a3b8'; }
-                toggleState = false;
-            } else {
-                const granted = await window.pushManager.requestPermission();
-                if (granted) {
-                    await window.pushManager.subscribe();
-                    if (thumb) thumb.style.transform = 'translateX(18px)';
-                    if (track) { track.style.background = '#22c55e'; track.style.opacity = '1'; }
-                    if (statusEl) { statusEl.textContent = 'Activado'; statusEl.style.color = '#22c55e'; }
-                    toggleState = true;
+
+            try {
+                if (toggleState) {
+                    console.log('PNL Push: Intentando desuscribir...');
+                    await window.pushManager.unsubscribe();
+                    console.log('PNL Push: Desuscripción completada.');
+
+                    if (thumb) thumb.style.transform = 'translateX(2px)';
+                    if (track) { track.style.background = '#e2e8f0'; track.style.opacity = '1'; }
+                    if (statusEl) { statusEl.textContent = 'Inactivo'; statusEl.style.color = '#94a3b8'; }
+                    toggleState = false;
                 } else {
-                    if (track) track.style.opacity = '1';
-                    if (statusEl) { statusEl.textContent = 'Permiso denegado'; statusEl.style.color = '#ef4444'; }
+                    console.log('PNL Push: Intentando solicitar permiso al usuario...');
+                    const granted = await window.pushManager.requestPermission();
+                    console.log('PNL Push: Resultado de solicitud de permiso:', granted);
+
+                    if (granted) {
+                        console.log('PNL Push: Permiso concedido, intentando suscribir al SW...');
+                        const subResult = await window.pushManager.subscribe();
+                        console.log('PNL Push: Resultado de la suscripción:', subResult ? 'Éxito' : 'Fallo');
+
+                        if (subResult) {
+                            if (thumb) thumb.style.transform = 'translateX(19px)';
+                            if (track) { track.style.background = '#22c55e'; track.style.opacity = '1'; }
+                            if (statusEl) { statusEl.textContent = 'Activado'; statusEl.style.color = '#22c55e'; }
+                            toggleState = true;
+                        } else {
+                            console.error('PNL Push: Falló la suscripción silente (posible problema de VAPID o SW).');
+                            if (track) track.style.opacity = '1';
+                        }
+                    } else {
+                        console.log('PNL Push: El usuario denegó o cerró el prompt de permisos.');
+                        if (track) track.style.opacity = '1';
+                        if (statusEl) { statusEl.textContent = 'Permiso denegado'; statusEl.style.color = '#ef4444'; }
+                    }
                 }
+            } catch (error) {
+                console.error('PNL Push: Ocurrió una excepción durante el toggle:', error);
+                if (track) track.style.opacity = '1';
             }
         });
     }, 0);
