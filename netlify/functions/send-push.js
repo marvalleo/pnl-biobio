@@ -50,9 +50,19 @@ exports.handler = async (event) => {
             .eq('auth_id', user.id)
             .single();
 
+        // DEBUG: log para diagnosticar el problema de rol
+        console.log('user.id:', user.id);
+        console.log('profile encontrado:', JSON.stringify(profile));
+        console.log('roleError:', roleError?.message);
+
         const allowedRoles = ['super_admin', 'admin', 'admin_usuarios'];
         if (roleError || !profile || !allowedRoles.includes(profile.role)) {
-            return { statusCode: 403, body: JSON.stringify({ error: 'Prohibido: Se requiere rol administrativo' }) };
+            return {
+                statusCode: 403, body: JSON.stringify({
+                    error: 'Prohibido: Se requiere rol administrativo',
+                    detail: `rol encontrado: "${profile?.role}", se requiere uno de: ${allowedRoles.join(', ')}`
+                })
+            };
         }
 
         // 3. Parsear el cuerpo de la notificación
