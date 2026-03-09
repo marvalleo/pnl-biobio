@@ -105,9 +105,9 @@ class PnlNavbar extends HTMLElement {
         let desktopLinksHTML = '';
         links.forEach(link => {
             const isActive = currentPath === link.path
-                ? 'text-[#0f172a] after:content-[\\'\\'] after:absolute after:w-full after:h-[3px] after:-bottom-[4px] after:left-0 after:bg-[#fba931]'
-                : 'text-gray-400 hover:text-[#fba931]';
-            desktopLinksHTML += `<a href="${link.path}" class="relative cursor-pointer font-bold uppercase text-[11px] tracking-[0.05em] transition-all duration-300 ${isActive} whitespace-nowrap">${link.label}</a>`;
+                ? 'text-[#0f172a] border-b-[3px] border-[#fba931] pb-1'
+                : 'text-gray-400 hover:text-[#fba931] border-b-[3px] border-transparent pb-1';
+            desktopLinksHTML += `<a href="${link.path}" class="cursor-pointer font-bold uppercase text-[11px] tracking-[0.05em] transition-all duration-300 ${isActive} whitespace-nowrap">${link.label}</a>`;
         });
 
         // Links para el menú mobile desplegable
