@@ -48,13 +48,22 @@ async function setupPushNotifications() {
     } else {
         // En otros navegadores (Chrome/Android/Firefox)
         const isSubscribed = await pushManager.isSubscribed();
+        const permStatus = pushManager.getPermissionStatus();
+
         if (!isSubscribed) {
-            if (pushManager.getPermissionStatus() === 'default') {
-                // Si no ha decidido, mostrar nuestro banner
+            if (permStatus === 'default') {
+                // No ha decidido aún → mostrar banner de solicitud
                 showPushPermissionBanner(async () => {
                     const granted = await pushManager.requestPermission();
                     if (granted) await pushManager.subscribe();
                 });
+            } else if (permStatus === 'denied') {
+                // Ya rechazó → mostrar banner informativo de cómo habilitarlo
+                showPushPermissionBanner(null, true); // modo 'denied'
+            }
+            // Si 'granted' pero no suscrito → suscribir silenciosamente
+            else if (permStatus === 'granted') {
+                await pushManager.subscribe();
             }
         }
     }
