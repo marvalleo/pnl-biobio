@@ -55,16 +55,34 @@ exports.handler = async (event) => {
         }
 
         // Verificar si el usuario tiene rol administrativo usando el userId del JWT
-        const { data: profile, error: roleError } = await supabase
+        // Intentamos primero por auth_id, luego por id (primary key, también = auth.uid())
+        let profile = null;
+        let roleError = null;
+
+        const byAuthId = await supabase
             .from('profiles')
             .select('role')
             .eq('auth_id', userId)
-            .single();
+            .maybeSingle();
 
-        // DEBUG temporal
+        if (byAuthId.data) {
+            profile = byAuthId.data;
+        } else {
+            // Fallback: buscar por id (primary key en muchos schemas de Supabase)
+            const byId = await supabase
+                .from('profiles')
+                .select('role')
+                .eq('id', userId)
+                .maybeSingle();
+            profile = byId.data;
+            roleError = byId.error;
+        }
+
+        // DEBUG temporal - visible en Netlify → Functions → Logs
         console.log('userId del JWT (sub):', userId);
         console.log('profile encontrado:', JSON.stringify(profile));
         console.log('roleError:', roleError?.message);
+        console.log('resultado byAuthId:', JSON.stringify(byAuthId.data), 'error:', byAuthId.error?.message);
 
         const allowedRoles = ['super_admin', 'admin', 'admin_usuarios'];
         if (roleError || !profile || !allowedRoles.includes(profile.role)) {
