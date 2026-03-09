@@ -36,22 +36,33 @@ exports.handler = async (event) => {
     try {
         const token = authHeader.replace('Bearer ', '');
 
-        // Obtener el usuario usando el cliente ANÓN (correcto para validar JWTs de usuario)
-        const { data: { user }, error: authError } = await supabaseAnon.auth.getUser(token);
-        if (authError || !user) {
-            console.error('Auth error:', authError?.message);
-            return { statusCode: 401, body: JSON.stringify({ error: 'Token inválido o expirado', detail: authError?.message }) };
+        // Decodificar el JWT directamente para obtener el user UUID (campo "sub")
+        // El campo "sub" del JWT de Supabase ES el auth.uid() = auth_id en la BD
+        let userId;
+        try {
+            const payloadBase64 = token.split('.')[1];
+            const payload = JSON.parse(Buffer.from(payloadBase64, 'base64').toString('utf8'));
+            userId = payload.sub;
+            if (payload.exp && payload.exp < Math.floor(Date.now() / 1000)) {
+                return { statusCode: 401, body: JSON.stringify({ error: 'Token expirado. Cierra sesión e inicia nuevamente.' }) };
+            }
+        } catch (jwtErr) {
+            return { statusCode: 401, body: JSON.stringify({ error: 'Token malformado o inválido.' }) };
         }
 
-        // Verificar si el usuario tiene rol administrativo
+        if (!userId) {
+            return { statusCode: 401, body: JSON.stringify({ error: 'No se pudo extraer la identidad del token.' }) };
+        }
+
+        // Verificar si el usuario tiene rol administrativo usando el userId del JWT
         const { data: profile, error: roleError } = await supabase
             .from('profiles')
             .select('role')
-            .eq('auth_id', user.id)
+            .eq('auth_id', userId)
             .single();
 
-        // DEBUG: log para diagnosticar el problema de rol
-        console.log('user.id:', user.id);
+        // DEBUG temporal
+        console.log('userId del JWT (sub):', userId);
         console.log('profile encontrado:', JSON.stringify(profile));
         console.log('roleError:', roleError?.message);
 
@@ -60,7 +71,7 @@ exports.handler = async (event) => {
             return {
                 statusCode: 403, body: JSON.stringify({
                     error: 'Prohibido: Se requiere rol administrativo',
-                    detail: `rol encontrado: "${profile?.role}", se requiere uno de: ${allowedRoles.join(', ')}`
+                    detail: `rol encontrado: "${profile?.role}", userId: ${userId}`
                 })
             };
         }
@@ -130,7 +141,7 @@ exports.handler = async (event) => {
             title,
             body,
             url: url || '/',
-            sent_by: user.id,
+            sent_by: userId,
             total_sent: successCount,
             total_failed: failCount
         });
