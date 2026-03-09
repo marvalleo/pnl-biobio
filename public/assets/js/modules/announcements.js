@@ -225,6 +225,17 @@ export async function checkAndShowAnnouncements() {
             }
         }
 
+        // Comprobar contexto de página: anuncios de militantes solo en la Forja (plataforma privada)
+        // Las páginas públicas son: index.html, nosotros.html, contacto.html, publicaciones-oficiales.html
+        const currentPage = window.location.pathname.split('/').pop() || 'index.html';
+        const publicPages = ['index.html', 'nosotros.html', 'contacto.html', 'publicaciones-oficiales.html', ''];
+        const isPublicPage = publicPages.includes(currentPage);
+
+        if (isPublicPage && announcement.target_audience !== 'all') {
+            console.log("PNL Biobío: Anuncio omitido en página pública (solo aplica dentro de la Forja).");
+            return;
+        }
+
         // Config de renderizado
         const configForModal = { ...announcement };
 

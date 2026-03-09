@@ -45,7 +45,7 @@ export async function initNavbar() {
             adminLink.classList.remove('hidden');
         }
 
-        // Calcular notificaciones no leídas
+        // Calcular notificaciones no leídas (solo si pushManager está disponible)
         const unreadCount = window.pushManager ? await window.pushManager.getUnreadCount() : 0;
         const badgeHTML = unreadCount > 0
             ? `<span id="notif-badge" style="
@@ -55,7 +55,7 @@ export async function initNavbar() {
                 font-size:9px; font-weight:900;
                 display:flex; align-items:center; justify-content:center;
                 border:2px solid white; line-height:1;
-                animation: badgePulse 2s ease-in-out infinite;
+                pointer-events:none;
               ">${unreadCount > 9 ? '9+' : unreadCount}</span>`
             : '';
 
@@ -68,16 +68,12 @@ export async function initNavbar() {
 
         navContainer.innerHTML = `
             <style>
-                @keyframes badgePulse {
-                    0%, 100% { transform: scale(1); }
-                    50% { transform: scale(1.15); }
-                }
-                #user-dropdown { transition: opacity 0.15s ease, transform 0.15s ease; }
-                #push-toggle-btn { transition: background 0.2s; }
+                #push-toggle-thumb { transition: transform 0.2s ease; }
+                #push-toggle-track { transition: background 0.2s ease; }
             </style>
-            <div class="relative">
-                <button onclick="toggleUserMenu()" style="position:relative; display:inline-block;" 
-                        class="w-10 h-10 rounded-full bg-[#fba931] text-[#0f172a] font-900 text-xs border-2 border-white shadow-sm hover:scale-105 transition-all flex items-center justify-center">
+            <div class="relative" id="user-menu-wrapper">
+                <button id="user-avatar-btn" style="position:relative; display:inline-flex; align-items:center; justify-content:center;"
+                        class="w-10 h-10 rounded-full bg-[#fba931] text-[#0f172a] font-900 text-xs border-2 border-white shadow-sm hover:scale-105 transition-all">
                     ${initials}
                     ${badgeHTML}
                 </button>
@@ -100,8 +96,39 @@ export async function initNavbar() {
             </div>
         `;
 
-        // Vincular el toggle después de renderizar
+        // Vincular el botón del avatar directamente (sin sobreescribir toggleUserMenu global)
+        const avatarBtn = document.getElementById('user-avatar-btn');
+        if (avatarBtn) {
+            avatarBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const dropdown = document.getElementById('user-dropdown');
+                if (dropdown) {
+                    dropdown.classList.toggle('hidden');
+                    // Al abrir: marcar notificaciones como leídas y ocultar badge
+                    if (!dropdown.classList.contains('hidden')) {
+                        const badge = document.getElementById('notif-badge');
+                        if (badge) {
+                            badge.style.transition = 'opacity 0.3s';
+                            badge.style.opacity = '0';
+                            setTimeout(() => badge.remove(), 300);
+                        }
+                        if (window.pushManager) window.pushManager.markAllAsRead();
+                    }
+                }
+            });
+        }
+
+        // Vincular el toggle de notificaciones
         bindPushToggle(toggleOn, permStatus);
+
+        // Cerrar el dropdown al hacer click fuera (complementa el listener de ui.js)
+        document.addEventListener('click', (e) => {
+            const wrapper = document.getElementById('user-menu-wrapper');
+            const dropdown = document.getElementById('user-dropdown');
+            if (dropdown && wrapper && !wrapper.contains(e.target)) {
+                dropdown.classList.add('hidden');
+            }
+        }, { once: false, capture: false });
 
     } catch (err) {
         console.error("Navbar init error:", err);
@@ -120,27 +147,26 @@ function buildToggleHTML(isOn, permStatus) {
 
     return `
         <div class="px-5 py-3 border-b border-gray-50 flex items-center justify-between gap-3">
-            <div class="flex items-center gap-3 flex-1">
-                <span class="material-symbols-outlined text-lg text-gray-400">notifications</span>
-                <div>
+            <div class="flex items-center gap-3 flex-1 min-w-0">
+                <span class="material-symbols-outlined text-lg text-gray-400 shrink-0">notifications</span>
+                <div class="min-w-0">
                     <p class="text-[10px] font-black uppercase text-gray-700 leading-none mb-0.5">Notificaciones</p>
-                    <p id="push-toggle-status" style="font-size:9px; font-weight:700; color:${statusColor}; margin:0; line-height:1.3;">${statusText}</p>
+                    <p id="push-toggle-status" style="font-size:9px; font-weight:700; color:${statusColor}; margin:0; line-height:1.3; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${statusText}</p>
                 </div>
             </div>
-            <button id="push-toggle-btn" onclick="window._handlePushToggle()" 
-                    title="${permStatus === 'denied' ? 'Ve a Configuración del navegador para habilitarlas' : ''}"
+            <button id="push-toggle-btn"
+                    title="${permStatus === 'denied' ? 'Ve a Configuración del navegador para habilitarlas' : (isOn ? 'Desactivar notificaciones' : 'Activar notificaciones')}"
                     style="
-                        width:40px; height:22px; border:none; cursor:pointer;
+                        width:40px; height:22px; border:none; cursor:${permStatus === 'denied' ? 'not-allowed' : 'pointer'};
                         border-radius:9999px; background:${trackColor};
                         position:relative; flex-shrink:0; padding:0;
-                        ${permStatus === 'denied' ? 'opacity:0.5; cursor:not-allowed;' : ''}
-                    ">
+                        opacity:${permStatus === 'denied' ? '0.5' : '1'};
+                    " id="push-toggle-track">
                 <span id="push-toggle-thumb" style="
                     position:absolute; top:2px;
                     width:18px; height:18px;
                     background:white; border-radius:9999px;
                     box-shadow:0 1px 3px rgba(0,0,0,0.2);
-                    transition:transform 0.2s ease;
                     transform:${thumbPos};
                 "></span>
             </button>
@@ -150,9 +176,10 @@ function buildToggleHTML(isOn, permStatus) {
 
 /** Vincula el evento del toggle al pushManager global */
 function bindPushToggle(isCurrentlyOn, permStatus) {
-    window._handlePushToggle = async () => {
+    let toggleState = isCurrentlyOn;
+
+    const handleToggle = async () => {
         if (permStatus === 'denied') {
-            // Mostrar tooltip informativo
             const statusEl = document.getElementById('push-toggle-status');
             if (statusEl) {
                 statusEl.textContent = 'Ve a Configuración del navegador';
@@ -161,48 +188,40 @@ function bindPushToggle(isCurrentlyOn, permStatus) {
             return;
         }
 
-        const btn = document.getElementById('push-toggle-btn');
+        const track = document.getElementById('push-toggle-track');
         const thumb = document.getElementById('push-toggle-thumb');
         const statusEl = document.getElementById('push-toggle-status');
-        if (btn) btn.style.opacity = '0.6';
+        if (track) track.style.opacity = '0.5';
 
-        if (isCurrentlyOn) {
+        if (toggleState) {
             // Desactivar
             await window.pushManager.unsubscribe();
             if (thumb) thumb.style.transform = 'translateX(2px)';
-            if (btn) btn.style.background = '#e2e8f0';
+            if (track) track.style.background = '#e2e8f0';
             if (statusEl) { statusEl.textContent = 'Inactivo'; statusEl.style.color = '#94a3b8'; }
-            isCurrentlyOn = false;
+            toggleState = false;
         } else {
             // Activar
             const granted = await window.pushManager.requestPermission();
             if (granted) {
                 await window.pushManager.subscribe();
                 if (thumb) thumb.style.transform = 'translateX(18px)';
-                if (btn) btn.style.background = '#22c55e';
+                if (track) track.style.background = '#22c55e';
                 if (statusEl) { statusEl.textContent = 'Activado'; statusEl.style.color = '#22c55e'; }
-                isCurrentlyOn = true;
+                toggleState = true;
             } else {
                 if (statusEl) { statusEl.textContent = 'Permiso denegado'; statusEl.style.color = '#ef4444'; }
-                isCurrentlyOn = false;
             }
         }
 
-        if (btn) btn.style.opacity = '1';
+        if (track) track.style.opacity = '1';
     };
 
-    // Al abrir el menú: marcar notificaciones como leídas y ocultar badge
-    const originalToggle = window.toggleUserMenu;
-    window.toggleUserMenu = () => {
-        if (originalToggle) originalToggle();
-        const badge = document.getElementById('notif-badge');
-        if (badge) {
-            badge.style.transition = 'opacity 0.3s';
-            badge.style.opacity = '0';
-            setTimeout(() => badge.remove(), 300);
-        }
-        if (window.pushManager) window.pushManager.markAllAsRead();
-    };
+    // Vincular el toggle después del render (con retardo mínimo)
+    setTimeout(() => {
+        const btn = document.getElementById('push-toggle-btn');
+        if (btn) btn.addEventListener('click', (e) => { e.stopPropagation(); handleToggle(); });
+    }, 0);
 }
 
 export async function logout() {
