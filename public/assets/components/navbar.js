@@ -106,28 +106,28 @@ class PnlNavbar extends HTMLElement {
             const isActive = currentPath === link.path
                 ? 'text-[#0f172a] after:content-[\'\'] after:absolute after:w-full after:h-[3px] after:-bottom-[4px] after:left-0 after:bg-[#fba931]'
                 : 'text-gray-400 hover:text-[#fba931]';
-            navLinksHTML += `<a href="${link.path}" class="relative cursor-pointer font-bold uppercase text-xs tracking-[0.05em] transition-all duration-300 ${isActive} whitespace-nowrap">${link.label}</a>`;
+            navLinksHTML += `<a href="${link.path}" class="relative cursor-pointer font-bold uppercase text-[9px] md:text-[11px] tracking-[0.05em] transition-all duration-300 ${isActive} whitespace-nowrap">${link.label}</a>`;
         });
 
         this.innerHTML = `
              <nav class="bg-white shadow-sm sticky top-0 z-50 border-b-4 border-[#fba931]">
-                <div class="max-w-[1360px] mx-auto px-4 md:px-10 h-20 flex justify-between items-center">
+                <div class="max-w-[1360px] mx-auto px-3 md:px-10 h-16 md:h-20 flex justify-between items-center gap-2">
                     <div class="flex items-center gap-2 md:gap-4 shrink-0">
                         <a href="forja-academia.html" class="flex items-center gap-2 md:gap-4">
-                            <img src="/assets/images/logos/pnl-del-biobio01.png" alt="PNL Biobío" class="h-10 md:h-14">
-                            <div class="hidden sm:flex items-center gap-1.5 ml-1">
+                            <img src="/assets/images/logos/pnl-del-biobio01.png" alt="PNL Biobío" class="h-9 md:h-14">
+                            <div class="hidden md:flex items-center gap-1.5 ml-1">
                                 <span class="font-black text-lg lg:text-2xl tracking-tighter uppercase leading-none text-[#0f172a]">FORJA</span>
                                 <span class="text-[#fba931] text-lg lg:text-2xl font-black tracking-widest uppercase leading-none">Biobío</span>
                             </div>
                         </a>
                     </div>
                     
-                    <div class="flex flex-1 items-center justify-end gap-6 mx-4 md:mx-8">
+                    <div class="flex items-center justify-end gap-3 md:gap-6 flex-1 min-w-0 overflow-hidden mx-2 md:mx-8">
                         ${navLinksHTML}
                     </div>
 
-                    <div id="user-menu-container" class="flex items-center shrink-0 gap-4">
-                        <div class="w-8 h-8 md:w-10 md:h-10 rounded-full bg-gray-100 animate-pulse"></div>
+                    <div id="user-menu-container" class="flex items-center shrink-0">
+                        <div class="w-9 h-9 rounded-full bg-gray-100 animate-pulse"></div>
                     </div>
                 </div>
             </nav>

@@ -226,22 +226,24 @@ export async function checkAndShowAnnouncements() {
         }
 
         // Comprobar contexto de página: anuncios de militantes solo en la Forja (plataforma privada)
-        // Las páginas públicas son: index.html, nosotros.html, contacto.html, publicaciones-oficiales.html
         const currentPage = window.location.pathname.split('/').pop() || 'index.html';
-        const publicPages = ['index.html', 'nosotros.html', 'contacto.html', 'publicaciones-oficiales.html', ''];
+        const publicPages = ['index.html', 'nosotros.html', 'contacto.html', 'publicaciones-oficiales.html', 'forja-login.html', ''];
         const isPublicPage = publicPages.includes(currentPage);
 
         if (isPublicPage && announcement.target_audience !== 'all') {
-            console.log("PNL Biobío: Anuncio omitido en página pública (solo aplica dentro de la Forja).");
+            console.log("PNL Biobío: Anuncio omitido en página pública/login (solo aplica dentro de la Forja).");
             return;
         }
+        // Dentro de la Forja: esperar 5s para no interrumpir la carga
+        const isForjaPage = currentPage.startsWith('forja-') && currentPage !== 'forja-login.html';
+        const displayDelay = isForjaPage ? 5000 : 1500;
 
         // Config de renderizado
         const configForModal = { ...announcement };
 
-        // Mostrar con un pequeño delay
-        console.log("PNL Biobío: Disparando modal de impacto...");
-        setTimeout(() => showImpactModal(configForModal), 1500);
+        // Mostrar con delay
+        console.log(`PNL Biobío: Disparando modal de impacto en ${displayDelay}ms...`);
+        setTimeout(() => showImpactModal(configForModal), displayDelay);
 
     } catch (err) {
         console.warn("Error al comprobar anuncios:", err);
