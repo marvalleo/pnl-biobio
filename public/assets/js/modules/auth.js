@@ -172,8 +172,8 @@ function buildToggleHTML(isOn, permStatus) {
                 </div>
             </div>
             <button id="push-toggle-btn"
-                    style="width:40px; height:22px; border:none; cursor:${permStatus === 'denied' ? 'not-allowed' : 'pointer'}; border-radius:9999px; background:${trackColor}; position:relative; flex-shrink:0; padding:0; opacity:${permStatus === 'denied' ? '0.5' : '1'};">
-                <span id="push-toggle-thumb" style="position:absolute; top:2px; width:18px; height:18px; background:white; border-radius:9999px; box-shadow:0 1px 3px rgba(0,0,0,0.2); transform:${thumbPos};"></span>
+                    style="width:40px; height:22px; border:none; cursor:${permStatus === 'denied' ? 'not-allowed' : 'pointer'}; border-radius:9999px; background:${trackColor}; position:relative; flex-shrink:0; padding:0; opacity:${permStatus === 'denied' ? '0.5' : '1'}; overflow:hidden;">
+                <span id="push-toggle-thumb" style="position:absolute; top:2px; left:0; width:18px; height:18px; background:white; border-radius:9999px; box-shadow:0 1px 3px rgba(0,0,0,0.3); transition:transform 0.2s ease; transform:${thumbPos};"></span>
             </button>
         </div>
     `;

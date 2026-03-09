@@ -58,12 +58,14 @@ export class PushNotificationManager {
 
             if (!subscription) {
                 subscription = await registration.pushManager.subscribe({
-                    userVisuallyIndicatesState: true,
+                    userVisibleOnly: true,   // ← Requerido por el estándar Web Push
                     applicationServerKey: this.urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
                 });
             }
 
             await this.saveSubscriptionToDB(subscription);
+            // Marcar en localStorage para que el toggle persista aunque isSubscribed() tarde
+            localStorage.setItem('pnl_push_subscribed', 'true');
             return subscription;
         } catch (error) {
             console.error('❌ Error al suscribir a push:', error);
@@ -100,9 +102,18 @@ export class PushNotificationManager {
 
     async isSubscribed() {
         if (!this.checkSupport()) return false;
-        const registration = await navigator.serviceWorker.ready;
-        const subscription = await registration.pushManager.getSubscription();
-        return !!subscription;
+        try {
+            const registration = await navigator.serviceWorker.ready;
+            const subscription = await registration.pushManager.getSubscription();
+            const result = !!subscription;
+            // Sincronizar caché local
+            if (result) localStorage.setItem('pnl_push_subscribed', 'true');
+            else localStorage.removeItem('pnl_push_subscribed');
+            return result;
+        } catch {
+            // Usar caché como fallback si el SW no responde a tiempo
+            return localStorage.getItem('pnl_push_subscribed') === 'true';
+        }
     }
 
     async unsubscribe() {
@@ -112,7 +123,6 @@ export class PushNotificationManager {
             const subscription = await registration.pushManager.getSubscription();
             if (subscription) {
                 await subscription.unsubscribe();
-                // Marcar como inactiva en BD
                 if (window.supabaseClient && window.isSupabaseInit) {
                     await window.supabaseClient
                         .from('push_subscriptions')
@@ -120,6 +130,7 @@ export class PushNotificationManager {
                         .eq('endpoint', subscription.endpoint);
                 }
             }
+            localStorage.removeItem('pnl_push_subscribed');
             return true;
         } catch (err) {
             console.error('Error al desuscribir:', err);
