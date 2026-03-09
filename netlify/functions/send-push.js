@@ -3,12 +3,12 @@ const { createClient } = require('@supabase/supabase-js');
 
 exports.handler = async (event) => {
     // 0. Validar variables de entorno críticas al inicio del handler
-    const { VAPID_SUBJECT, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY } = process.env;
+    const { VAPID_SUBJECT, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY } = process.env;
     if (!VAPID_SUBJECT || !VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY) {
         console.error('Error: Variables de entorno VAPID no configuradas.');
         return { statusCode: 500, body: JSON.stringify({ error: 'Configuración VAPID incompleta en el servidor.' }) };
     }
-    if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+    if (!SUPABASE_URL || !SUPABASE_ANON_KEY || !SUPABASE_SERVICE_ROLE_KEY) {
         console.error('Error: Variables de entorno de Supabase no configuradas.');
         return { statusCode: 500, body: JSON.stringify({ error: 'Configuración de base de datos incompleta.' }) };
     }
@@ -16,7 +16,10 @@ exports.handler = async (event) => {
     // Inicializar web-push con VAPID DENTRO del handler (evita crash en módulo global)
     webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
 
-    // Cliente Supabase con Service Role (permite saltar RLS para leer todas las suscripciones)
+    // 2 clientes Supabase con responsabilidades separadas:
+    // - supabaseAnon: valida el JWT del usuario (getUser funciona correctamente con clave anón)
+    // - supabaseAdmin: operaciones privilegiadas (leer suscripciones, profiles, escribir logs)
+    const supabaseAnon = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
     // 1. Solo permitir métodos POST
@@ -33,10 +36,11 @@ exports.handler = async (event) => {
     try {
         const token = authHeader.replace('Bearer ', '');
 
-        // Obtener el usuario desde el auth de Supabase
-        const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+        // Obtener el usuario usando el cliente ANÓN (correcto para validar JWTs de usuario)
+        const { data: { user }, error: authError } = await supabaseAnon.auth.getUser(token);
         if (authError || !user) {
-            return { statusCode: 401, body: JSON.stringify({ error: 'Token inválido o expirado' }) };
+            console.error('Auth error:', authError?.message);
+            return { statusCode: 401, body: JSON.stringify({ error: 'Token inválido o expirado', detail: authError?.message }) };
         }
 
         // Verificar si el usuario tiene rol administrativo
