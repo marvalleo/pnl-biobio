@@ -104,4 +104,47 @@ export class PushNotificationManager {
         const subscription = await registration.pushManager.getSubscription();
         return !!subscription;
     }
+
+    async unsubscribe() {
+        if (!this.checkSupport()) return false;
+        try {
+            const registration = await navigator.serviceWorker.ready;
+            const subscription = await registration.pushManager.getSubscription();
+            if (subscription) {
+                await subscription.unsubscribe();
+                // Marcar como inactiva en BD
+                if (window.supabaseClient && window.isSupabaseInit) {
+                    await window.supabaseClient
+                        .from('push_subscriptions')
+                        .update({ is_active: false })
+                        .eq('endpoint', subscription.endpoint);
+                }
+            }
+            return true;
+        } catch (err) {
+            console.error('Error al desuscribir:', err);
+            return false;
+        }
+    }
+
+    // Retorna el número de notificaciones enviadas desde la última vez que el usuario abrió el menú
+    async getUnreadCount() {
+        try {
+            if (!window.supabaseClient || !window.isSupabaseInit) return 0;
+            const lastSeen = localStorage.getItem('pnl_last_notif_seen') || '1970-01-01T00:00:00Z';
+            const { count, error } = await window.supabaseClient
+                .from('push_notifications_log')
+                .select('*', { count: 'exact', head: true })
+                .gt('created_at', lastSeen);
+            if (error) return 0;
+            return count ?? 0;
+        } catch {
+            return 0;
+        }
+    }
+
+    // Marca todas las notificaciones como vistas guardando el timestamp actual
+    markAllAsRead() {
+        localStorage.setItem('pnl_last_notif_seen', new Date().toISOString());
+    }
 }

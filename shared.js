@@ -4,7 +4,6 @@ import { validateRUT } from '/public/assets/js/modules/validation.js';
 import { showImpactModal, handleModalImageError, closeImpactModal, checkAndShowAnnouncements } from '/public/assets/js/modules/announcements.js';
 import { PushNotificationManager } from '/public/assets/js/modules/push-manager.js';
 import { showIOSInstallPrompt } from '/public/assets/js/modules/ios-prompt.js';
-import { showPushPermissionBanner } from '/public/assets/js/modules/push-banner.js';
 
 // --- EXPOSICIÓN GLOBAL AL OBJETO WINDOW ---
 window.showToast = showToast;
@@ -18,15 +17,16 @@ window.handleModalImageError = handleModalImageError;
 window.closeImpactModal = closeImpactModal;
 window.checkAndShowAnnouncements = checkAndShowAnnouncements;
 
-// Instanciar Push Manager
+// Instanciar Push Manager (disponible globalmente para auth.js y el toggle)
 const pushManager = new PushNotificationManager();
 window.pushManager = pushManager;
 
-// --- GESTIÓN DE NOTIFICACIONES PUSH ---
+// --- GESTIÓN DE NOTIFICACIONES PUSH (solo iOS con suscripción silenciosa) ---
+// La suscripción voluntaria ahora se gestiona desde el toggle en el menú del usuario (auth.js)
 async function setupPushNotifications() {
     if (!pushManager.checkSupport()) return;
 
-    // 1. Esperar a que Supabase esté listo (ya que necesitamos el usuario)
+    // Esperar a que Supabase esté listo
     let attempts = 0;
     while (!window.isSupabaseInit && attempts < 10) {
         await new Promise(r => setTimeout(r, 500));
@@ -34,50 +34,29 @@ async function setupPushNotifications() {
     }
 
     const { data: { user } } = await window.supabaseClient.auth.getUser();
-    if (!user) return; // Solo pedimos push a usuarios logueados
+    if (!user) return;
 
-    // 2. Lógica por plataforma
+    // Solo en iOS standalone: intentar suscribir silenciosamente si ya tiene permiso
     if (pushManager.isIOS()) {
         if (!pushManager.isStandalone()) {
-            // Si está en Safari iOS pero no instalada, mostrar guía
-            showIOSInstallPrompt();
+            showIOSInstallPrompt(); // Guía de instalación en iOS Safari
         } else {
-            // Si está instalada en iOS, intentar suscribir (Safari 16.4+)
-            await trySubscribe();
-        }
-    } else {
-        // En otros navegadores (Chrome/Android/Firefox)
-        const isSubscribed = await pushManager.isSubscribed();
-        const permStatus = pushManager.getPermissionStatus();
-
-        if (!isSubscribed) {
-            if (permStatus === 'default') {
-                // No ha decidido aún → mostrar banner de solicitud
-                showPushPermissionBanner(async () => {
-                    const granted = await pushManager.requestPermission();
-                    if (granted) await pushManager.subscribe();
-                });
-            } else if (permStatus === 'denied') {
-                // Ya rechazó → mostrar banner informativo de cómo habilitarlo
-                showPushPermissionBanner(null, true); // modo 'denied'
-            }
-            // Si 'granted' pero no suscrito → suscribir silenciosamente
-            else if (permStatus === 'granted') {
+            // Ya instalada en iOS: suscribir si tiene permiso concedido
+            const isSubscribed = await pushManager.isSubscribed();
+            if (!isSubscribed && pushManager.getPermissionStatus() === 'granted') {
                 await pushManager.subscribe();
             }
         }
     }
-}
-
-async function trySubscribe() {
-    const isSubscribed = await pushManager.isSubscribed();
-    if (!isSubscribed && pushManager.getPermissionStatus() === 'granted') {
-        // Si tiene permiso pero no está en la DB, suscribir silenciosamente
-        await pushManager.subscribe();
+    // En Android/Chrome: si ya tiene permiso granted (de antes) pero no está suscrito, suscribir silenciosamente
+    else if (pushManager.getPermissionStatus() === 'granted') {
+        const isSubscribed = await pushManager.isSubscribed();
+        if (!isSubscribed) await pushManager.subscribe();
     }
+    // Para el estado 'default' el usuario usa el toggle del menú
 }
 
-// --- INICIALIZACIÓN AUTOMÁTICA DEL SISTEMA BASE ---
+// --- INICIALIZACIÓN AUTOMÁTICA ---
 if (document.readyState === 'loading') {
     window.addEventListener('DOMContentLoaded', () => {
         initNavbar();
