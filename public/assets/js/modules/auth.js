@@ -232,6 +232,7 @@ function bindPushToggle(isCurrentlyOn, permStatus, isSupported = true) {
                 // Guardar inmediatamente en localStorage por si la app crashea
                 localStorage.setItem('pnlPushLogs', JSON.stringify(logs.slice(-30))); // Mantener últimos 30
             };
+            window.pnlLog = log;
 
             window.showPWALogs = () => {
                 let currentLogs = [];
@@ -259,15 +260,40 @@ function bindPushToggle(isCurrentlyOn, permStatus, isSupported = true) {
                         </div>
                         <div class="p-5 md:p-8 bg-slate-50">
                             ${logsHTML}
-                            <button id="pwa-debug-clear" class="mt-4 w-full py-3 bg-red-500 hover:bg-red-600 text-white font-black text-xs tracking-wider uppercase rounded-xl transition-all flex items-center justify-center gap-2">
-                                <span class="material-symbols-outlined text-base">delete</span> Limpiar Logs
-                            </button>
+                            <div class="mt-4 flex flex-col gap-2">
+                                <button id="pwa-debug-copy" class="w-full py-3 bg-blue-500 hover:bg-blue-600 text-white font-black text-xs tracking-wider uppercase rounded-xl transition-all flex items-center justify-center gap-2">
+                                    <span class="material-symbols-outlined text-base">content_copy</span> Copiar todo el texto
+                                </button>
+                                <button id="pwa-debug-clear" class="w-full py-3 bg-red-500 hover:bg-red-600 text-white font-black text-xs tracking-wider uppercase rounded-xl transition-all flex items-center justify-center gap-2">
+                                    <span class="material-symbols-outlined text-base">delete</span> Limpiar Logs
+                                </button>
+                            </div>
                         </div>
                     </div>
                 `;
 
                 document.body.appendChild(modal);
                 document.getElementById('pwa-debug-close').addEventListener('click', () => modal.remove());
+
+                document.getElementById('pwa-debug-copy').addEventListener('click', async () => {
+                    try {
+                        let textLogs = currentLogs.join('\\n');
+                        if (!textLogs) textLogs = "No hay logs aún.";
+                        await navigator.clipboard.writeText(textLogs);
+                        const btn = document.getElementById('pwa-debug-copy');
+                        btn.innerHTML = '<span class="material-symbols-outlined text-base">check</span> ¡Copiado!';
+                        btn.classList.replace('bg-blue-500', 'bg-emerald-500');
+                        btn.classList.replace('hover:bg-blue-600', 'hover:bg-emerald-600');
+                        setTimeout(() => {
+                            btn.innerHTML = '<span class="material-symbols-outlined text-base">content_copy</span> Copiar todo el texto';
+                            btn.classList.replace('bg-emerald-500', 'bg-blue-500');
+                            btn.classList.replace('hover:bg-emerald-600', 'hover:bg-blue-600');
+                        }, 2000);
+                    } catch (err) {
+                        alert('Error al copiar: ' + err);
+                    }
+                });
+
                 document.getElementById('pwa-debug-clear').addEventListener('click', () => {
                     localStorage.removeItem('pnlPushLogs');
                     logs = [];

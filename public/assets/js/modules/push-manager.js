@@ -82,24 +82,51 @@ export class PushNotificationManager {
     }
 
     async subscribe() {
+        const lg = (msg) => {
+            console.log(msg);
+            if (window.pnlLog) window.pnlLog(msg);
+        };
+        const errLg = (msg, err) => {
+            console.error(msg, err);
+            if (window.pnlLog) window.pnlLog('ERROR FATAL: ' + msg + ' ' + (err?.message || err));
+        };
+
         if (!this.checkSupport()) return null;
+        lg('PNL Push Manager: Iniciando subscribe() interno...');
         try {
+            lg('PNL Push Manager: Esperando a navigator.serviceWorker.ready...');
             const registration = await navigator.serviceWorker.ready;
+            lg('PNL Push Manager: registration listo. Revisando suscripciones existentes...');
+
             let subscription = await registration.pushManager.getSubscription();
+            lg('PNL Push Manager: Resultado de getSubscription() -> ' + !!subscription);
 
             if (!subscription) {
-                subscription = await registration.pushManager.subscribe({
-                    userVisibleOnly: true,   // ← Requerido por el estándar Web Push
-                    applicationServerKey: this.urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
-                });
+                lg('PNL Push Manager: No hay suscripción previa. Generando nueva con PushManager...');
+                try {
+                    const convertedKey = this.urlBase64ToUint8Array(VAPID_PUBLIC_KEY);
+                    lg('PNL Push Manager: Llave VAPID convertida exitosamente.');
+                    subscription = await registration.pushManager.subscribe({
+                        userVisibleOnly: true,
+                        applicationServerKey: convertedKey
+                    });
+                    lg('PNL Push Manager: ✅ Suscripción creada con éxito.');
+                } catch (subErr) {
+                    errLg('PNL Push Manager: ❌ Fallo fatal dentro de registration.pushManager.subscribe()', subErr);
+                    throw subErr; // Lanzar para atrapar en el catch exterior
+                }
             }
 
+            lg('PNL Push Manager: Guardando token de suscripción en la base de datos...');
             await this.saveSubscriptionToDB(subscription);
+            lg('PNL Push Manager: Token guardado exitosamente.');
+
             // Marcar en localStorage para que el toggle persista aunque isSubscribed() tarde
             localStorage.setItem('pnl_push_subscribed', 'true');
+            lg('PNL Push Manager: Proceso de suscripción finalizado por completo.');
             return subscription;
         } catch (error) {
-            console.error('❌ Error al suscribir a push:', error);
+            errLg('❌ Error general al suscribir a push', error);
             return null;
         }
     }
