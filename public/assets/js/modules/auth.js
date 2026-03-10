@@ -212,12 +212,29 @@ function bindPushToggle(isCurrentlyOn, permStatus, isSupported = true) {
             let logs = [];
             const log = (msg) => { console.log(msg); logs.push(msg); };
             const showLogs = () => {
-                const logsHTML = '<div style="text-align:left; font-size:11px; font-family:monospace; background:#f1f5f9; padding:10px; border-radius:8px; max-height:250px; overflow-y:auto;">' + logs.join('<br>') + '</div>';
-                if (window.Swal) {
-                    Swal.fire({ title: 'Diagnóstico PWA', html: logsHTML, icon: 'info', confirmButtonColor: '#0f172a' });
-                } else {
-                    alert('LOGS:\n' + logs.join('\n'));
-                }
+                const logsHTML = '<div style="text-align:left; font-size:11px; font-family:monospace; background:#1e293b; color:#10b981; padding:12px; border-radius:8px; max-height:250px; overflow-y:auto; line-height:1.4;">' + logs.join('<br>') + '</div>';
+
+                // Remover modal anterior si existe
+                const existingModal = document.getElementById('pwa-debug-modal');
+                if (existingModal) existingModal.remove();
+
+                const modal = document.createElement('div');
+                modal.id = 'pwa-debug-modal';
+                modal.style.cssText = 'position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:99999; display:flex; align-items:center; justify-content:center; padding:20px;';
+
+                modal.innerHTML = `
+                    <div style="background:white; border-radius:12px; width:100%; max-width:400px; padding:20px; box-shadow:0 10px 25px rgba(0,0,0,0.5);">
+                        <h3 style="margin:0 0 15px 0; font-size:16px; font-weight:900; color:#0f172a; display:flex; align-items:center; gap:8px;">
+                            <span class="material-symbols-outlined" style="color:#fba931;">bug_report</span> 
+                            PWA LOGS
+                        </h3>
+                        ${logsHTML}
+                        <button id="pwa-debug-close" style="margin-top:15px; width:100%; padding:10px; background:#0f172a; color:white; border:none; border-radius:8px; font-weight:bold; cursor:pointer;">Cerrar Diagnóstico</button>
+                    </div>
+                `;
+
+                document.body.appendChild(modal);
+                document.getElementById('pwa-debug-close').addEventListener('click', () => modal.remove());
             };
 
             log('PNL Push: [PWA DEBUG] Toggle presionado.');
