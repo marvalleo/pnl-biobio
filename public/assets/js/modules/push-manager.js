@@ -94,6 +94,8 @@ export class PushNotificationManager {
         if (!this.checkSupport()) return null;
         lg('PNL Push Manager: Iniciando subscribe() interno...');
         try {
+            lg('PNL Push Manager: Asegurando registro explícito de /sw.js...');
+            await navigator.serviceWorker.register('/sw.js'); // FORZAR REGISTRO
             lg('PNL Push Manager: Esperando a navigator.serviceWorker.ready...');
             const registration = await navigator.serviceWorker.ready;
             lg('PNL Push Manager: registration listo. Revisando suscripciones existentes...');
@@ -161,6 +163,7 @@ export class PushNotificationManager {
     async isSubscribed() {
         if (!this.checkSupport()) return false;
         try {
+            await navigator.serviceWorker.register('/sw.js');
             const registration = await navigator.serviceWorker.ready;
             const subscription = await registration.pushManager.getSubscription();
             const result = !!subscription;
@@ -177,6 +180,7 @@ export class PushNotificationManager {
     async unsubscribe() {
         if (!this.checkSupport()) return false;
         try {
+            await navigator.serviceWorker.register('/sw.js');
             const registration = await navigator.serviceWorker.ready;
             const subscription = await registration.pushManager.getSubscription();
             if (subscription) {
