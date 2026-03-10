@@ -113,6 +113,10 @@ export async function initNavbar() {
 
                     ${toggleHTML}
 
+                    <button id="show-pwa-logs-btn" class="w-full text-left px-5 py-3 text-[10px] font-black uppercase text-indigo-500 hover:bg-indigo-50 flex items-center gap-3 transition-colors border-b border-gray-50">
+                        <span class="material-symbols-outlined text-lg">bug_report</span> Ver Logs (Debug)
+                    </button>
+
                     <button onclick="logout()" class="w-full text-left px-5 py-3 text-[10px] font-black uppercase text-red-500 hover:bg-red-50 flex items-center gap-3 transition-colors">
                         <span class="material-symbols-outlined text-lg">logout</span> Cerrar Sesión
                     </button>
@@ -150,7 +154,16 @@ export async function initNavbar() {
         });
 
         // Vincular toggle
-        bindPushToggle(toggleOn, permStatus);
+        bindPushToggle(toggleOn, permStatus, isSupported);
+
+        // Vincular botón de logs
+        const logsBtn = document.getElementById('show-pwa-logs-btn');
+        if (logsBtn) {
+            logsBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (window.showPWALogs) window.showPWALogs();
+            });
+        }
 
     } catch (err) {
         console.error("Navbar init error:", err);
@@ -209,32 +222,58 @@ function bindPushToggle(isCurrentlyOn, permStatus, isSupported = true) {
         if (!btn) return;
         btn.addEventListener('click', async (e) => {
             e.stopPropagation();
+            let savedStr = localStorage.getItem('pnlPushLogs') || '[]';
             let logs = [];
-            const log = (msg) => { console.log(msg); logs.push(msg); };
-            const showLogs = () => {
-                const logsHTML = '<div style="text-align:left; font-size:11px; font-family:monospace; background:#1e293b; color:#10b981; padding:12px; border-radius:8px; max-height:250px; overflow-y:auto; line-height:1.4;">' + logs.join('<br>') + '</div>';
+            try { logs = JSON.parse(savedStr); } catch (e) { }
 
-                // Remover modal anterior si existe
+            const log = (msg) => {
+                console.log(msg);
+                logs.push(new Date().toLocaleTimeString() + " - " + msg);
+                // Guardar inmediatamente en localStorage por si la app crashea
+                localStorage.setItem('pnlPushLogs', JSON.stringify(logs.slice(-30))); // Mantener últimos 30
+            };
+
+            window.showPWALogs = () => {
+                let currentLogs = [];
+                try { currentLogs = JSON.parse(localStorage.getItem('pnlPushLogs') || '[]'); } catch (e) { }
+                const logsHTML = '<div class="text-left text-[10px] font-mono bg-slate-900 text-emerald-400 p-3 rounded-lg max-h-60 overflow-y-auto leading-relaxed whitespace-pre-wrap break-words border border-slate-700">' + (currentLogs.length ? currentLogs.join('<br>') : 'No hay logs aún.') + '</div>';
+
                 const existingModal = document.getElementById('pwa-debug-modal');
                 if (existingModal) existingModal.remove();
 
                 const modal = document.createElement('div');
                 modal.id = 'pwa-debug-modal';
-                modal.style.cssText = 'position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:99999; display:flex; align-items:center; justify-content:center; padding:20px;';
+                // Estructura exacta del overlay de abogados
+                modal.className = "fixed inset-0 z-[99999] flex items-center justify-center p-4 sm:p-6 bg-slate-900/60 backdrop-blur-sm transition-opacity duration-300";
 
                 modal.innerHTML = `
-                    <div style="background:white; border-radius:12px; width:100%; max-width:400px; padding:20px; box-shadow:0 10px 25px rgba(0,0,0,0.5);">
-                        <h3 style="margin:0 0 15px 0; font-size:16px; font-weight:900; color:#0f172a; display:flex; align-items:center; gap:8px;">
-                            <span class="material-symbols-outlined" style="color:#fba931;">bug_report</span> 
-                            PWA LOGS
-                        </h3>
-                        ${logsHTML}
-                        <button id="pwa-debug-close" style="margin-top:15px; width:100%; padding:10px; background:#0f172a; color:white; border:none; border-radius:8px; font-weight:bold; cursor:pointer;">Cerrar Diagnóstico</button>
+                    <div class="bg-white rounded-2xl md:rounded-3xl shadow-2xl w-full max-w-lg md:max-w-2xl overflow-hidden transform transition-all duration-300 border border-slate-100/50">
+                        <div class="relative bg-slate-900 border-b border-slate-800 px-6 py-4 flex items-center justify-between">
+                            <h3 class="text-sm font-black uppercase tracking-widest text-[#fba931] flex items-center gap-2">
+                                <span class="material-symbols-outlined text-lg">bug_report</span> 
+                                PWA Console
+                            </h3>
+                            <button id="pwa-debug-close" class="w-8 h-8 flex items-center justify-center rounded-full bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700 transition-colors">
+                                <span class="material-symbols-outlined text-xl">close</span>
+                            </button>
+                        </div>
+                        <div class="p-5 md:p-8 bg-slate-50">
+                            ${logsHTML}
+                            <button id="pwa-debug-clear" class="mt-4 w-full py-3 bg-red-500 hover:bg-red-600 text-white font-black text-xs tracking-wider uppercase rounded-xl transition-all flex items-center justify-center gap-2">
+                                <span class="material-symbols-outlined text-base">delete</span> Limpiar Logs
+                            </button>
+                        </div>
                     </div>
                 `;
 
                 document.body.appendChild(modal);
                 document.getElementById('pwa-debug-close').addEventListener('click', () => modal.remove());
+                document.getElementById('pwa-debug-clear').addEventListener('click', () => {
+                    localStorage.removeItem('pnlPushLogs');
+                    logs = [];
+                    modal.remove();
+                    window.showPWALogs();
+                });
             };
 
             log('PNL Push: [PWA DEBUG] Toggle presionado.');
@@ -243,7 +282,7 @@ function bindPushToggle(isCurrentlyOn, permStatus, isSupported = true) {
             if (!isSupported) {
                 log('PNL Push: ALERTA - pushManager.checkSupport() retornó FALSE.');
                 log('PNL Push: El API no está soportado en este navegador o contexto (HTTP inseguro, modo incógnito, in-app).');
-                showLogs();
+                // Eliminadas llamadas a showLogs() para que el usuario las consulte manualmente con el botón
                 return;
             }
 
@@ -251,7 +290,7 @@ function bindPushToggle(isCurrentlyOn, permStatus, isSupported = true) {
                 log('PNL Push: Permiso está denegado a nivel navegador.');
                 const st = document.getElementById('push-toggle-status');
                 if (st) { st.textContent = 'Ve a Configuración del navegador'; st.style.color = '#f59e0b'; }
-                showLogs();
+                // Eliminadas llamadas a showLogs() para que el usuario las consulte manualmente con el botón
                 return;
             }
 
@@ -271,7 +310,7 @@ function bindPushToggle(isCurrentlyOn, permStatus, isSupported = true) {
                     if (track) { track.style.background = '#e2e8f0'; track.style.opacity = '1'; }
                     if (statusEl) { statusEl.textContent = 'Inactivo'; statusEl.style.color = '#94a3b8'; }
                     toggleState = false;
-                    showLogs();
+                    // Eliminadas llamadas a showLogs() para que el usuario las consulte manualmente con el botón
                 } else {
                     log('PNL Push: Intentando solicitar permiso con requestPermission()...');
                     const granted = await window.pushManager.requestPermission();
@@ -291,18 +330,18 @@ function bindPushToggle(isCurrentlyOn, permStatus, isSupported = true) {
                             log('PNL Push: ERROR - Falló la suscripción silente (posible problema de VAPID o Endpoint bloqueado).');
                             if (track) track.style.opacity = '1';
                         }
-                        showLogs();
+                        // Eliminadas llamadas a showLogs() para que el usuario las consulte manualmente con el botón
                     } else {
                         log('PNL Push: El usuario denegó o cerró el prompt nativo.');
                         if (track) track.style.opacity = '1';
                         if (statusEl) { statusEl.textContent = 'Permiso denegado o omitido'; statusEl.style.color = '#ef4444'; }
-                        showLogs();
+                        // Eliminadas llamadas a showLogs() para que el usuario las consulte manualmente con el botón
                     }
                 }
             } catch (error) {
                 log('PNL Push: EXCEPCIÓN FATAL. Error: ' + error.message);
                 if (track) track.style.opacity = '1';
-                showLogs();
+                // Eliminadas llamadas a showLogs() para que el usuario las consulte manualmente con el botón
             }
         });
     }, 0);
