@@ -52,12 +52,13 @@ USING (
 );
 
 -- 6. Políticas para push_notifications_log
--- Solo admins pueden leer el log
-CREATE POLICY "Admins can read logs"
+-- Solo admins pueden leer todos los detalles para gestionar, pero todos deben poder VERLAS en su historial
+CREATE POLICY "Todos los usuarios autenticados pueden leer logs"
 ON push_notifications_log FOR SELECT
-USING (
-    public.get_my_role() IN ('super_admin', 'admin', 'admin_usuarios')
-);
+USING ( auth.role() = 'authenticated' );
+
+-- Eliminar la política anterior restrictiva si existía
+DROP POLICY IF EXISTS "Admins can read logs" ON push_notifications_log;
 
 -- Solo admins pueden insertar logs (via serverless functions)
 CREATE POLICY "Admins can insert logs"

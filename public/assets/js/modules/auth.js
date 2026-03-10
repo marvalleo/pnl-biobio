@@ -113,7 +113,11 @@ export async function initNavbar() {
 
                     ${toggleHTML}
 
-                    <button id="show-pwa-logs-btn" class="w-full text-left px-5 py-3 text-[10px] font-black uppercase text-indigo-500 hover:bg-indigo-50 flex items-center gap-3 transition-colors border-b border-gray-50">
+                    <button id="show-notif-history-btn" class="w-full text-left px-5 py-3 text-[10px] font-black uppercase text-blue-500 hover:bg-blue-50 flex items-center gap-3 transition-colors border-b border-gray-50">
+                        <span class="material-symbols-outlined text-lg">history</span> Bandeja de Entrada
+                    </button>
+
+                    <button id="show-pwa-logs-btn" class="hidden w-full text-left px-5 py-3 text-[10px] font-black uppercase text-indigo-500 hover:bg-indigo-50 items-center gap-3 transition-colors border-b border-gray-50">
                         <span class="material-symbols-outlined text-lg">bug_report</span> Ver Logs (Debug)
                     </button>
 
@@ -155,6 +159,20 @@ export async function initNavbar() {
 
         // Vincular toggle
         bindPushToggle(toggleOn, permStatus, isSupported);
+
+        // Vincular botón de historial
+        const historyBtn = document.getElementById('show-notif-history-btn');
+        if (historyBtn) {
+            historyBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+
+                // Ocultar dropdown al abrir
+                const dropdown = document.getElementById('user-dropdown');
+                if (dropdown) dropdown.classList.add('hidden');
+
+                if (window.showNotificationHistory) window.showNotificationHistory();
+            });
+        }
 
         // Vincular botón de logs
         const logsBtn = document.getElementById('show-pwa-logs-btn');
@@ -372,6 +390,144 @@ function bindPushToggle(isCurrentlyOn, permStatus, isSupported = true) {
         });
     }, 0);
 }
+
+window.showNotificationHistory = async () => {
+    // 1. Quitar modal si ya existe
+    const existingModal = document.getElementById('notif-history-modal');
+    if (existingModal) existingModal.remove();
+
+    // 2. Crear overlay del modal
+    const modal = document.createElement('div');
+    modal.id = 'notif-history-modal';
+    modal.className = "fixed inset-0 z-[99999] flex items-center justify-center p-4 sm:p-6 bg-slate-900/60 backdrop-blur-sm transition-opacity duration-300";
+
+    modal.innerHTML = `
+        <div class="bg-white rounded-2xl md:rounded-3xl shadow-2xl w-full max-w-lg md:max-w-xl overflow-hidden transform transition-all duration-300 border border-slate-100/50 flex flex-col max-h-[85vh]">
+            <div class="relative bg-slate-900 border-b border-slate-800 px-6 py-4 flex items-center justify-between shrink-0">
+                <h3 class="text-sm font-black uppercase tracking-widest text-blue-400 flex items-center gap-2">
+                    <span class="material-symbols-outlined text-lg">history</span> 
+                    Bandeja de Entrada
+                </h3>
+                <button id="notif-history-close" class="w-8 h-8 flex items-center justify-center rounded-full bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700 transition-colors">
+                    <span class="material-symbols-outlined text-xl">close</span>
+                </button>
+            </div>
+            
+            <div id="notif-history-content" class="p-0 bg-slate-50 flex-1 overflow-y-auto relative">
+                <!-- Loader -->
+                <div class="p-8 flex flex-col items-center justify-center text-slate-400">
+                    <span class="material-symbols-outlined text-4xl animate-spin mb-3">progress_activity</span>
+                    <p class="text-xs font-bold uppercase tracking-widest">Cargando Mensajes...</p>
+                </div>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    document.getElementById('notif-history-close').addEventListener('click', () => {
+        modal.remove();
+    });
+
+    const contentContainer = document.getElementById('notif-history-content');
+
+    try {
+        if (!window.supabaseClient) throw new Error("Supabase no inicializado.");
+
+        // Obtener IDs de localStorage
+        let readNotifs = [];
+        try { readNotifs = JSON.parse(localStorage.getItem('pnl_read_notifs') || '[]'); } catch (e) { }
+
+        // Obtener historial desde RPC seguro
+        const { data, error } = await window.supabaseClient.rpc('get_my_push_history', { max_records: 50 });
+
+        if (error) throw error;
+
+        if (!data || data.length === 0) {
+            contentContainer.innerHTML = `
+                <div class="p-10 flex flex-col items-center justify-center text-center">
+                    <div class="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-4 text-slate-300">
+                        <span class="material-symbols-outlined text-3xl">inbox</span>
+                    </div>
+                    <h4 class="text-slate-800 font-black text-sm mb-1">Bandeja Vacía</h4>
+                    <p class="text-slate-500 text-xs">Aún no hay mensajes o anuncios enviados.</p>
+                </div>
+            `;
+            return;
+        }
+
+        let htmlList = '<div class="divide-y divide-slate-100">';
+
+        data.forEach(notif => {
+            const isRead = readNotifs.includes(notif.id);
+            const dateStr = new Date(notif.created_at).toLocaleString('es-CL', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+
+            const titleColor = isRead ? 'text-slate-600' : 'text-slate-900';
+            const bgColor = isRead ? 'bg-white' : 'bg-blue-50/30';
+            const badgeHTML = isRead
+                ? ''
+                : '<span class="px-2 py-0.5 rounded-full bg-blue-500 text-white text-[9px] font-black uppercase tracking-wider shrink-0 shadow-sm shadow-blue-500/30">Nueva</span>';
+
+            htmlList += `
+                <div class="notif-history-item p-4 md:p-5 hover:bg-slate-50 transition-colors cursor-pointer ${bgColor} group" 
+                     data-id="${notif.id}" data-url="${notif.url || ''}">
+                     
+                    <div class="flex items-start justify-between gap-3 mb-2">
+                        <h4 class="text-sm font-bold leading-tight ${titleColor} transition-colors group-hover:text-blue-600 flex-1">${notif.title}</h4>
+                        <div class="flex flex-col items-end gap-1 shrink-0">
+                            ${badgeHTML}
+                            <span class="text-[10px] font-medium text-slate-400 whitespace-nowrap">${dateStr}</span>
+                        </div>
+                    </div>
+                    <p class="text-xs text-slate-500 leading-relaxed line-clamp-2">${notif.body}</p>
+                </div>
+            `;
+        });
+
+        htmlList += '</div>';
+        contentContainer.innerHTML = htmlList;
+
+        // Agregar eventos de click a cada item
+        const items = contentContainer.querySelectorAll('.notif-history-item');
+        items.forEach(item => {
+            item.addEventListener('click', (e) => {
+                const id = item.getAttribute('data-id');
+                const url = item.getAttribute('data-url');
+
+                // Marcar como leído
+                if (!readNotifs.includes(id)) {
+                    readNotifs.push(id);
+                    localStorage.setItem('pnl_read_notifs', JSON.stringify(readNotifs));
+                    // Apagar visualmente el badge "Nueva" de inmediato
+                    const badge = item.querySelector('.bg-blue-500');
+                    if (badge) badge.remove();
+                    item.classList.remove('bg-blue-50/30');
+                    item.classList.add('bg-white');
+                    const titleEl = item.querySelector('h4');
+                    if (titleEl) {
+                        titleEl.classList.remove('text-slate-900');
+                        titleEl.classList.add('text-slate-600');
+                    }
+                }
+
+                // Navegar si hay URL, sino mostrar modal o expandir (aquí navegaremos o no haremos nada si no hay URL)
+                if (url && url !== 'undefined' && url !== 'null' && url !== '') {
+                    window.location.href = url;
+                }
+            });
+        });
+
+    } catch (err) {
+        console.error("Error cargando historial de notificaciones:", err);
+        contentContainer.innerHTML = `
+            <div class="p-8 text-center text-red-500 flex flex-col items-center">
+                <span class="material-symbols-outlined text-4xl mb-2 text-red-300">error</span>
+                <p class="text-xs font-bold uppercase">Error cargando el historial.</p>
+                <p class="text-[10px] text-red-400 mt-1">${err.message || 'Intente nuevamente más tarde.'}</p>
+            </div>
+        `;
+    }
+};
 
 export async function logout() {
     try {
