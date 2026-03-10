@@ -493,6 +493,8 @@ window.showNotificationHistory = async () => {
             item.addEventListener('click', (e) => {
                 const id = item.getAttribute('data-id');
                 const url = item.getAttribute('data-url');
+                const notif = data.find(n => n.id === id);
+                if (!notif) return;
 
                 // Marcar como leído
                 if (!readNotifs.includes(id)) {
@@ -510,22 +512,59 @@ window.showNotificationHistory = async () => {
                     }
                 }
 
-                // Navegar si hay URL, sino mostrar modal o expandir (aquí navegaremos o no haremos nada si no hay URL)
-                if (url && url !== 'undefined' && url !== 'null' && url !== '') {
-                    window.location.href = url;
-                }
+                // Mostrar Modal de Lectura en lugar de redirigir de golpe
+                const existingReadModal = document.getElementById('notif-read-modal');
+                if (existingReadModal) existingReadModal.remove();
+
+                const readModal = document.createElement('div');
+                readModal.id = 'notif-read-modal';
+                readModal.className = "fixed inset-0 z-[100000] flex items-center justify-center p-4 sm:p-6 bg-slate-900/60 backdrop-blur-sm transition-opacity duration-300";
+
+                const hasUrl = (url && url !== 'undefined' && url !== 'null' && url !== '');
+                const urlBtnHTML = hasUrl
+                    ? `<a href="${url}" class="w-full py-3 bg-blue-500 hover:bg-blue-600 text-white font-black text-xs tracking-wider uppercase rounded-xl transition-all flex items-center justify-center gap-2 mt-6 shadow-lg shadow-blue-500/30"><span class="material-symbols-outlined text-base">link</span> Ir al Enlace Adjunto</a>`
+                    : '';
+
+                const dateStr = new Date(notif.created_at).toLocaleString('es-CL', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+
+                readModal.innerHTML = `
+                    <div class="bg-white rounded-2xl md:rounded-3xl shadow-2xl w-full max-w-sm md:max-w-md overflow-hidden transform transition-all duration-300 border border-slate-100/50 flex flex-col animation-scale-up">
+                        <div class="relative bg-slate-50 border-b border-slate-100 px-6 py-4 flex items-center justify-between shrink-0">
+                            <h3 class="text-sm font-black uppercase tracking-widest text-slate-800 flex items-center gap-2">
+                                <span class="material-symbols-outlined text-lg">mail</span> 
+                                Mensaje
+                            </h3>
+                            <button id="notif-read-close" class="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 text-slate-500 hover:text-slate-800 hover:bg-slate-200 transition-colors">
+                                <span class="material-symbols-outlined text-xl">close</span>
+                            </button>
+                        </div>
+                        
+                        <div class="p-6 md:p-8 bg-white flex-1 overflow-y-auto">
+                            <p class="text-[10px] font-medium text-slate-400 mb-2 uppercase tracking-wide">${dateStr}</p>
+                            <h2 class="text-xl font-black text-slate-900 leading-tight mb-4">${notif.title}</h2>
+                            <p class="text-sm text-slate-600 leading-relaxed whitespace-pre-wrap">${notif.body}</p>
+                            ${urlBtnHTML}
+                        </div>
+                    </div>
+                `;
+
+                document.body.appendChild(readModal);
+
+                document.getElementById('notif-read-close').addEventListener('click', () => {
+                    readModal.remove();
+                });
             });
         });
 
     } catch (err) {
         console.error("Error cargando historial de notificaciones:", err);
         contentContainer.innerHTML = `
-            <div class="p-8 text-center text-red-500 flex flex-col items-center">
+                        < div class="p-8 text-center text-red-500 flex flex-col items-center" >
                 <span class="material-symbols-outlined text-4xl mb-2 text-red-300">error</span>
                 <p class="text-xs font-bold uppercase">Error cargando el historial.</p>
                 <p class="text-[10px] text-red-400 mt-1">${err.message || 'Intente nuevamente más tarde.'}</p>
-            </div>
-        `;
+            </div >
+                    `;
     }
 };
 
