@@ -128,6 +128,57 @@ export async function initNavbar() {
             </div>
         `;
 
+        // Función para actualizar el contador visual (globo rojo)
+        window.updateUnreadCount = async () => {
+            try {
+                if (!window.supabaseClient) return;
+
+                // 1. Obtener historial (mismos datos que el modal)
+                const { data, error } = await window.supabaseClient.rpc('get_my_push_history', { max_records: 50 });
+                if (error || !data) return;
+
+                // 2. Obtener leídos de localStorage
+                let readNotifs = [];
+                try { readNotifs = JSON.parse(localStorage.getItem('pnl_read_notifs') || '[]'); } catch (e) { }
+
+                // 3. Calcular no leídos
+                const unread = data.filter(n => !readNotifs.includes(n.id)).length;
+
+                // 4. Actualizar el DOM
+                const avatarBtn = document.getElementById('user-avatar-btn');
+                if (!avatarBtn) return;
+
+                let badge = document.getElementById('notif-badge');
+
+                if (unread > 0) {
+                    const badgeText = unread > 9 ? '9+' : unread;
+                    if (!badge) {
+                        badge = document.createElement('span');
+                        badge.id = 'notif-badge';
+                        badge.style.cssText = `
+                            position:absolute; top:-4px; right:-4px;
+                            background:#ef4444; color:white;
+                            border-radius:9999px; width:18px; height:18px;
+                            font-size:9px; font-weight:900;
+                            display:flex; align-items:center; justify-content:center;
+                            border:2px solid white; line-height:1;
+                            pointer-events:none; transition: all 0.3s ease;
+                        `;
+                        avatarBtn.appendChild(badge);
+                    }
+                    badge.textContent = badgeText;
+                    badge.style.opacity = '1';
+                    badge.style.transform = 'scale(1)';
+                } else if (badge) {
+                    badge.style.opacity = '0';
+                    badge.style.transform = 'scale(0.5)';
+                    setTimeout(() => badge.remove(), 300);
+                }
+            } catch (err) {
+                console.error("Error updating unread count:", err);
+            }
+        };
+
         // Event listener directo en el botón del avatar
         const avatarBtn = document.getElementById('user-avatar-btn');
         if (avatarBtn) {
@@ -136,17 +187,12 @@ export async function initNavbar() {
                 const dropdown = document.getElementById('user-dropdown');
                 if (!dropdown) return;
                 dropdown.classList.toggle('hidden');
-                if (!dropdown.classList.contains('hidden')) {
-                    const badge = document.getElementById('notif-badge');
-                    if (badge) {
-                        badge.style.transition = 'opacity 0.3s';
-                        badge.style.opacity = '0';
-                        setTimeout(() => badge.remove(), 300);
-                    }
-                    if (window.pushManager) window.pushManager.markAllAsRead();
-                }
+                // Ya no borramos el badge al abrir el menú, el usuario quiere ver el contador hasta que lea las notificaciones
             });
         }
+
+        // Ejecutar conteo inicial
+        window.updateUnreadCount();
 
         // Cerrar al hacer clic fuera
         document.addEventListener('click', (e) => {
@@ -552,6 +598,8 @@ window.showNotificationHistory = async () => {
 
                 document.getElementById('notif-read-close').addEventListener('click', () => {
                     readModal.remove();
+                    // Actualizar el contador global al cerrar el detalle de lectura
+                    if (window.updateUnreadCount) window.updateUnreadCount();
                 });
             });
         });
