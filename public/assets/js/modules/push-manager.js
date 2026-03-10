@@ -28,13 +28,31 @@ export class PushNotificationManager {
     }
 
     async requestPermission() {
-        if (!this.checkSupport()) return false;
+        console.log('PNL Push Manager: requestPermission() invocado. checkSupport() =', this.checkSupport());
+        if (!this.checkSupport()) {
+            console.warn('PNL Push Manager: El navegador no soporta ServiceWorkers o PushManager.');
+            return false;
+        }
+
+        console.log('PNL Push Manager: Permiso actual:', Notification.permission);
         if (Notification.permission === 'granted') return true;
+
         try {
-            const permission = await Notification.requestPermission();
+            console.log('PNL Push Manager: Solicitando permiso al navegador...');
+            const permission = await new Promise((resolve) => {
+                const permissionResult = Notification.requestPermission((result) => {
+                    resolve(result);
+                });
+
+                if (permissionResult) {
+                    permissionResult.then(resolve);
+                }
+            });
+
+            console.log('PNL Push Manager: Respuesta del usuario al prompt:', permission);
             return permission === 'granted';
         } catch (err) {
-            console.error('Error pidiendo permiso:', err);
+            console.error('PNL Push Manager: Error pidiendo permiso:', err);
             return false;
         }
     }
