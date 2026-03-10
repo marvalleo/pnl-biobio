@@ -16,7 +16,6 @@ window.showImpactModal = showImpactModal;
 window.handleModalImageError = handleModalImageError;
 window.closeImpactModal = closeImpactModal;
 window.checkAndShowAnnouncements = checkAndShowAnnouncements;
-window.openVideoModal = openVideoModal;
 
 // Instanciar Push Manager (disponible globalmente para auth.js y el toggle)
 const pushManager = new PushNotificationManager();
