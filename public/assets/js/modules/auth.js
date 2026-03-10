@@ -209,18 +209,32 @@ function bindPushToggle(isCurrentlyOn, permStatus, isSupported = true) {
         if (!btn) return;
         btn.addEventListener('click', async (e) => {
             e.stopPropagation();
-            console.log('PNL Push: [MOBILE DEBUG] Toggle presionado.');
-            console.log('PNL Push: Estado actual de variables -> toggleState:', toggleState, '| permStatus:', permStatus, '| isSupported:', isSupported);
+            let logs = [];
+            const log = (msg) => { console.log(msg); logs.push(msg); };
+            const showLogs = () => {
+                const logsHTML = '<div style="text-align:left; font-size:11px; font-family:monospace; background:#f1f5f9; padding:10px; border-radius:8px; max-height:250px; overflow-y:auto;">' + logs.join('<br>') + '</div>';
+                if (window.Swal) {
+                    Swal.fire({ title: 'Diagnóstico PWA', html: logsHTML, icon: 'info', confirmButtonColor: '#0f172a' });
+                } else {
+                    alert('LOGS:\n' + logs.join('\n'));
+                }
+            };
+
+            log('PNL Push: [PWA DEBUG] Toggle presionado.');
+            log(`PNL Push: Estado: toggleState=${toggleState} | permStatus=${permStatus} | isSupported=${isSupported}`);
 
             if (!isSupported) {
-                console.warn('PNL Push: El API Push no está soportado en este contexto.');
-                return; // No hacer nada, el UI ya está deshabilitado visualmente
+                log('PNL Push: ALERTA - pushManager.checkSupport() retornó FALSE.');
+                log('PNL Push: El API no está soportado en este navegador o contexto (HTTP inseguro, modo incógnito, in-app).');
+                showLogs();
+                return;
             }
 
             if (permStatus === 'denied') {
-                console.log('PNL Push: Permiso está denegado. Informando al usuario...');
+                log('PNL Push: Permiso está denegado a nivel navegador.');
                 const st = document.getElementById('push-toggle-status');
                 if (st) { st.textContent = 'Ve a Configuración del navegador'; st.style.color = '#f59e0b'; }
+                showLogs();
                 return;
             }
 
@@ -232,23 +246,24 @@ function bindPushToggle(isCurrentlyOn, permStatus, isSupported = true) {
 
             try {
                 if (toggleState) {
-                    console.log('PNL Push: Intentando desuscribir...');
+                    log('PNL Push: Intentando desuscribir...');
                     await window.pushManager.unsubscribe();
-                    console.log('PNL Push: Desuscripción completada.');
+                    log('PNL Push: Desuscripción completada.');
 
                     if (thumb) thumb.style.transform = 'translateX(2px)';
                     if (track) { track.style.background = '#e2e8f0'; track.style.opacity = '1'; }
                     if (statusEl) { statusEl.textContent = 'Inactivo'; statusEl.style.color = '#94a3b8'; }
                     toggleState = false;
+                    showLogs();
                 } else {
-                    console.log('PNL Push: Intentando solicitar permiso al usuario...');
+                    log('PNL Push: Intentando solicitar permiso con requestPermission()...');
                     const granted = await window.pushManager.requestPermission();
-                    console.log('PNL Push: Resultado de solicitud de permiso:', granted);
+                    log('PNL Push: Resultado devuelto por requestPermission(): ' + granted);
 
                     if (granted) {
-                        console.log('PNL Push: Permiso concedido, intentando suscribir al SW...');
+                        log('PNL Push: Permiso concedido por el usuario, suscribiendo...');
                         const subResult = await window.pushManager.subscribe();
-                        console.log('PNL Push: Resultado de la suscripción:', subResult ? 'Éxito' : 'Fallo');
+                        log('PNL Push: Resultado final de la suscripción (token sw): ' + (subResult ? 'Éxito' : 'Fallo o Null'));
 
                         if (subResult) {
                             if (thumb) thumb.style.transform = 'translateX(19px)';
@@ -256,18 +271,21 @@ function bindPushToggle(isCurrentlyOn, permStatus, isSupported = true) {
                             if (statusEl) { statusEl.textContent = 'Activado'; statusEl.style.color = '#22c55e'; }
                             toggleState = true;
                         } else {
-                            console.error('PNL Push: Falló la suscripción silente (posible problema de VAPID o SW).');
+                            log('PNL Push: ERROR - Falló la suscripción silente (posible problema de VAPID o Endpoint bloqueado).');
                             if (track) track.style.opacity = '1';
                         }
+                        showLogs();
                     } else {
-                        console.log('PNL Push: El usuario denegó o cerró el prompt de permisos.');
+                        log('PNL Push: El usuario denegó o cerró el prompt nativo.');
                         if (track) track.style.opacity = '1';
-                        if (statusEl) { statusEl.textContent = 'Permiso denegado'; statusEl.style.color = '#ef4444'; }
+                        if (statusEl) { statusEl.textContent = 'Permiso denegado o omitido'; statusEl.style.color = '#ef4444'; }
+                        showLogs();
                     }
                 }
             } catch (error) {
-                console.error('PNL Push: Ocurrió una excepción durante el toggle:', error);
+                log('PNL Push: EXCEPCIÓN FATAL. Error: ' + error.message);
                 if (track) track.style.opacity = '1';
+                showLogs();
             }
         });
     }, 0);
