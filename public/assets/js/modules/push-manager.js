@@ -7,7 +7,20 @@ const VAPID_PUBLIC_KEY = 'BG5gsJgsZ0t3Tu1GfWFYuHtDNAlkJXrMq0m_-3vPobewZaTzdqoHC8
 
 export class PushNotificationManager {
     constructor() {
-        this.isSupported = 'serviceWorker' in navigator && 'PushManager' in window;
+        const hasSW = 'serviceWorker' in navigator;
+        const hasPush = 'PushManager' in window;
+        const hasNotif = 'Notification' in window;
+        const isSecure = window.isSecureContext;
+
+        this.isSupported = hasSW && hasPush;
+
+        // Imprimir siempre en la inicialización para saber qué falló en el móvil
+        console.log(`PNL Push Manager: Iniciando clase...`);
+        console.log(`PNL Push Manager: isSecureContext = ${isSecure}`);
+        console.log(`PNL Push Manager: serviceWorker = ${hasSW}`);
+        console.log(`PNL Push Manager: PushManager = ${hasPush}`);
+        console.log(`PNL Push Manager: Notification = ${hasNotif}`);
+        console.log(`PNL Push Manager: isSupported Final = ${this.isSupported}`);
     }
 
     checkSupport() {

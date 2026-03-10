@@ -53,21 +53,24 @@ export async function initNavbar() {
             adminLink.classList.remove('hidden');
         }
 
-        // Obtener estado push con timeout de 2s para no bloquear la carga del avatar
         let unreadCount = 0;
         let toggleOn = false;
         let permStatus = 'default';
+        let isSupported = false;
 
         try {
             permStatus = typeof Notification !== 'undefined' ? Notification.permission : 'default';
             if (window.pushManager) {
-                // Usar timeout para evitar que navigator.serviceWorker.ready bloquee
-                const [cnt, subscribed] = await Promise.all([
-                    withTimeout(window.pushManager.getUnreadCount(), 2000, 0),
-                    withTimeout(window.pushManager.isSubscribed(), 2000, false)
-                ]);
-                unreadCount = cnt;
-                toggleOn = permStatus === 'granted' && subscribed;
+                isSupported = window.pushManager.checkSupport();
+                if (isSupported) {
+                    // Usar timeout para evitar que navigator.serviceWorker.ready bloquee
+                    const [cnt, subscribed] = await Promise.all([
+                        withTimeout(window.pushManager.getUnreadCount(), 2000, 0),
+                        withTimeout(window.pushManager.isSubscribed(), 2000, false)
+                    ]);
+                    unreadCount = cnt;
+                    toggleOn = permStatus === 'granted' && subscribed;
+                }
             }
         } catch (_) {
             // Push no disponible, continuar sin ello
@@ -85,7 +88,7 @@ export async function initNavbar() {
               ">${unreadCount > 9 ? '9+' : unreadCount}</span>`
             : '';
 
-        const toggleHTML = buildToggleHTML(toggleOn, permStatus);
+        const toggleHTML = buildToggleHTML(toggleOn, permStatus, isSupported);
 
         navContainer.innerHTML = `
             <style>
@@ -154,13 +157,32 @@ export async function initNavbar() {
     }
 }
 
-function buildToggleHTML(isOn, permStatus) {
-    const trackColor = isOn ? '#22c55e' : '#e2e8f0';
-    const thumbPos = isOn ? 'translateX(18px)' : 'translateX(2px)';
+function buildToggleHTML(isOn, permStatus, isSupported = true) {
+    const trackColor = isOn && isSupported ? '#22c55e' : '#e2e8f0';
+    const thumbPos = isOn && isSupported ? 'translateX(18px)' : 'translateX(2px)';
+
     let statusText = 'Inactivo';
     let statusColor = '#94a3b8';
-    if (isOn) { statusText = 'Activado'; statusColor = '#22c55e'; }
-    else if (permStatus === 'denied') { statusText = 'Bloqueado en navegador'; statusColor = '#ef4444'; }
+    let opacity = '1';
+    let cursor = 'pointer';
+    let title = isOn ? 'Desactivar notificaciones' : 'Activar notificaciones';
+
+    if (!isSupported) {
+        statusText = 'No compatible o en Incógnito';
+        statusColor = '#f59e0b';
+        opacity = '0.5';
+        cursor = 'not-allowed';
+        title = 'Actualiza tu navegador, quita el modo incógnito, o instala la PWA para usar notificaciones.';
+    } else if (isOn) {
+        statusText = 'Activado';
+        statusColor = '#22c55e';
+    } else if (permStatus === 'denied') {
+        statusText = 'Bloqueado en navegador';
+        statusColor = '#ef4444';
+        opacity = '0.5';
+        cursor = 'not-allowed';
+        title = 'Ve a la configuración del navegador para habilitarlas.';
+    }
 
     return `
         <div class="px-5 py-3 border-b border-gray-50 flex items-center justify-between gap-3">
@@ -172,22 +194,28 @@ function buildToggleHTML(isOn, permStatus) {
                 </div>
             </div>
             <button id="push-toggle-btn"
-                    style="width:40px; height:22px; border:none; cursor:${permStatus === 'denied' ? 'not-allowed' : 'pointer'}; border-radius:9999px; background:${trackColor}; position:relative; flex-shrink:0; padding:0; opacity:${permStatus === 'denied' ? '0.5' : '1'}; overflow:hidden;">
+                    title="${title}"
+                    style="width:40px; height:22px; border:none; cursor:${cursor}; border-radius:9999px; background:${trackColor}; position:relative; flex-shrink:0; padding:0; opacity:${opacity}; overflow:hidden;">
                 <span id="push-toggle-thumb" style="position:absolute; top:2px; left:0; width:18px; height:18px; background:white; border-radius:9999px; box-shadow:0 1px 3px rgba(0,0,0,0.3); transition:transform 0.2s ease; transform:${thumbPos};"></span>
             </button>
         </div>
     `;
 }
 
-function bindPushToggle(isCurrentlyOn, permStatus) {
-    let toggleState = isCurrentlyOn;
+function bindPushToggle(isCurrentlyOn, permStatus, isSupported = true) {
+    let toggleState = isCurrentlyOn && isSupported;
     setTimeout(() => {
         const btn = document.getElementById('push-toggle-btn');
         if (!btn) return;
         btn.addEventListener('click', async (e) => {
             e.stopPropagation();
             console.log('PNL Push: [MOBILE DEBUG] Toggle presionado.');
-            console.log('PNL Push: Estado actual de variables -> toggleState:', toggleState, '| permStatus:', permStatus);
+            console.log('PNL Push: Estado actual de variables -> toggleState:', toggleState, '| permStatus:', permStatus, '| isSupported:', isSupported);
+
+            if (!isSupported) {
+                console.warn('PNL Push: El API Push no está soportado en este contexto.');
+                return; // No hacer nada, el UI ya está deshabilitado visualmente
+            }
 
             if (permStatus === 'denied') {
                 console.log('PNL Push: Permiso está denegado. Informando al usuario...');
