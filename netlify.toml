@@ -3,9 +3,8 @@
   publish = "dist"
 
 [build.environment]
-  SECRETS_SCAN_OMIT_KEYS = "SUPABASE_ANON_KEY,SUPABASE_URL,SUPABASE_SERVICE_ROLE_KEY"
-  # Aquí se pueden definir variables por defecto si se desea
-  # Pero lo ideal es configurarlas en el panel de Netlify
+  NODE_VERSION = "22"
+  # Las variables de Supabase se gestionan directamente en el panel de Netlify
 
 [[redirects]]
   from = "/*"
