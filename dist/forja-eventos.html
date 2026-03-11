@@ -79,8 +79,8 @@
         }
     </style>
   <script type="module" crossorigin src="/assets/supabase-config-BMBUMuEI.js"></script>
-  <script type="module" crossorigin src="/assets/shared-D4mVz3YT.js"></script>
-  <link rel="stylesheet" crossorigin href="/assets/input-BdIaKnhm.css">
+  <script type="module" crossorigin src="/assets/shared-DI3ZJ9hL.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/input-DUrpoSl1.css">
 </head>
 
 <body class="min-h-screen flex flex-col">
@@ -274,11 +274,11 @@
                         </div>
 
                         <div class="flex items-center gap-4">
-                            <button onclick="${isExternalReg ? `window.open('${event.content_url}', '_blank')` : `handleRegistration('${event.id}', ${isRegistered})`}" 
+                            <button onclick="${isExternalReg ? `window.openVideoModal('${event.content_url}')` : `handleRegistration('${event.id}', ${isRegistered})`}" 
                                     class="${isRegistered && !isExternalReg ? 'bg-gray-100 text-gray-400' : isOnline ? 'bg-[#fba931] text-[#0f172a]' : 'bg-[#0f172a] text-white'} px-8 py-3 rounded-xl font-900 text-[10px] uppercase tracking-widest hover:brightness-110 transition-all shadow-lg active:scale-95">
                                 ${isExternalReg ? 'Formulario de Inscripción' : isRegistered ? 'Cancelar Inscripción' : 'Inscribirse Ahora'}
                             </button>
-                            ${isRegistered && !isExternalReg && event.content_url ? `<a href="${event.content_url}" target="_blank" class="text-[10px] font-black text-[#fba931] uppercase hover:underline">Ir a la sesión</a>` : ''}
+                            ${isRegistered && !isExternalReg && event.content_url ? `<button onclick="window.openVideoModal('${event.content_url}')" class="text-[10px] font-black text-[#fba931] uppercase hover:underline">Ir a la sesión</button>` : ''}
                         </div>
                     </div>
                 </div>

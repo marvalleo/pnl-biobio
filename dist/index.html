@@ -18,7 +18,8 @@
     <meta name="theme-color" content="#0f172a">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link rel="manifest" href="/assets/manifest-CYrbnOlj.json">
+    <link rel="apple-touch-icon" href="/assets/images/logos/pwa-icon-vfinal.png">
+    <link rel="manifest" href="/manifest.json?v=6">
     <link rel="icon" href="/assets/images/logos/favicon-100x100.jpg" sizes="32x32" />
 
     <style>
@@ -318,39 +319,6 @@
         }
 
         @media (max-width: 991px) {
-            #main-header {
-                height: auto;
-                padding: 10px 0;
-            }
-
-            .header-content {
-                flex-wrap: wrap;
-            }
-
-            nav {
-                width: 100%;
-                display: none;
-                /* Hidden by default on mobile */
-                padding-top: 20px;
-            }
-
-            nav.open {
-                display: block;
-            }
-
-            nav ul {
-                flex-direction: column;
-                gap: 10px;
-                text-align: center;
-            }
-
-            .menu-toggle {
-                display: block !important;
-                cursor: pointer;
-                font-size: 30px;
-                color: #182d56;
-            }
-
             .section {
                 padding: 40px 0;
             }
@@ -381,7 +349,6 @@
 
             .info-image {
                 order: -1;
-                /* Image first on mobile */
             }
 
             .directiva-grid {
@@ -395,15 +362,11 @@
                 grid-template-columns: 1fr;
             }
         }
-
-        .menu-toggle {
-            display: none;
-        }
     </style>
   <script type="module" crossorigin src="/assets/supabase-config-BMBUMuEI.js"></script>
-  <script type="module" crossorigin src="/assets/shared-D4mVz3YT.js"></script>
+  <script type="module" crossorigin src="/assets/shared-DI3ZJ9hL.js"></script>
   <link rel="stylesheet" crossorigin href="/assets/index-pN8EBOlj.css">
-  <link rel="stylesheet" crossorigin href="/assets/input-BdIaKnhm.css">
+  <link rel="stylesheet" crossorigin href="/assets/input-DUrpoSl1.css">
 </head>
 
 <body>
@@ -428,8 +391,7 @@
                     </p>
                 </div>
                 <div class="info-image">
-                    <img src="/assets/images/backgrounds/Partido-Nacional-Libertario-Mobile-1.png"
-                        alt="Sede Biobío">
+                    <img src="/assets/images/backgrounds/Partido-Nacional-Libertario-Mobile-1.png" alt="Sede Biobío">
                 </div>
             </div>
         </div>
@@ -537,10 +499,6 @@
             }, 800);
         }
 
-        function toggleMenu() {
-            const nav = document.getElementById('main-nav');
-            nav.classList.toggle('open');
-        }
 
         window.onclick = function (event) {
             let overlay = document.getElementById('loginOverlay');

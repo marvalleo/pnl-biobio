@@ -97,10 +97,15 @@
                 opacity: 1;
             }
         }
+
+        .aspect-video {
+            aspect-ratio: 16 / 9;
+            width: 100%;
+        }
     </style>
   <script type="module" crossorigin src="/assets/supabase-config-BMBUMuEI.js"></script>
-  <script type="module" crossorigin src="/assets/shared-D4mVz3YT.js"></script>
-  <link rel="stylesheet" crossorigin href="/assets/input-BdIaKnhm.css">
+  <script type="module" crossorigin src="/assets/shared-DI3ZJ9hL.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/input-DUrpoSl1.css">
 </head>
 
 <body class="h-screen flex flex-col md:flex-row overflow-hidden">
@@ -185,7 +190,7 @@
         <!-- Reproductor de Video -->
         <div id="video-wrapper" class="hidden flex-1 flex flex-col">
             <div class="bg-black flex-1 relative flex items-center justify-center">
-                <div id="video-player" class="w-full h-full"></div>
+                <div id="video-player" class="aspect-video"></div>
             </div>
         </div>
 
@@ -222,9 +227,9 @@
                         class="bg-[#fba931] text-[#0f172a] px-10 py-4 rounded-2xl font-900 text-xs uppercase tracking-widest hover:scale-105 transition-transform">Inscribirse
                         ahora</button>
 
-                    <a id="session-action-link" target="_blank"
+                    <button id="session-action-link"
                         class="hidden bg-[#fba931] text-[#0f172a] px-10 py-4 rounded-2xl font-900 text-xs uppercase tracking-widest hover:scale-105 transition-transform">Ir
-                        a la sesión</a>
+                        a la sesión</button>
 
                     <button id="session-map-btn" onclick="openMap()"
                         class="bg-white/5 border border-white/10 text-white px-10 py-4 rounded-2xl font-900 text-xs uppercase tracking-widest hover:bg-white/10 transition-colors hidden">Ver
@@ -265,8 +270,7 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="https://www.youtube.com/iframe_api"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
         let currentLessons = [];
         let completedLessonIds = new Set();
@@ -279,12 +283,28 @@
         let videoProgressInterval = null;
 
         function getYoutubeID(url) {
+            if (!url) return null;
+            if (url.length === 11) return url; // Es ya un ID
             const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
             const match = url.match(regExp);
             return (match && match[2].length === 11) ? match[2] : null;
         }
 
-        window.onYouTubeIframeAPIReady = () => { console.log("📺 YouTube Player API Ready"); };
+        window.onYouTubeIframeAPIReady = () => { 
+            console.log("📺 PNL Biobio: YouTube Player API Ready"); 
+            window.isYTReady = true;
+        };
+
+        // Carga dinámica de la API para asegurar que los callbacks estén listos
+        function loadYoutubeAPI() {
+            if (window.isYTAPIRequested) return;
+            console.log("📺 PNL Biobio: Cargando YouTube IFrame API...");
+            const tag = document.createElement('script');
+            tag.src = "https://www.youtube.com/iframe_api";
+            window.isYTAPIRequested = true;
+            const firstScriptTag = document.getElementsByTagName('script')[0];
+            firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+        }
 
         window.addEventListener('DOMContentLoaded', async () => {
             if (!window.isSupabaseInit) {
@@ -315,6 +335,7 @@
             profileId = profile.id;
 
             await Promise.all([loadCourse(), loadLessons(), loadRegistrations()]);
+            loadYoutubeAPI();
         });
 
         async function loadCourse() {
@@ -341,10 +362,14 @@
                 if (error) throw error;
                 currentLessons = lessons || [];
 
-                const { data: progress } = await supabaseClient
+                const { data: progress, error: progError } = await supabaseClient
                     .from('user_progress')
-                    .select('lesson_id, minutes_watched, last_video_second')
+                    .select('lesson_id, minutes_watched, last_video_second, is_completed')
                     .eq('profile_id', profileId);
+
+                if (progError) {
+                    console.warn("Error cargando progreso (posible tabla incompleta):", progError);
+                }
 
                 // Store progress maps
                 window.lessonProgressMap = {};
@@ -360,6 +385,11 @@
 
                 renderLessons();
                 updateProgress();
+
+                // Auto-seleccionar primera lección si hay disponibles y ninguna activa
+                if (currentLessons.length > 0 && currentLessonIndex === -1) {
+                    selectLesson(0);
+                }
             } catch (err) { console.error(err); }
         }
 
@@ -425,91 +455,73 @@
         }
 
         async function selectLesson(index) {
-            currentLessonIndex = index;
-            const lesson = currentLessons[index];
-            const isCompleted = completedLessonIds.has(lesson.id);
-
-            // UI Resets
-            document.getElementById('placeholder-overlay').classList.add('hidden');
-            document.getElementById('video-wrapper').classList.add('hidden');
-            document.getElementById('session-wrapper').classList.add('hidden');
-            document.getElementById('lesson-footer').classList.remove('hidden');
-
-            // Footer
-            document.getElementById('lesson-order-badge').textContent = lesson.order.toString().padStart(2, '0');
-            document.getElementById('lesson-title-footer').textContent = lesson.title;
-            document.getElementById('lesson-desc-footer').textContent = lesson.description || 'Sin descripción adicional.';
-            const deliveryLabels = { recorded: 'Grabado', live: 'En Vivo', in_person: 'Presencial' };
-            document.getElementById('delivery-badge').textContent = deliveryLabels[lesson.delivery_type];
-
-            if (lesson.delivery_type === 'recorded') {
-                document.getElementById('video-wrapper').classList.remove('hidden');
-                const ytId = getYoutubeID(lesson.content_url);
-                const startTime = window.videoSecondsMap[lesson.id] || 0;
-
-                if (ytId) {
-                    initYoutubePlayer(ytId, startTime);
-                } else {
-                    document.getElementById('video-player').innerHTML = `<iframe class="w-full h-full" src="${lesson.content_url}" frameborder="0" allowfullscreen></iframe>`;
+            console.log(`☝️ PNL Biobio: Seleccionando lección índice ${index}`);
+            try {
+                if (!currentLessons || !currentLessons[index]) {
+                    console.error("❌ PNL Biobio: Lección no encontrada.");
+                    return;
                 }
-                startAttendanceHeartbeat(lesson.id);
-            } else {
-                stopAttendanceHeartbeat();
-                document.getElementById('session-wrapper').classList.remove('hidden');
-                document.getElementById('session-title-large').textContent = lesson.title;
-                document.getElementById('session-desc').textContent = lesson.description || 'Esta sesión se llevará a cabo según la fecha programada.';
+                currentLessonIndex = index;
+                const lesson = currentLessons[index];
+                const isCompleted = completedLessonIds.has(lesson.id);
+                
+                // UI Cleanup
+                document.getElementById('placeholder-overlay')?.classList.add('hidden');
+                document.getElementById('video-wrapper')?.classList.add('hidden');
+                document.getElementById('session-wrapper')?.classList.add('hidden');
+                document.getElementById('lesson-footer')?.classList.remove('hidden');
 
-                const badge = document.getElementById('session-badge');
-                badge.textContent = deliveryLabels[lesson.delivery_type];
-                badge.className = `px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest mb-6 inline-block ${lesson.delivery_type === 'live' ? 'bg-red-600 animate-pulse' : 'bg-white text-black'}`;
+                // Footer Info
+                document.getElementById('lesson-order-badge').textContent = lesson.order.toString().padStart(2, '0');
+                document.getElementById('lesson-title-footer').textContent = lesson.title;
+                document.getElementById('lesson-desc-footer').textContent = lesson.description || 'Sin descripción adicional.';
+                
+                const deliveryLabels = { recorded: 'Grabado', live: 'En Vivo', in_person: 'Presencial' };
+                document.getElementById('delivery-badge').textContent = deliveryLabels[lesson.delivery_type] || lesson.delivery_type;
 
-                const dateStr = lesson.scheduled_at ? new Date(lesson.scheduled_at).toLocaleString('es-CL', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' }) : 'Fecha por confirmar';
-                document.getElementById('session-date').textContent = dateStr;
+                if (lesson.delivery_type === 'recorded') {
+                    document.getElementById('video-wrapper')?.classList.remove('hidden');
+                    const ytId = getYoutubeID(lesson.content_url);
+                    const startTime = window.videoSecondsMap[lesson.id] || 0;
 
-                const locContainer = document.getElementById('session-loc-container');
-                const actionLink = document.getElementById('session-action-link');
-                const regBtn = document.getElementById('btn-register');
-                const mapBtn = document.getElementById('session-map-btn');
-                const statusTxt = document.getElementById('registration-status');
-                const capInfo = document.getElementById('session-capacity-info');
-
-                // Capacidad
-                if (lesson.max_capacity > 0) {
-                    capInfo.classList.remove('hidden');
-                    const { count } = await supabaseClient.from('lesson_registrations').select('*', { count: 'exact', head: true }).eq('lesson_id', lesson.id);
-                    document.getElementById('capacity-count').textContent = `${count} / ${lesson.max_capacity}`;
-                } else {
-                    capInfo.classList.add('hidden');
-                }
-
-                if (lesson.delivery_type === 'live') {
-                    locContainer.classList.add('hidden');
-                    mapBtn.classList.add('hidden');
-                } else {
-                    locContainer.classList.remove('hidden');
-                    document.getElementById('session-location').textContent = lesson.location || 'Consultar sede';
-                    mapBtn.classList.remove('hidden');
-                }
-
-                // Lógica de Inscripción
-                const isRegistered = registrations.has(lesson.id);
-                if (isRegistered) {
-                    regBtn.classList.add('hidden');
-                    statusTxt.classList.remove('hidden');
-                    if (lesson.delivery_type === 'live' && lesson.content_url) {
-                        actionLink.classList.remove('hidden');
-                        actionLink.href = lesson.content_url;
+                    if (ytId) {
+                        await initYoutubePlayer(ytId, startTime);
+                    } else if (lesson.content_url) {
+                        const videoContainer = document.getElementById('video-player');
+                        if (videoContainer) {
+                            videoContainer.innerHTML = `<iframe class="w-full h-full aspect-video" src="${lesson.content_url}" frameborder="0" allowfullscreen></iframe>`;
+                        }
                     }
-                    startAttendanceHeartbeat(lesson.id); // También trackeamos tiempo en la página de la sesión
+                    startAttendanceHeartbeat(lesson.id);
                 } else {
-                    regBtn.classList.remove('hidden');
-                    statusTxt.classList.add('hidden');
-                    actionLink.classList.add('hidden');
-                }
-            }
+                    stopAttendanceHeartbeat();
+                    document.getElementById('session-wrapper')?.classList.remove('hidden');
+                    document.getElementById('session-title-large').textContent = lesson.title;
+                    document.getElementById('session-desc').textContent = lesson.description || 'Esta sesión se llevará a cabo según la fecha programada.';
+                    
+                    const badge = document.getElementById('session-badge');
+                    badge.textContent = deliveryLabels[lesson.delivery_type];
+                    badge.className = `px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest mb-6 inline-block ${lesson.delivery_type === 'live' ? 'bg-red-600 animate-pulse' : 'bg-white text-black'}`;
 
-            updateButtonUI(isCompleted);
-            renderLessons();
+                    const dateStr = lesson.scheduled_at ? new Date(lesson.scheduled_at).toLocaleString('es-CL', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' }) : 'Fecha por confirmar';
+                    document.getElementById('session-date').textContent = dateStr;
+
+                    const capInfo = document.getElementById('session-capacity-info');
+                    if (lesson.max_capacity > 0) {
+                        capInfo?.classList.remove('hidden');
+                        const { count } = await supabaseClient.from('lesson_registrations').select('*', { count: 'exact', head: true }).eq('lesson_id', lesson.id);
+                        const countEl = document.getElementById('capacity-count');
+                        if (countEl) countEl.textContent = `${count} / ${lesson.max_capacity}`;
+                    } else {
+                        capInfo?.classList.add('hidden');
+                    }
+                }
+
+                updateButtonUI(isCompleted);
+                renderLessons();
+            } catch (err) {
+                console.error("❌ PNL Biobio: Error fatal en selectLesson:", err);
+            }
         }
 
         async function registerToEvent() {
@@ -578,32 +590,52 @@
             }
         }
 
-        function initYoutubePlayer(videoId, startTime) {
-            if (ytPlayer && typeof ytPlayer.destroy === 'function') {
-                ytPlayer.destroy();
-            }
-
-            ytPlayer = new YT.Player('video-player', {
-                height: '100%',
-                width: '100%',
-                videoId: videoId,
-                playerVars: {
-                    'autoplay': 1,
-                    'start': startTime,
-                    'modestbranding': 1,
-                    'rel': 0
-                },
-                events: {
-                    'onStateChange': (event) => {
-                        if (event.data === YT.PlayerState.PLAYING) {
-                            startVideoProgressSync();
-                        } else if (event.data === YT.PlayerState.PAUSED || event.data === YT.PlayerState.ENDED) {
-                            stopVideoProgressSync();
-                            saveVideoSeconds();
-                        }
-                    }
+        async function initYoutubePlayer(videoId, startTime) {
+            console.log(`🎬 PNL Biobio: Preparando reproductor para ID: ${videoId}`);
+            
+            let container = document.getElementById('video-player');
+            if (!container) {
+                const wrapper = document.querySelector('#video-wrapper .bg-black');
+                if (wrapper) {
+                    wrapper.innerHTML = '<div id="video-player" class="aspect-video"></div>';
+                    container = document.getElementById('video-player');
                 }
-            });
+            }
+            if (!container) return;
+
+            // Paso 1: Crear el Iframe por HTML (Método robusto de plibchile.cl)
+            const origin = encodeURIComponent(window.location.origin);
+            const iframeId = `yt-iframe-${Date.now()}`;
+            const iframeUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&start=${startTime}&rel=0&playsinline=1&enablejsapi=1&origin=${origin}&modestbranding=1&controls=1`;
+            
+            container.innerHTML = `<iframe id="${iframeId}" class="w-full h-full aspect-video" src="${iframeUrl}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>`;
+            
+            // Paso 2: Vincular API para seguimiento (Opcional, no bloqueante)
+            if (window.isYTReady && typeof YT !== 'undefined' && YT.Player) {
+                try {
+                    console.log("🔗 PNL Biobio: Vinculando API de seguimiento al iframe...");
+                    if (ytPlayer && typeof ytPlayer.destroy === 'function') ytPlayer.destroy();
+                    
+                    ytPlayer = new YT.Player(iframeId, {
+                        events: {
+                            'onReady': () => console.log("✅ PNL Biobio: Seguimiento vinculado."),
+                            'onStateChange': (event) => {
+                                if (event.data === YT.PlayerState.PLAYING) {
+                                    startVideoProgressSync();
+                                } else if (event.data === YT.PlayerState.PAUSED || event.data === YT.PlayerState.ENDED) {
+                                    stopVideoProgressSync();
+                                    saveVideoSeconds();
+                                }
+                            },
+                            'onError': (e) => console.error("❌ PNL Biobio: Error de API en el iframe:", e.data)
+                        }
+                    });
+                } catch (e) {
+                    console.warn("⚠️ PNL Biobio: No se pudo activar el seguimiento automático:", e);
+                }
+            } else {
+                console.log("ℹ️ PNL Biobio: API de YouTube no lista, el video se reproducirá sin seguimiento automático por ahora.");
+            }
         }
 
         function startVideoProgressSync() {
@@ -624,12 +656,17 @@
 
             try {
                 const { data: currentProg } = await supabaseClient.from('user_progress').select('id').match({ profile_id: profileId, lesson_id: lessonId }).single();
+                
+                const updateData = { last_video_second: currentSec };
+                
                 if (currentProg) {
-                    await supabaseClient.from('user_progress').update({ last_video_second: currentSec }).eq('id', currentProg.id);
+                    await supabaseClient.from('user_progress').update(updateData).eq('id', currentProg.id);
                 } else {
-                    await supabaseClient.from('user_progress').insert([{ profile_id: profileId, lesson_id: lessonId, last_video_second: currentSec, is_completed: false }]);
+                    await supabaseClient.from('user_progress').insert([{ profile_id: profileId, lesson_id: lessonId, ...updateData, is_completed: false }]);
                 }
-            } catch (e) { console.warn("Error guardando segundos de video:", e); }
+            } catch (e) { 
+                console.warn("Error guardando segundos de video (¿Tabla incompleta?):", e); 
+            }
         }
 
 
