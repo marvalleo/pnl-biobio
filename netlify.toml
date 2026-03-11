@@ -4,6 +4,7 @@
 
 [build.environment]
   NODE_VERSION = "22"
+  SECRETS_SCAN_OMIT_KEYS = "SUPABASE_URL,SUPABASE_ANON_KEY"
   # Las variables de Supabase se gestionan directamente en el panel de Netlify
 
 [[redirects]]
