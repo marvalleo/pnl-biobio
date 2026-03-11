@@ -452,9 +452,12 @@
                 const startTime = window.videoSecondsMap[lesson.id] || 0;
 
                 if (ytId) {
-                    initYoutubePlayer(ytId, startTime);
+                    await initYoutubePlayer(ytId, startTime);
                 } else {
-                    document.getElementById('video-player').innerHTML = `<iframe class="w-full h-full" src="${lesson.content_url}" frameborder="0" allowfullscreen></iframe>`;
+                    const videoContainer = document.getElementById('video-player');
+                    if (videoContainer) {
+                        videoContainer.innerHTML = `<iframe class="w-full h-full" src="${lesson.content_url}" frameborder="0" allowfullscreen></iframe>`;
+                    }
                 }
                 startAttendanceHeartbeat(lesson.id);
             } else {
@@ -582,9 +585,41 @@
             }
         }
 
-        function initYoutubePlayer(videoId, startTime) {
-            if (ytPlayer && typeof ytPlayer.destroy === 'function') {
-                ytPlayer.destroy();
+        async function initYoutubePlayer(videoId, startTime) {
+            // Asegurar que el contenedor existe (YouTube lo reemplaza por un iframe)
+            let container = document.getElementById('video-player');
+            if (!container) {
+                const wrapper = document.querySelector('#video-wrapper .bg-black');
+                if (wrapper) {
+                    wrapper.innerHTML = '<div id="video-player" class="w-full h-full"></div>';
+                    container = document.getElementById('video-player');
+                }
+            }
+
+            // Esperar a que la API esté lista si es necesario
+            let retries = 0;
+            while (typeof YT === 'undefined' || !YT.Player && retries < 10) {
+                await new Promise(r => setTimeout(r, 500));
+                retries++;
+            }
+
+            if (typeof YT === 'undefined') {
+                console.error("YouTube API not loaded");
+                return;
+            }
+
+            if (ytPlayer && typeof ytPlayer.loadVideoById === 'function') {
+                try {
+                    ytPlayer.loadVideoById({
+                        videoId: videoId,
+                        startSeconds: startTime
+                    });
+                    return;
+                } catch (e) {
+                    console.warn("Error reusando el player, recreando...", e);
+                    if (typeof ytPlayer.destroy === 'function') ytPlayer.destroy();
+                    ytPlayer = null;
+                }
             }
 
             ytPlayer = new YT.Player('video-player', {
@@ -595,15 +630,27 @@
                     'autoplay': 1,
                     'start': startTime,
                     'modestbranding': 1,
-                    'rel': 0
+                    'rel': 0,
+                    'enablejsapi': 1,
+                    'origin': window.location.origin
                 },
                 events: {
+                    'onReady': (event) => {
+                        // Intentar reproducir (a veces bloqueado por el navegador)
+                        event.target.playVideo();
+                    },
                     'onStateChange': (event) => {
                         if (event.data === YT.PlayerState.PLAYING) {
                             startVideoProgressSync();
                         } else if (event.data === YT.PlayerState.PAUSED || event.data === YT.PlayerState.ENDED) {
                             stopVideoProgressSync();
                             saveVideoSeconds();
+                        }
+                    },
+                    'onError': (e) => {
+                        console.error("YT Player Error:", e.data);
+                        if (e.data === 2 || e.data === 5) {
+                            showToast("Error en el formato del video de YouTube.", "error");
                         }
                     }
                 }
