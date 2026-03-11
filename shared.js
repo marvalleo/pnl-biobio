@@ -54,8 +54,9 @@ window.openVideoModal = function (url) {
                 <span class="material-symbols-outlined text-2xl">close</span>
             </button>
             <iframe class="w-full h-full border-0" 
-                src="https://www.youtube.com/embed/${ytId}?autoplay=1&rel=0&modestbranding=1" 
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                src="https://www.youtube.com/embed/${ytId}?autoplay=1&rel=0&modestbranding=1&enablejsapi=1&origin=${encodeURIComponent(window.location.origin)}&playsinline=1" 
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                referrerpolicy="strict-origin-when-cross-origin"
                 allowfullscreen>
             </iframe>
         </div>

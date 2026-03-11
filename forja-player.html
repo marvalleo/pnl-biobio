@@ -98,6 +98,11 @@
                 opacity: 1;
             }
         }
+
+        .aspect-video {
+            aspect-ratio: 16 / 9;
+            width: 100%;
+        }
     </style>
 </head>
 
@@ -183,7 +188,7 @@
         <!-- Reproductor de Video -->
         <div id="video-wrapper" class="hidden flex-1 flex flex-col">
             <div class="bg-black flex-1 relative flex items-center justify-center">
-                <div id="video-player" class="w-full h-full"></div>
+                <div id="video-player" class="aspect-video"></div>
             </div>
         </div>
 
@@ -284,7 +289,10 @@
             return (match && match[2].length === 11) ? match[2] : null;
         }
 
-        window.onYouTubeIframeAPIReady = () => { console.log("📺 YouTube Player API Ready"); };
+        window.onYouTubeIframeAPIReady = () => { 
+            console.log("📺 YouTube Player API Ready"); 
+            window.isYTReady = true;
+        };
 
         window.addEventListener('DOMContentLoaded', async () => {
             if (!window.isSupabaseInit) {
@@ -364,6 +372,11 @@
 
                 renderLessons();
                 updateProgress();
+
+                // Auto-seleccionar primera lección si hay disponibles y ninguna activa
+                if (currentLessons.length > 0 && currentLessonIndex === -1) {
+                    selectLesson(0);
+                }
             } catch (err) { console.error(err); }
         }
 
@@ -591,15 +604,15 @@
             if (!container) {
                 const wrapper = document.querySelector('#video-wrapper .bg-black');
                 if (wrapper) {
-                    wrapper.innerHTML = '<div id="video-player" class="w-full h-full"></div>';
+                    wrapper.innerHTML = '<div id="video-player" class="aspect-video"></div>';
                     container = document.getElementById('video-player');
                 }
             }
 
             // Esperar a que la API esté lista si es necesario
             let retries = 0;
-            while (typeof YT === 'undefined' || !YT.Player && retries < 10) {
-                await new Promise(r => setTimeout(r, 500));
+            while ((typeof YT === 'undefined' || !YT.Player || !window.isYTReady) && retries < 15) {
+                await new Promise(r => setTimeout(r, 300));
                 retries++;
             }
 
@@ -632,7 +645,10 @@
                     'modestbranding': 1,
                     'rel': 0,
                     'enablejsapi': 1,
-                    'origin': window.location.origin
+                    'origin': window.location.origin,
+                    'playsinline': 1,
+                    'controls': 1,
+                    'widget_referrer': window.location.href
                 },
                 events: {
                     'onReady': (event) => {
