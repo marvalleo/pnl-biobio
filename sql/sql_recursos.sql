@@ -20,13 +20,13 @@ CREATE TABLE IF NOT EXISTS public.multimedia_resources (
 -- 2. Habilitar RLS
 ALTER TABLE public.multimedia_resources ENABLE ROW LEVEL SECURITY;
 
--- 3. Políticas de acceso
+-- 3. Políticas de acceso (Usando DROP para evitar error 42710)
 
--- Cualquier usuario puede ver los recursos activos
+DROP POLICY IF EXISTS "Recursos visibles para todos" ON public.multimedia_resources;
 CREATE POLICY "Recursos visibles para todos" ON public.multimedia_resources
     FOR SELECT USING (is_active = true);
 
--- Solo súper administradores pueden gestionar (CRUD completo)
+DROP POLICY IF EXISTS "Admins gestionan todo" ON public.multimedia_resources;
 CREATE POLICY "Admins gestionan todo" ON public.multimedia_resources
     FOR ALL USING (
         EXISTS (
@@ -45,6 +45,8 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
+-- DROP TRIGGER IF EXISTS para evitar errores en re-ejecución
+DROP TRIGGER IF EXISTS update_multimedia_resources_updated_at ON public.multimedia_resources;
 CREATE TRIGGER update_multimedia_resources_updated_at
     BEFORE UPDATE ON public.multimedia_resources
     FOR EACH ROW
@@ -52,14 +54,15 @@ CREATE TRIGGER update_multimedia_resources_updated_at
 
 -- 📦 CONFIGURACIÓN DE STORAGE (BUCKET)
 -- Nota: El bucket 'multimedia' debe crearse manualmente en la UI de Supabase o vía API.
--- Estas políticas aseguran que solo los admins puedan subir y todos puedan ver.
 
--- 1. Permitir lectura pública a cualquier objeto en el bucket 'multimedia'
+-- 1. Permitir lectura pública
+DROP POLICY IF EXISTS "Acceso público multimedia" ON storage.objects;
 CREATE POLICY "Acceso público multimedia"
 ON storage.objects FOR SELECT
 USING ( bucket_id = 'multimedia' );
 
--- 2. Permitir a admins subir archivos al bucket 'multimedia'
+-- 2. Permitir a admins subir archivos
+DROP POLICY IF EXISTS "Admins suben multimedia" ON storage.objects;
 CREATE POLICY "Admins suben multimedia"
 ON storage.objects FOR INSERT
 WITH CHECK (
@@ -67,7 +70,8 @@ WITH CHECK (
     (SELECT role FROM public.profiles WHERE auth_id = auth.uid()) = 'super_admin'
 );
 
--- 3. Permitir a admins borrar archivos del bucket 'multimedia'
+-- 3. Permitir a admins borrar archivos
+DROP POLICY IF EXISTS "Admins borran multimedia" ON storage.objects;
 CREATE POLICY "Admins borran multimedia"
 ON storage.objects FOR DELETE
 USING (
