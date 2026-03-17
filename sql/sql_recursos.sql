@@ -49,3 +49,28 @@ CREATE TRIGGER update_multimedia_resources_updated_at
     BEFORE UPDATE ON public.multimedia_resources
     FOR EACH ROW
     EXECUTE PROCEDURE update_updated_at_column();
+
+-- 📦 CONFIGURACIÓN DE STORAGE (BUCKET)
+-- Nota: El bucket 'multimedia' debe crearse manualmente en la UI de Supabase o vía API.
+-- Estas políticas aseguran que solo los admins puedan subir y todos puedan ver.
+
+-- 1. Permitir lectura pública a cualquier objeto en el bucket 'multimedia'
+CREATE POLICY "Acceso público multimedia"
+ON storage.objects FOR SELECT
+USING ( bucket_id = 'multimedia' );
+
+-- 2. Permitir a admins subir archivos al bucket 'multimedia'
+CREATE POLICY "Admins suben multimedia"
+ON storage.objects FOR INSERT
+WITH CHECK (
+    bucket_id = 'multimedia' AND
+    (SELECT role FROM public.profiles WHERE auth_id = auth.uid()) = 'super_admin'
+);
+
+-- 3. Permitir a admins borrar archivos del bucket 'multimedia'
+CREATE POLICY "Admins borran multimedia"
+ON storage.objects FOR DELETE
+USING (
+    bucket_id = 'multimedia' AND
+    (SELECT role FROM public.profiles WHERE auth_id = auth.uid()) = 'super_admin'
+);

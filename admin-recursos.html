@@ -123,10 +123,21 @@
                             placeholder="Marzo 2024">
                     </div>
                     <div class="col-span-full">
-                        <label class="text-[9px] font-black uppercase text-gray-400 block mb-2">URL del Contenido (Link)</label>
-                        <input type="text" id="content_url" required
-                            class="w-full bg-gray-50 border border-gray-100 rounded-2xl px-5 py-4 text-xs font-bold outline-none focus:border-[#fba931] transition-colors"
-                            placeholder="https://supabase-storage.com/file.pdf">
+                        <div class="flex justify-between items-center mb-2">
+                            <label class="text-[9px] font-black uppercase text-gray-400 block">URL del Contenido (Link)</label>
+                            <label for="fileUpload" class="text-[9px] font-black uppercase text-[#fba931] cursor-pointer hover:underline flex items-center gap-1">
+                                <span class="material-symbols-outlined text-sm">cloud_upload</span> O sube un archivo aquí
+                            </label>
+                            <input type="file" id="fileUpload" class="hidden" onchange="handleFileUpload(this)">
+                        </div>
+                        <div class="relative group">
+                            <input type="text" id="content_url" required
+                                class="w-full bg-gray-50 border border-gray-100 rounded-2xl px-5 py-4 text-xs font-bold outline-none focus:border-[#fba931] transition-colors pr-12"
+                                placeholder="https://supabase-storage.com/file.pdf">
+                            <div id="uploadProgress" class="absolute right-4 top-1/2 -translate-y-1/2 hidden">
+                                <span class="material-symbols-outlined animate-spin text-[#fba931]">sync</span>
+                            </div>
+                        </div>
                     </div>
                     <div>
                         <label class="text-[9px] font-black uppercase text-gray-400 block mb-2">Meta: Tamaño (MB)</label>
@@ -279,6 +290,63 @@
             document.getElementById('is_active').checked = r.is_active;
 
             document.getElementById('formModal').style.display = 'flex';
+        }
+
+        async function handleFileUpload(input) {
+            const file = input.files[0];
+            if (!file) return;
+
+            const progress = document.getElementById('uploadProgress');
+            const urlInput = document.getElementById('content_url');
+            
+            progress.classList.remove('hidden');
+            input.disabled = true;
+
+            try {
+                // Generar un nombre único para el archivo
+                const fileExt = file.name.split('.').pop();
+                const fileName = `${Math.random().toString(36).substring(2)}-${Date.now()}.${fileExt}`;
+                const filePath = `uploads/${fileName}`;
+
+                // Subir a Supabase Storage (Bucket: multimedia)
+                const { data, error } = await supabaseClient.storage
+                    .from('multimedia')
+                    .upload(filePath, file);
+
+                if (error) throw error;
+
+                // Obtener URL pública
+                const { data: { publicUrl } } = supabaseClient.storage
+                    .from('multimedia')
+                    .getPublicUrl(filePath);
+
+                urlInput.value = publicUrl;
+                window.showToast('Archivo subido con éxito', 'success');
+                
+                // Autocompletar tamaño si es posible
+                const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
+                document.getElementById('file_size').value = `${sizeMB} MB`;
+                
+                // Autoseleccionar tipo por extensión
+                const typeMap = {
+                    'pdf': 'pdf',
+                    'mp4': 'video', 'mov': 'video', 'avi': 'video',
+                    'ppt': 'ppt', 'pptx': 'ppt',
+                    'mp3': 'audio', 'wav': 'audio',
+                    'jpg': 'image', 'png': 'image', 'webp': 'image'
+                };
+                if (typeMap[fileExt.toLowerCase()]) {
+                    document.getElementById('type').value = typeMap[fileExt.toLowerCase()];
+                }
+
+            } catch (err) {
+                console.error('Error subiendo archivo:', err);
+                window.showToast('Error al subir: Verifique que el bucket "multimedia" exista.', 'error');
+            } finally {
+                progress.classList.add('hidden');
+                input.disabled = false;
+                input.value = ''; // Reset input
+            }
         }
 
         async function deleteResource(id) {
