@@ -524,7 +524,8 @@
                     badge.textContent = deliveryLabels[lesson.delivery_type];
                     badge.className = `px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest mb-6 inline-block ${lesson.delivery_type === 'live' ? 'bg-red-600 animate-pulse' : 'bg-white text-black'}`;
 
-                    const dateStr = lesson.scheduled_at ? new Date(lesson.scheduled_at).toLocaleString('es-CL', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' }) : 'Fecha por confirmar';
+                    const dateObj = lesson.event_date || lesson.scheduled_at;
+                    const dateStr = dateObj ? new Date(dateObj).toLocaleString('es-CL', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' }) : 'Fecha por confirmar';
                     document.getElementById('session-date').textContent = dateStr;
 
                     const capInfo = document.getElementById('session-capacity-info');

@@ -372,7 +372,7 @@
                 order: parseInt(document.getElementById('lesson-order').value),
                 content_url: document.getElementById('lesson-url').value || null,
                 location: document.getElementById('lesson-location').value || null,
-                event_date: document.getElementById('lesson-date').value || null,
+                event_date: document.getElementById('lesson-date').value ? new Date(document.getElementById('lesson-date').value).toISOString() : null,
                 duration: document.getElementById('lesson-duration').value || null,
                 max_capacity: parseInt(document.getElementById('lesson-capacity').value) || 0
             };
@@ -419,8 +419,8 @@
 
             if (lesson.event_date) {
                 const d = new Date(lesson.event_date);
-                const isoStr = d.toISOString().slice(0, 16);
-                document.getElementById('lesson-date').value = isoStr;
+                const localISOTime = new Date(d.getTime() - (d.getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
+                document.getElementById('lesson-date').value = localISOTime;
             }
 
             document.getElementById('modal-title').textContent = 'Editar Lección';

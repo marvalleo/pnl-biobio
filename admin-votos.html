@@ -382,7 +382,11 @@
                 // 1. Crear el Voto
                 const { data: vote, error: vError } = await supabaseClient
                     .from('votes')
-                    .insert([{ title, deadline, status: 'open' }])
+                    .insert([{ 
+                        title, 
+                        deadline: deadline ? new Date(deadline).toISOString() : null, 
+                        status: 'open' 
+                    }])
                     .select()
                     .single();
 

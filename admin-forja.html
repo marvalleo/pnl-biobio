@@ -467,7 +467,7 @@
                 order: parseInt(document.getElementById('lesson-order').value),
                 content_url: document.getElementById('lesson-url').value || null,
                 location: document.getElementById('lesson-location').value || null,
-                event_date: document.getElementById('lesson-date').value || null,
+                event_date: document.getElementById('lesson-date').value ? new Date(document.getElementById('lesson-date').value).toISOString() : null,
                 max_capacity: parseInt(document.getElementById('lesson-capacity').value) || 0
             };
             try {
