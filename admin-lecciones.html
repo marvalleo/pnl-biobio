@@ -185,8 +185,14 @@
             <div id="reg-list" class="space-y-3 max-h-96 overflow-y-auto pr-2">
                 <!-- Miembros inscritos -->
             </div>
-            <button onclick="document.getElementById('reg-modal').classList.add('hidden')"
-                class="w-full mt-6 bg-gray-100 text-gray-600 py-4 rounded-xl font-900 uppercase text-xs hover:bg-gray-200">Cerrar</button>
+            <div class="flex gap-3 mt-6">
+                <button onclick="exportToExcel()"
+                    class="flex-1 bg-green-600 text-white py-4 rounded-xl font-900 uppercase text-xs hover:bg-green-700 shadow-lg flex items-center justify-center gap-2 transition-all">
+                    <span class="material-symbols-outlined text-sm">download</span> Exportar a Excel
+                </button>
+                <button onclick="document.getElementById('reg-modal').classList.add('hidden')"
+                    class="flex-1 bg-gray-100 text-gray-600 py-4 rounded-xl font-900 uppercase text-xs hover:bg-gray-200">Cerrar</button>
+            </div>
         </div>
     </div>
 
@@ -208,6 +214,7 @@
         }
 
         const courseId = getCourseId();
+        let currentModalData = { id: null, title: '', registrations: [] };
 
         window.addEventListener('DOMContentLoaded', async () => {
             if (!window.isSupabaseInit) {
@@ -436,10 +443,12 @@
             try {
                 const { data, error } = await supabaseClient
                     .from('lesson_registrations')
-                    .select('*, profiles(full_name, rut)')
+                    .select('*, profiles(full_name, rut, email)')
                     .eq('lesson_id', lessonId);
 
                 if (error) throw error;
+
+                currentModalData = { id: lessonId, title: lessonTitle, registrations: data || [] };
 
                 if (data.length === 0) {
                     list.innerHTML = '<p class="text-center text-gray-400 py-10">No hay inscritos todavía.</p>';
@@ -450,7 +459,7 @@
                     <div class="flex justify-between items-center p-4 bg-gray-50 rounded-2xl border border-gray-100">
                         <div>
                             <p class="font-black uppercase text-xs">${reg.profiles.full_name}</p>
-                            <p class="text-[9px] text-gray-400 font-bold tracking-widest">${reg.profiles.rut || 'SIN RUT'}</p>
+                            <p class="text-[9px] text-gray-400 font-bold tracking-widest uppercase">${reg.profiles.rut || 'SIN RUT'} • ${reg.profiles.email || 'SIN EMAIL'}</p>
                         </div>
                         <div class="flex items-center gap-2">
                             <button onclick="toggleAttendance('${reg.id}', ${!reg.attended}, '${lessonId}', '${lessonTitle}')" 
@@ -478,6 +487,35 @@
             } catch (err) {
                 showToast('Error al actualizarasistencia: ' + err.message, 'error');
             }
+        }
+
+        function exportToExcel() {
+            const { title, registrations } = currentModalData;
+            if (!registrations || registrations.length === 0) {
+                showToast("No hay datos para exportar.", "info");
+                return;
+            }
+
+            // Crear contenido CSV con BOM para visualización correcta en Excel (UTF-8)
+            let csvContent = "\uFEFF"; 
+            csvContent += "Nombre Completo;RUT;Email;Asistencia\n";
+
+            registrations.forEach(reg => {
+                const name = reg.profiles?.full_name || 'N/A';
+                const rut = reg.profiles?.rut || 'N/A';
+                const email = reg.profiles?.email || 'N/A';
+                const attendance = reg.attended ? 'SÍ' : 'NO';
+                csvContent += `"${name}";"${rut}";"${email}";"${attendance}"\n`;
+            });
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.setAttribute("href", url);
+            link.setAttribute("download", `Inscritos_${title.replace(/[^a-z0-9]/gi, '_')}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         }
     </script>
 </body>
