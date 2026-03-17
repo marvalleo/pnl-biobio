@@ -23,6 +23,7 @@ class PnlNavbar extends HTMLElement {
             { id: 'inicio', path: 'index.html', label: 'Inicio', isExternal: false },
             { id: 'nosotros', path: 'nosotros.html', label: 'Nosotros', isExternal: false },
             { id: 'publicaciones', path: 'publicaciones-oficiales.html', label: 'Publicaciones', isExternal: false },
+            { id: 'recursos', path: 'recursos.html', label: 'Recursos', isExternal: false },
             { id: 'contacto', path: 'contacto.html', label: 'Contacto', isExternal: false }
         ];
 

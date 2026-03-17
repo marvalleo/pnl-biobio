@@ -134,6 +134,17 @@
                 <h2 class="text-xl font-900 uppercase mb-2">Aviso de Impacto</h2>
                 <p class="text-sm text-gray-500 font-medium">Configurar modal de bienvenida y anuncios globales.</p>
             </a>
+
+            <!-- Módulo Recursos (NUEVO) -->
+            <a href="admin-recursos.html" id="mod-recursos"
+                class="bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-100 hover:shadow-2xl hover:scale-[1.02] transition-all group border-l-4 border-[#0f172a]">
+                <div
+                    class="w-14 h-14 bg-gray-50 rounded-2xl flex items-center justify-center mb-6 text-[#0f172a] group-hover:bg-[#0f172a] group-hover:text-white transition-colors">
+                    <span class="material-symbols-outlined text-3xl">folder_managed</span>
+                </div>
+                <h2 class="text-xl font-900 uppercase mb-2">Biblioteca Multimedia</h2>
+                <p class="text-sm text-gray-500 font-medium">Gestionar documentos, reglamentos y videos oficiales.</p>
+            </a>
         </div>
 
         <!-- SECCIÓN DE NOTIFICACIONES PUSH (NUEVO) -->
@@ -220,7 +231,8 @@
                 'mod-votos': ['super_admin', 'admin_votos'],
                 'mod-foros': ['super_admin', 'admin_foros'],
                 'mod-usuarios': ['super_admin', 'admin_usuarios'],
-                'mod-anuncios': ['super_admin']
+                'mod-anuncios': ['super_admin'],
+                'mod-recursos': ['super_admin']
             };
 
             Object.entries(modules).forEach(([id, allowedRoles]) => {

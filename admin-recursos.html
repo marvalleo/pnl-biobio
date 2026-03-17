@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Recursos - Admin PNL</title>
+    <link rel="stylesheet" href="/input.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&family=Playfair+Display:wght@700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+    <style>
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background-color: #f8fafc;
+        }
+
+        .serif {
+            font-family: 'Playfair Display', serif;
+        }
+
+        .premium-card {
+            background: white;
+            border-radius: 2rem;
+            border: 1px solid #e2e8f0;
+            transition: all 0.3s;
+        }
+
+        .premium-card:hover {
+            border-color: #fba931;
+            box-shadow: 0 20px 40px rgba(15, 23, 42, 0.05);
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #fba931;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+
+<body class="min-h-screen flex flex-col">
+    <!-- NAVEGACIÓN -->
+    <nav class="bg-[#0f172a] text-white py-4 px-6 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <div class="flex items-center gap-4">
+                <a href="admin-dashboard.html" class="material-symbols-outlined hover:text-[#fba931]">arrow_back</a>
+                <h1 class="font-900 uppercase text-[10px] tracking-widest text-[#fba931]">Gestión de Biblioteca Multimedia</h1>
+            </div>
+            <div id="user-menu-container"></div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-6 py-12 w-full">
+        <div class="flex flex-col md:flex-row justify-between items-end gap-6 mb-12">
+            <div>
+                <h2 class="serif text-5xl text-[#0f172a] mb-2 uppercase">Recursos</h2>
+                <p class="text-gray-400 font-bold text-xs uppercase tracking-[0.3em]">Administra la soberanía de información</p>
+            </div>
+            <button onclick="openResourceModal()"
+                class="bg-[#fba931] text-[#0f172a] px-8 py-4 rounded-2xl font-900 text-[10px] uppercase tracking-widest hover:brightness-110 shadow-xl shadow-amber-500/20 flex items-center gap-2 transition-all">
+                <span class="material-symbols-outlined text-sm">add_circle</span> Nuevo Recurso
+            </button>
+        </div>
+
+        <!-- Lista de Recursos -->
+        <div id="resourcesList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <!-- Loading Skeletons -->
+            <div class="animate-pulse bg-white h-64 rounded-[2rem] border border-gray-100"></div>
+            <div class="animate-pulse bg-white h-64 rounded-[2rem] border border-gray-100"></div>
+            <div class="animate-pulse bg-white h-64 rounded-[2rem] border border-gray-100"></div>
+        </div>
+    </main>
+
+    <!-- Modal de Formulario -->
+    <div id="formModal"
+        class="fixed inset-0 bg-[#0f172a]/95 backdrop-blur-md z-[500] hidden items-center justify-center p-4">
+        <div class="bg-white w-full max-w-2xl rounded-[3rem] overflow-hidden shadow-2xl relative max-h-[90vh] flex flex-col">
+            <div class="bg-[#0f172a] p-10 text-white flex justify-between items-center">
+                <div>
+                    <span class="text-[#fba931] text-[9px] font-black uppercase tracking-widest mb-1 block">Editor de Contenido</span>
+                    <h3 class="serif text-3xl" id="modalTitle">Nuevo Recurso</h3>
+                </div>
+                <button onclick="closeModal()" class="material-symbols-outlined hover:text-[#fba931] transition-colors">close</button>
+            </div>
+            <form id="resourceForm" class="p-10 space-y-6 overflow-y-auto custom-scrollbar flex-1">
+                <input type="hidden" id="resourceId">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="col-span-full">
+                        <label class="text-[9px] font-black uppercase text-gray-400 block mb-2">Título del Recurso</label>
+                        <input type="text" id="title" required
+                            class="w-full bg-gray-50 border border-gray-100 rounded-2xl px-5 py-4 text-xs font-bold outline-none focus:border-[#fba931] transition-colors"
+                            placeholder="Estatutos Provinciales 2024">
+                    </div>
+                    <div class="col-span-full">
+                        <label class="text-[9px] font-black uppercase text-gray-400 block mb-2">Descripción (Breve)</label>
+                        <textarea id="description"
+                            class="w-full bg-gray-50 border border-gray-100 rounded-2xl px-5 py-4 text-xs font-bold h-24 outline-none focus:border-[#fba931] transition-colors"
+                            placeholder="Detalle de los principios y reglamentos..."></textarea>
+                    </div>
+                    <div>
+                        <label class="text-[9px] font-black uppercase text-gray-400 block mb-2">Tipo de Archivo</label>
+                        <select id="type" required
+                            class="w-full bg-gray-50 border border-gray-100 rounded-2xl px-5 py-4 text-xs font-bold outline-none focus:border-[#fba931] transition-colors">
+                            <option value="pdf">📄 Documento (PDF)</option>
+                            <option value="video">🎥 Video / Registro</option>
+                            <option value="ppt">📊 Presentación</option>
+                            <option value="audio">🎧 Audio / Podcast</option>
+                            <option value="image">🖼️ Imagen / Gráfico</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-[9px] font-black uppercase text-gray-400 block mb-2">Etiqueta de Fecha</label>
+                        <input type="text" id="date_label"
+                            class="w-full bg-gray-50 border border-gray-100 rounded-2xl px-5 py-4 text-xs font-bold outline-none focus:border-[#fba931] transition-colors"
+                            placeholder="Marzo 2024">
+                    </div>
+                    <div class="col-span-full">
+                        <label class="text-[9px] font-black uppercase text-gray-400 block mb-2">URL del Contenido (Link)</label>
+                        <input type="text" id="content_url" required
+                            class="w-full bg-gray-50 border border-gray-100 rounded-2xl px-5 py-4 text-xs font-bold outline-none focus:border-[#fba931] transition-colors"
+                            placeholder="https://supabase-storage.com/file.pdf">
+                    </div>
+                    <div>
+                        <label class="text-[9px] font-black uppercase text-gray-400 block mb-2">Meta: Tamaño (MB)</label>
+                        <input type="text" id="file_size"
+                            class="w-full bg-gray-50 border border-gray-100 rounded-2xl px-5 py-4 text-xs font-bold outline-none focus:border-[#fba931] transition-colors"
+                            placeholder="2.4 MB">
+                    </div>
+                    <div>
+                        <label class="text-[9px] font-black uppercase text-gray-400 block mb-2">Meta: Duración (min)</label>
+                        <input type="text" id="duration"
+                            class="w-full bg-gray-50 border border-gray-100 rounded-2xl px-5 py-4 text-xs font-bold outline-none focus:border-[#fba931] transition-colors"
+                            placeholder="45:20 min">
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-3 bg-amber-500/5 p-4 rounded-2xl border border-amber-500/10">
+                    <input type="checkbox" id="is_active" checked class="w-5 h-5 accent-[#fba931]">
+                    <label for="is_active" class="text-[10px] font-black uppercase text-amber-600">Publicar inmediatamente en el portal</label>
+                </div>
+
+                <div class="flex gap-4 pt-6">
+                    <button type="button" onclick="closeModal()"
+                        class="flex-1 px-8 py-5 rounded-2xl font-900 text-[10px] uppercase bg-gray-50 text-gray-400 hover:bg-gray-100 transition-colors">Cancelar</button>
+                    <button type="submit"
+                        class="flex-1 bg-[#0f172a] text-white px-8 py-5 rounded-2xl font-900 text-[10px] uppercase hover:bg-black shadow-2xl transition-all">Guardar Recurso</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script type="module" src="supabase-config.js"></script>
+    <script type="module" src="/shared.js"></script>
+    <script>
+        let resources = [];
+
+        window.addEventListener('DOMContentLoaded', async () => {
+             // Esperar a que Supabase configure el cliente
+            let attempts = 0;
+            while (!window.isSupabaseInit && attempts < 10) {
+                await new Promise(r => setTimeout(r, 500));
+                attempts++;
+            }
+
+            if (!window.isSupabaseInit) return;
+
+            const { data: { user } } = await supabaseClient.auth.getUser();
+            if (!user) { window.location.href = 'forja-login.html'; return; }
+
+            const { data: profile } = await supabaseClient.from('profiles').select('role').eq('auth_id', user.id).single();
+            if (!profile || profile.role !== 'super_admin') {
+                alert('Acceso restringido solo a Súper Administradores.');
+                window.location.href = 'admin-dashboard.html';
+                return;
+            }
+
+            loadResources();
+        });
+
+        async function loadResources() {
+            const list = document.getElementById('resourcesList');
+            const { data, error } = await supabaseClient
+                .from('multimedia_resources')
+                .select('*')
+                .order('created_at', { ascending: false });
+
+            if (error) {
+                console.error(error);
+                list.innerHTML = `<p class="col-span-full text-center py-10 text-red-500 font-bold">Error al cargar biblioteca.</p>`;
+                return;
+            }
+
+            resources = data;
+            renderResources();
+        }
+
+        function renderResources() {
+            const list = document.getElementById('resourcesList');
+            if (resources.length === 0) {
+                list.innerHTML = `<p class="col-span-full text-center py-20 text-gray-400 font-black uppercase text-[10px] tracking-widest">Biblioteca vacía</p>`;
+                return;
+            }
+
+            list.innerHTML = resources.map(r => {
+                const isActive = r.is_active;
+                const iconMap = {
+                    pdf: 'picture_as_pdf',
+                    video: 'play_circle',
+                    ppt: 'present_to_all',
+                    audio: 'headphones',
+                    image: 'image'
+                };
+                const icon = iconMap[r.type] || 'description';
+
+                return `
+                <div class="premium-card p-8 flex flex-col gap-5 relative group">
+                    <div class="flex justify-between items-start">
+                        <span class="text-[8px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full ${isActive ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-400'}">
+                            ${isActive ? 'Activo' : 'Borrador'}
+                        </span>
+                        <div class="flex gap-2">
+                            <button onclick="editResource('${r.id}')" class="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 hover:text-[#fba931] hover:bg-amber-50 transition-all">
+                                <span class="material-symbols-outlined text-lg">edit</span>
+                            </button>
+                            <button onclick="deleteResource('${r.id}')" class="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-red-50 transition-all">
+                                <span class="material-symbols-outlined text-lg">delete</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-4">
+                        <span class="material-symbols-outlined text-4xl text-gray-100 group-hover:text-[#fba931] transition-colors">${icon}</span>
+                        <div>
+                            <h4 class="serif text-xl text-[#0f172a] leading-tight mb-1">${r.title}</h4>
+                            <p class="text-[10px] font-black text-[#fba931] uppercase tracking-widest">${r.type}</p>
+                        </div>
+                    </div>
+                    <p class="text-xs text-gray-500 line-clamp-2">${r.description || 'Sin descripción.'}</p>
+                    <div class="mt-auto pt-6 border-t border-gray-50 flex items-center justify-between">
+                         <div class="flex flex-col">
+                            <span class="text-[8px] font-black text-gray-300 uppercase">Subido</span>
+                            <span class="text-[9px] font-bold text-gray-400">${new Date(r.created_at).toLocaleDateString()}</span>
+                         </div>
+                         <a href="${r.content_url}" target="_blank" class="text-[#fba931] hover:underline text-[9px] font-black uppercase tracking-widest">Ver archivo</a>
+                    </div>
+                </div>
+            `;
+            }).join('');
+        }
+
+        function openResourceModal() {
+            document.getElementById('modalTitle').innerText = 'Nuevo Recurso';
+            document.getElementById('resourceForm').reset();
+            document.getElementById('resourceId').value = '';
+            document.getElementById('formModal').style.display = 'flex';
+        }
+
+        function editResource(id) {
+            const r = resources.find(x => x.id === id);
+            if (!r) return;
+
+            document.getElementById('modalTitle').innerText = 'Editar Recurso';
+            document.getElementById('resourceId').value = r.id;
+            document.getElementById('title').value = r.title;
+            document.getElementById('description').value = r.description || '';
+            document.getElementById('type').value = r.type;
+            document.getElementById('content_url').value = r.content_url;
+            document.getElementById('date_label').value = r.date_label || '';
+            document.getElementById('file_size').value = r.file_size || '';
+            document.getElementById('duration').value = r.duration || '';
+            document.getElementById('is_active').checked = r.is_active;
+
+            document.getElementById('formModal').style.display = 'flex';
+        }
+
+        async function deleteResource(id) {
+            if (!confirm('¿Confirma la eliminación permanente de este recurso? Esta acción no se puede deshacer.')) return;
+            const { error } = await supabaseClient.from('multimedia_resources').delete().eq('id', id);
+            if (error) { window.showToast('Error al eliminar recurso', 'error'); return; }
+            window.showToast('Recurso eliminado de la soberanía', 'success');
+            loadResources();
+        }
+
+        function closeModal() {
+            document.getElementById('formModal').style.display = 'none';
+        }
+
+        document.getElementById('resourceForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('resourceId').value;
+            const payload = {
+                title: document.getElementById('title').value,
+                description: document.getElementById('description').value,
+                type: document.getElementById('type').value,
+                content_url: document.getElementById('content_url').value,
+                date_label: document.getElementById('date_label').value,
+                file_size: document.getElementById('file_size').value,
+                duration: document.getElementById('duration').value,
+                is_active: document.getElementById('is_active').checked
+            };
+
+            const action = id ?
+                supabaseClient.from('multimedia_resources').update(payload).eq('id', id) :
+                supabaseClient.from('multimedia_resources').insert(payload);
+
+            const { error } = await action;
+            if (error) { 
+                console.error(error); 
+                window.showToast('Fallo al guardar: Verifique conexión con DB.', 'error'); 
+                return; 
+            }
+
+            window.showToast('Recurso guardado y sincronizado', 'success');
+            closeModal();
+            loadResources();
+        });
+
+    </script>
+</body>
+
+</html>
