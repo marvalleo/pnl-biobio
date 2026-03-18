@@ -197,10 +197,19 @@
 
                 // 5. Redirección basada en rol
                 const redirectPath = ROLE_REDIRECTS[profile.role] || 'forja-eventos.html';
+                
+                // 6. Registrar evento de login exitoso
+                if (window.logSystemEvent) {
+                    await window.logSystemEvent('login', 'info', `Inicio de sesión exitoso: ${email}`);
+                }
+
                 window.location.href = redirectPath;
 
             } catch (err) {
-                console.error("Login error:", err);
+                // Registrar el error en el sistema de logs (si es posible)
+                if (window.logError) {
+                    window.logError(`Fallo en inicio de sesión para: ${email}`, { error: err.message });
+                }
 
                 // Mostrar alerta de error con Toast
                 showToast(`Error: ${err.message || 'Error desconocido'}`, 'error');

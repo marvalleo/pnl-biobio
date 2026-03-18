@@ -274,7 +274,7 @@
                         </div>
 
                         <div class="flex items-center gap-4">
-                            <button onclick="${isExternalReg ? `window.openVideoModal('${event.content_url}')` : `handleRegistration('${event.id}', ${isRegistered})`}" 
+                            <button onclick="${isExternalReg ? `window.openVideoModal('${event.content_url}')` : `handleRegistration('${event.id}', ${isRegistered}, this)`}" 
                                     class="${isRegistered && !isExternalReg ? 'bg-gray-100 text-gray-400' : isOnline ? 'bg-[#fba931] text-[#0f172a]' : 'bg-[#0f172a] text-white'} px-8 py-3 rounded-xl font-900 text-[10px] uppercase tracking-widest hover:brightness-110 transition-all shadow-lg active:scale-95">
                                 ${isExternalReg ? 'Formulario de Inscripción' : isRegistered ? 'Cancelar Inscripción' : 'Inscribirse Ahora'}
                             </button>
@@ -286,34 +286,70 @@
             }).join('');
         }
 
-        async function handleRegistration(lessonId, isRegistered) {
+        async function handleRegistration(lessonId, isRegistered, btnElement) {
+            if (btnElement) window.setButtonLoading(btnElement, true);
+
             try {
                 if (isRegistered) {
-                    if (!confirm('¿Deseas cancelar tu inscripción a este evento?')) return;
+                    if (!confirm('¿Deseas cancelar tu inscripción a este evento?')) {
+                        if (btnElement) window.setButtonLoading(btnElement, false);
+                        return;
+                    }
                     const { error } = await supabaseClient.from('regional_event_registrations').delete().eq('profile_id', profileId).eq('event_id', lessonId);
                     if (error) throw error;
                     registrations.delete(lessonId);
                     showToast('Inscripción cancelada', 'info');
+                    window.logSystemEvent('registration', 'info', `Cancelación de inscripción al evento ID: ${lessonId}`);
                 } else {
-                    const { data: currentLesson } = await supabaseClient.from('regional_events').select('max_capacity').eq('id', lessonId).single();
-                    const { count } = await supabaseClient.from('regional_event_registrations').select('*', { count: 'exact', head: true }).eq('event_id', lessonId);
+                    // Validar si tenemos profileId
+                    if (!profileId) {
+                        throw new Error("No se detectó el perfil del usuario. Por favor, recarga la página.");
+                    }
+
+                    const { data: currentLesson, error: lessonError } = await supabaseClient.from('regional_events').select('title, max_capacity').eq('id', lessonId).maybeSingle();
+                    if (lessonError) throw lessonError;
+                    if (!currentLesson) throw new Error("El evento no fue encontrado.");
+
+                    const { count, error: countError } = await supabaseClient.from('regional_event_registrations').select('*', { count: 'exact', head: true }).eq('event_id', lessonId);
+                    if (countError) throw countError;
 
                     if (currentLesson.max_capacity > 0 && count >= currentLesson.max_capacity) {
                         showToast('Lo sentimos, este evento ya no tiene cupos disponibles.', 'warning');
+                        if (btnElement) window.setButtonLoading(btnElement, false);
                         return;
                     }
 
                     const { error } = await supabaseClient.from('regional_event_registrations').insert({ profile_id: profileId, event_id: lessonId });
-                    if (error) throw error;
+                    
+                    if (error) {
+                        // Manejo específico de duplicados (Ya inscrito)
+                        if (error.code === '23505') {
+                            showToast('Ya te encuentras inscrito en este evento.', 'info');
+                            registrations.add(lessonId);
+                            renderEvents();
+                            return;
+                        }
+                        throw error;
+                    };
+
                     registrations.add(lessonId);
                     showToast('¡Inscripción exitosa! Te esperamos.', 'success');
+                    window.logSystemEvent('registration', 'info', `Inscripción exitosa al evento: ${currentLesson.title}`);
                 }
                 await loadEvents();
                 renderEvents();
                 renderCalendar();
             } catch (err) {
                 console.error(err);
-                showToast('Error al procesar la solicitud.', 'error');
+                const errorMsg = err.message || 'Error desconocido';
+                showToast(`Error: ${errorMsg}`, 'error');
+                
+                // Registrar el error en el sistema de logs
+                if (window.logError) {
+                    window.logError(`Fallo en inscripción (Mobile): ${errorMsg}`, { event_id: lessonId, is_registered_attempt: isRegistered }, err);
+                }
+            } finally {
+                if (btnElement) window.setButtonLoading(btnElement, false);
             }
         }
 
