@@ -123,37 +123,56 @@
             // UI Loading
             const originalText = btn.innerHTML;
             btn.disabled = true;
-            btn.innerHTML = '<span class="animate-spin h-5 w-5 border-2 border-[#0f172a] border-t-transparent rounded-full mr-2"></span> Buscando en Padrón...';
+            btn.innerHTML = '<span class="animate-spin h-5 w-5 border-2 border-[#0f172a] border-t-transparent rounded-full mr-2"></span> Procesando...';
             feedbackBox.classList.add('hidden');
 
             try {
-                // Generar URL de redirección (funciona en localhost y deploy)
-                // Apunta a la página donde el usuario definirá su password
+                // Generar URL de redirección
                 const redirectUrl = window.location.origin + '/forja-reset-password.html';
-
-                console.log("Solicitando reset a:", redirectUrl);
 
                 const { data, error } = await supabaseClient.auth.resetPasswordForEmail(email, {
                     redirectTo: redirectUrl
                 });
 
                 if (error) {
-                    // Supabase limita los intentos frecuentes (rate limit)
-                    if (error.message.includes("Rate limit")) {
-                        throw new Error("Demasiados intentos. Espera unos minutos.");
+                    // Detectar Rate Limit de forma más robusta
+                    const isRateLimit = error.message.toLowerCase().includes("rate limit") || error.status === 429;
+                    
+                    if (isRateLimit) {
+                        const rateLimitMsg = "Límite de seguridad alcanzado. Supabase bloquea el envío excesivo de correos para evitar Spam. Por favor, <strong>espera 15 minutos</strong> antes de intentar nuevamente.";
+                        showFeedback(`⚠️ ${rateLimitMsg}`, 'error');
+                        
+                        // Registrar en logs para el administrador
+                        if (window.logError) {
+                            window.logError(`Rate Limit alcanzado en Activación: ${email}`, { status: error.status, original_error: error.message });
+                        }
+                        return;
                     }
                     throw error;
                 }
 
                 // ÉXITO
-                showFeedback(`✅ ¡Encontrado! Hemos enviado el enlace a <strong>${email}</strong>.<br>Revisa tu bandeja de entrada (y Spam) para continuar.`, 'success');
+                showFeedback(`✅ ¡Casi listo! Hemos enviado el enlace a <strong>${email}</strong>.<br><br>Si el correo no llega en 2 minutos, revisa tu carpeta de <strong>SPAM o Correo No Deseado</strong>.`, 'success');
+                
+                if (window.logSystemEvent) {
+                    window.logSystemEvent('registration', 'info', `Solicitud de enlace de activación para: ${email}`);
+                }
+
                 document.getElementById('email-input').value = ''; // Limpiar
 
             } catch (err) {
                 console.error("Activation Error:", err);
-                showFeedback(`❌ Error: ${err.message}`, 'error');
+                const readableError = err.message.includes("Email not found") 
+                    ? "Este correo no se encuentra en el Padrón oficial. Por favor, verifica que sea el mismo con el que te inscribiste."
+                    : err.message;
+                
+                showFeedback(`❌ Error: ${readableError}`, 'error');
                 document.getElementById('activation-container').classList.add('error-shake');
                 setTimeout(() => document.getElementById('activation-container').classList.remove('error-shake'), 500);
+
+                if (window.logError) {
+                    window.logError(`Fallo en Activación de cuenta: ${email}`, { error: err.message });
+                }
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = originalText;
