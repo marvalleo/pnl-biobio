@@ -38,7 +38,7 @@ export function showPushPermissionBanner(onAccept, isDenied = false) {
         const icon = isDenied ? '🔕' : '🔔';
         const title = isDenied ? 'Notificaciones Bloqueadas' : 'Activar Notificaciones';
         const message = isDenied
-            ? 'Habilitaste el bloqueo antes. Para recibir avisos, ve a <b>Configuración del navegador → Notificaciones → pnl-biobio.netlify.app</b> y cambia a "Permitir".'
+            ? 'Habilitaste el bloqueo antes. Para recibir avisos, ve a <b>Configuración del navegador → Notificaciones → nacionallibertariobiobio.cl</b> y cambia a "Permitir".'
             : 'Recibe avisos al instante sobre nuevas votaciones, clases y debates en el foro.';
         const acceptLabel = isDenied ? 'Entendido' : 'Activar';
         const dismissLabel = isDenied ? 'Cerrar' : 'Ahora no';

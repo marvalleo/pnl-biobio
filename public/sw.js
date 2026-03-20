@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pnl-biobio-v2';
+const CACHE_NAME = 'pnl-biobio-v3';
 const ASSETS = [
     '/',
     '/index.html',

@@ -19,7 +19,7 @@ export async function initNavbar() {
             warning.id = 'pnl-config-warning';
             warning.className = "fixed top-0 left-0 w-full bg-red-600 text-white text-[10px] font-black uppercase py-2 px-4 shadow-xl z-[9000] text-center flex justify-center items-center gap-4";
             warning.innerHTML = `
-                <span>⚠️ Error de Configuración: Supabase no detectado en Local</span>
+                <span>⚠️ Error de Configuración: Conexión con Supabase no inicializada</span>
                 <button onclick="localStorage.setItem('SUPABASE_URL', prompt('URL Supabase:')); localStorage.setItem('SUPABASE_ANON_KEY', prompt('Anon Key:')); location.reload();" 
                         class="bg-white text-red-600 px-3 py-1 rounded-full hover:bg-gray-100 transition-colors">
                     Configurar Ahora

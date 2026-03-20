@@ -156,6 +156,57 @@
                 <h2 class="text-xl font-900 uppercase mb-2">Servidor / Logs</h2>
                 <p class="text-sm text-gray-500 font-medium">Revisar actividad, errores y auditoría técnica.</p>
             </a>
+
+            <!-- Módulo Estado del Servidor (NUEVO) -->
+            <div id="mod-server-health"
+                class="bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-100 transition-all flex flex-col justify-between">
+                <div>
+                    <div class="flex justify-between items-start mb-6">
+                        <div
+                            class="w-14 h-14 bg-emerald-50 rounded-2xl flex items-center justify-center text-emerald-600">
+                            <span class="material-symbols-outlined text-3xl">terminal</span>
+                        </div>
+                        <div id="health-badge"
+                            class="px-3 py-1 bg-emerald-100 text-emerald-700 text-[9px] font-black uppercase rounded-full tracking-widest">
+                            SISTEMA OPTIMIZADO
+                        </div>
+                    </div>
+                    <h2 class="text-xl font-900 uppercase mb-2">Uso de Recursos</h2>
+                    <p class="text-sm text-gray-500 font-medium mb-6">Límites del Tier Gratuito (Supabase).</p>
+
+                    <!-- Barra de Datos -->
+                    <div class="space-y-4">
+                        <div>
+                            <div class="flex justify-between text-[10px] font-black uppercase mb-1.5">
+                                <span class="text-gray-400">Base de Datos (500MB)</span>
+                                <span id="db-usage-text" class="text-emerald-600">...</span>
+                            </div>
+                            <div class="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+                                <div id="db-usage-bar" class="h-full bg-emerald-500 transition-all duration-1000"
+                                    style="width: 0%"></div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between text-[10px] font-black uppercase mb-1.5">
+                                <span class="text-gray-400">Militantes (50K AIU)</span>
+                                <span id="militants-usage-text" class="text-blue-600">...</span>
+                            </div>
+                            <div class="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+                                <div id="militants-usage-bar" class="h-full bg-blue-500 transition-all duration-1000"
+                                    style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-8 pt-4 border-t border-dashed border-gray-100">
+                    <a href="https://app.supabase.com" target="_blank"
+                        class="text-[10px] font-black uppercase text-gray-400 hover:text-[#fba931] transition-colors flex items-center justify-center gap-2">
+                        Ver Consola Detallada <span class="material-symbols-outlined text-sm">open_in_new</span>
+                    </a>
+                </div>
+            </div>
         </div>
 
         <!-- SECCIÓN DE NOTIFICACIONES PUSH (NUEVO) -->
@@ -260,7 +311,50 @@
 
             initNavbar();
             loadDashboardStats();
+            loadServerHealth();
         });
+
+        async function loadServerHealth() {
+            try {
+                if (typeof supabaseClient === 'undefined' || !supabaseClient) return;
+
+                const { data, error } = await supabaseClient.rpc('get_server_health');
+
+                if (error) {
+                    console.warn("⚠️ Función RPC get_server_health pendiente de instalar en Supabase Dashboard.");
+                    document.getElementById('db-usage-text').innerText = 'PENDIENTE';
+                    return;
+                }
+
+                if (data) {
+                    const dbSize = data.database.usage_percent;
+                    const milUsage = (data.resources.militantes_count / data.resources.militantes_limit) * 100;
+
+                    // Actualizar UI
+                    document.getElementById('db-usage-text').innerText = `${data.database.public_size_human} (${dbSize}%)`;
+                    document.getElementById('db-usage-bar').style.width = `${Math.min(dbSize, 100)}%`;
+
+                    document.getElementById('militants-usage-text').innerText = `${data.resources.militantes_count} / ${data.resources.militantes_limit}`;
+                    document.getElementById('militants-usage-bar').style.width = `${Math.min(milUsage, 100)}%`;
+
+                    const badge = document.getElementById('health-badge');
+
+                    if (data.status === 'critical') {
+                        badge.innerText = '⚠️ CRÍTICO: LÍMITES CERCA';
+                        badge.className = 'px-3 py-1 bg-red-100 text-red-700 text-[9px] font-black uppercase rounded-full tracking-widest animate-pulse';
+                        document.getElementById('db-usage-bar').className = 'h-full bg-red-500 transition-all duration-1000';
+                        if (window.showToast) showToast('Advertencia: El almacenamiento de la base de datos ha superado el 90%.', 'error');
+                    } else if (data.status === 'warning') {
+                        badge.innerText = '🟡 PRECAUCIÓN: USO ALTO';
+                        badge.className = 'px-3 py-1 bg-yellow-100 text-yellow-700 text-[9px] font-black uppercase rounded-full tracking-widest';
+                        document.getElementById('db-usage-bar').className = 'h-full bg-yellow-400 transition-all duration-1000';
+                        if (window.showToast) showToast('Nota: El almacenamiento ha superado el 75%.', 'warning');
+                    }
+                }
+            } catch (err) {
+                console.error("Error cargando salud del servidor:", err);
+            }
+        }
 
         async function loadDashboardStats() {
             try {

@@ -26,7 +26,7 @@ serve(async (req: Request) => {
 
     // Enviar invitación oficial de Supabase con redirección explícita a producción
     const { data, error } = await supabaseClient.auth.admin.inviteUserByEmail(email, {
-      redirectTo: 'https://pnl-biobio.netlify.app/forja-login.html'
+      redirectTo: 'https://nacionallibertariobiobio.cl/forja-login.html'
     })
 
     if (error) throw error

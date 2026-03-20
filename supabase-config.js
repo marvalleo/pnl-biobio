@@ -6,13 +6,16 @@ const FALLBACK_KEY = import.meta.env.SUPABASE_ANON_KEY || import.meta.env.VITE_S
 const ALLOWED_ORIGINS = [
     'localhost',
     '127.0.0.1',
-    'pnl-biobio.netlify.app'
+    'pnl-biobio.netlify.app',
+    'nacionallibertariobiobio.cl'
 ];
 
 function isOriginAllowed() {
     const hostname = window.location.hostname;
     // Permite Netlify deploys previews si contienen pnl-biobio
     if (hostname.includes('pnl-biobio') && hostname.includes('netlify.app')) return true;
+    // Permite el dominio oficial y sus subdominios
+    if (hostname.includes('nacionallibertariobiobio.cl')) return true;
     return ALLOWED_ORIGINS.includes(hostname);
 }
 

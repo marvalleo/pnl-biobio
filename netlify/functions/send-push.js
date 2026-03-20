@@ -112,9 +112,9 @@ exports.handler = async (event) => {
         const notificationPayload = JSON.stringify({
             title,
             body,
-            icon: icon || 'https://pnl-biobio.netlify.app/assets/images/logos/pnl-del-biobio01.png',
-            badge: 'https://pnl-biobio.netlify.app/assets/images/logos/favicon-100x100.jpg',
-            url: url || 'https://pnl-biobio.netlify.app/',
+            icon: icon || 'https://nacionallibertariobiobio.cl/assets/images/logos/pnl-del-biobio01.png',
+            badge: 'https://nacionallibertariobiobio.cl/assets/images/logos/favicon-100x100.jpg',
+            url: url || 'https://nacionallibertariobiobio.cl/',
             tag: tag || 'pnl-general'
         });
 
