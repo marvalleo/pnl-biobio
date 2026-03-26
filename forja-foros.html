@@ -266,35 +266,34 @@
         }
 
         async function loadHonorWall() {
-            // Obtener todos los perfiles que han publicado algo para calcular sus rangos
-            const { data: activeProfiles } = await supabaseClient.from('profiles').select('id, full_name, role').limit(50);
-            const profileIds = activeProfiles.map(p => p.id);
-            const ranks = await fetchProfilesRanks(profileIds);
+            // Ranking optimizado directo de BD
+            const { data: topUsers } = await supabaseClient
+                .from('profiles')
+                .select('id, full_name, role, rank, reputation_score')
+                .in('rank', ['Oro', 'Plata'])
+                .order('reputation_score', { ascending: false })
+                .limit(5);
 
             const honorContainer = document.getElementById('honor-wall');
 
-            // Filtrar solo a los que tienen rango Oro o Plata para el muro
-            const topUsers = activeProfiles
-                .map(p => ({ ...p, rank: ranks[p.id] }))
-                .filter(u => ['Oro', 'Plata'].includes(u.rank))
-                .sort((a, b) => (a.rank === 'Oro' ? -1 : 1))
-                .slice(0, 5);
-
-            if (topUsers.length === 0) {
+            if (!topUsers || topUsers.length === 0) {
                 honorContainer.innerHTML = '<p class="text-[8px] font-bold text-gray-300 uppercase italic">Formándonos para el muro...</p>';
                 return;
             }
 
             honorContainer.innerHTML = topUsers.map(u => `
                 <div class="flex items-center gap-3 p-3 rounded-2xl hover:bg-slate-50 transition-all border border-transparent hover:border-slate-100">
-                    <div class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-black text-slate-800 border-2 border-white shadow-sm">
-                        ${u.full_name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}
+                    <div class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-black text-slate-800 border-2 border-white shadow-sm shrink-0">
+                        ${u.full_name?.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}
                     </div>
-                    <div class="flex flex-col">
-                        <span class="text-[10px] font-black text-[#0f172a] leading-none mb-1">${u.full_name}</span>
+                    <div class="flex flex-col flex-1">
+                        <div class="flex justify-between items-center w-full">
+                            <span class="text-[10px] font-black text-[#0f172a] leading-none mb-1">${u.full_name}</span>
+                            <span class="text-[8px] text-gray-400 font-bold ml-2">${u.reputation_score || 0} rep</span>
+                        </div>
                         <span class="text-[8px] font-bold text-amber-600 uppercase tracking-widest">${u.rank}</span>
                     </div>
-                    <span class="material-symbols-outlined ml-auto text-amber-400 text-lg">verified</span>
+                    <span class="material-symbols-outlined ml-auto text-amber-400 text-lg shrink-0">verified</span>
                 </div>
             `).join('');
         }
@@ -319,7 +318,7 @@
         async function loadTopics() {
             let query = supabaseClient.from('forum_topics').select(`
                 id, title, content, created_at, last_activity, category_id,
-                profiles:profile_id (id, full_name, role),
+                profiles:profile_id (id, full_name, role, rank, reputation_score),
                 forum_votes (vote_type)
             `).order('last_activity', { ascending: false });
 
@@ -333,10 +332,6 @@
             }
 
             console.log("🔍 Datos de debates recibidos:", data);
-
-            // Optimizador de Rangos: Obtener progreso de todos los autores de forma segura
-            const profileIds = [...new Set(data.map(t => t.profiles?.id).filter(id => !!id))];
-            const ranks = await fetchProfilesRanks(profileIds);
 
             const feed = document.getElementById('topics-feed');
             if (!data || data.length === 0) {
@@ -359,7 +354,7 @@
                 const voteCount = (t.forum_votes || []).reduce((acc, v) => acc + v.vote_type, 0);
                 const initials = t.profiles?.full_name?.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() || '??';
                 const isDirectiva = ['super_admin', 'admin_forja'].includes(t.profiles?.role);
-                const userRank = (t.profiles?.id && ranks[t.profiles.id]) ? ranks[t.profiles.id] : 'Iniciado';
+                const userRank = t.profiles?.rank || 'Iniciado';
 
                 const rankStyles = {
                     'Oro': 'bg-amber-100 text-amber-600 border border-amber-200',
@@ -411,52 +406,7 @@
             }).join('');
         }
 
-        async function fetchProfilesRanks(ids) {
-            if (!ids || ids.length === 0) return {};
 
-            // 1. Obtener lecciones totales por curso
-            const { data: coursesData } = await supabaseClient.from('courses').select('id, lessons(id)').eq('status', 'published');
-            const courseLessonsCount = {};
-            coursesData?.forEach(c => courseLessonsCount[c.id] = c.lessons.length);
-
-            // 2. Obtener progreso de todos los usuarios
-            const { data: progress } = await supabaseClient
-                .from('user_progress')
-                .select('profile_id, lesson_id, lessons(course_id)')
-                .in('profile_id', ids);
-
-            const userStats = {};
-            ids.forEach(id => userStats[id] = new Set());
-
-            progress?.forEach(p => {
-                const courseId = p.lessons?.course_id;
-                if (courseId) {
-                    if (!userStats[p.profile_id]) userStats[p.profile_id] = {};
-                    if (!userStats[p.profile_id][courseId]) userStats[p.profile_id][courseId] = new Set();
-                    userStats[p.profile_id][courseId].add(p.lesson_id);
-                }
-            });
-
-            const userRanks = {};
-            ids.forEach(id => {
-                let completedCourses = 0;
-                const stats = userStats[id];
-                if (stats && typeof stats === 'object') {
-                    Object.keys(stats).forEach(cId => {
-                        if (stats[cId].size >= (courseLessonsCount[cId] || 999)) {
-                            completedCourses++;
-                        }
-                    });
-                }
-
-                if (completedCourses >= 5) userRanks[id] = 'Oro';
-                else if (completedCourses >= 3) userRanks[id] = 'Plata';
-                else if (completedCourses >= 1) userRanks[id] = 'Bronce';
-                else userRanks[id] = 'Iniciado';
-            });
-
-            return userRanks;
-        }
 
         async function vote(topicId, type) {
             try {
