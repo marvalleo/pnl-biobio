@@ -20,18 +20,32 @@ export function showImpactModal(config) {
 
     // Renderizado de bloque de imagen con log de depuración y fallback
     const imageBlock = image_url ? `
-        <div class="h-64 sm:h-80 w-full relative overflow-hidden bg-slate-100 flex items-center justify-center">
+        <div class="relative w-full overflow-hidden bg-slate-50 flex items-center justify-center group" id="impact-modal-img-container">
             <img src="${image_url}" 
                  id="impact-modal-img"
-                 class="w-full h-full object-cover transition-opacity duration-700 opacity-0" 
-                 onload="this.classList.remove('opacity-0'); console.log('PNL Image: Imagen cargada con éxito')"
+                 class="w-full h-auto max-h-[60vh] object-contain transition-all duration-700 opacity-0 cursor-zoom-in group-hover:scale-[1.01]" 
+                 onclick="openImageZoom('${image_url}')"
+                 onload="this.classList.remove('opacity-0');"
                  onerror="handleModalImageError(this, '${image_url}')">
-            <div class="absolute inset-0 bg-gradient-to-t from-[#0f172a] via-transparent to-transparent"></div>
+            <div class="absolute inset-0 bg-gradient-to-t from-[#0f172a]/10 via-transparent to-transparent pointer-events-none"></div>
+            
+            <!-- Indicador de Zoom -->
+            <div class="absolute bottom-4 right-4 bg-black/40 backdrop-blur-xl text-white py-1.5 px-3 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0 flex items-center gap-2 border border-white/10 shadow-2xl pointer-events-none">
+                 <span class="material-symbols-outlined text-sm">zoom_in</span>
+                 <span class="text-[9px] font-black uppercase tracking-widest">Ver Completa</span>
+            </div>
+
             <!-- Spinner / Loader -->
             <div id="img-loader" class="absolute inset-0 flex items-center justify-center bg-slate-50">
                  <div class="w-8 h-8 border-4 border-[#fba931] border-t-transparent rounded-full animate-spin"></div>
             </div>
         </div>` : '<div class="h-10 bg-[#0f172a]"></div>';
+
+    // Formatear enlaces (detectar si es email para mailto:)
+    let formattedCtaUrl = cta_url;
+    if (cta_url && cta_url.includes('@') && !cta_url.includes('://') && !cta_url.startsWith('mailto:')) {
+        formattedCtaUrl = `mailto:${cta_url}`;
+    }
 
     modal.innerHTML = `
         ${imageBlock}
@@ -51,7 +65,7 @@ export function showImpactModal(config) {
             <div class="flex flex-col gap-6 items-center">
                 ${cta_url ? `
                 <div class="flex flex-col sm:flex-row gap-4 w-full justify-center">
-                    <a href="${cta_url}" target="_blank"
+                    <a href="${formattedCtaUrl}" target="_blank"
                        class="px-8 py-4 bg-[#fba931] text-[#0f172a] rounded-2xl font-900 text-[10px] uppercase tracking-widest hover:brightness-110 transition-all shadow-xl shadow-amber-500/20 active:scale-95 flex items-center justify-center gap-3 min-w-[140px]">
                         ${cta_text || 'Entrar al Enlace'} ${arrowIcon}
                     </a>
@@ -60,21 +74,21 @@ export function showImpactModal(config) {
                 ${(config.contact_email || config.contact_whatsapp) ? `
                 <div class="flex flex-wrap items-center justify-center gap-4 border-t border-gray-100 pt-6 w-full mt-2">
                     ${config.contact_email ? `
-                    <div class="flex items-center gap-3 bg-slate-50 border border-slate-100 px-4 py-2 rounded-xl text-left cursor-pointer hover:bg-slate-100 transition-colors active:scale-95" 
-                         onclick="navigator.clipboard.writeText('${config.contact_email}'); const s = this.querySelector('.email-val'); const o = '${config.contact_email}'; s.innerText='¡Copiado al portapapeles!'; setTimeout(() => s.innerText=o, 2000);"
+                    <button class="flex items-center gap-3 bg-slate-50 border border-slate-100 px-4 py-2 rounded-xl text-left hover:bg-slate-100 transition-colors active:scale-95 group" 
+                         onclick="copyToClipboard('${config.contact_email}', this)"
                          title="Clic para copiar">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" class="text-gray-400 shrink-0" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" class="text-gray-400 shrink-0 group-hover:text-[#fba931] transition-colors" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
                         <div>
                             <span class="block text-[8px] font-black uppercase text-gray-400 tracking-widest leading-none mb-1">Copiar Correo</span>
-                            <span class="email-val text-[11px] font-bold text-[#fba931]">${config.contact_email}</span>
+                            <span class="email-val text-[11px] font-bold text-[#fba931] break-all">${config.contact_email}</span>
                         </div>
-                    </div>` : ''}
+                    </button>` : ''}
 
                     ${config.contact_whatsapp ? `
                     <a href="https://wa.me/${config.contact_whatsapp.replace(/\D/g, '')}?text=${encodeURIComponent('Hola, me comunico por este anuncio: ' + title)}" target="_blank"
-                       class="flex items-center gap-2 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-100 px-6 py-3 rounded-xl transition-all">
+                       class="flex items-center gap-2 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-100 px-6 py-3 rounded-xl transition-all active:scale-95">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 1 1-7.6-10.4 8.38 8.38 0 0 1 3.9 1.1L21 4z"></path></svg>
-                        <span class="text-[10px] font-black uppercase tracking-widest">Enviar WhatsApp</span>
+                        <span class="text-[10px] font-black uppercase tracking-widest">WhatsApp</span>
                     </a>` : ''}
                 </div>` : ''}
                 
@@ -108,18 +122,132 @@ export function showImpactModal(config) {
                 img.onload = () => {
                     loader?.remove();
                     img.classList.remove('opacity-0');
-                    console.log("PNL Image: Imagen cargada (evento)");
                 };
             }
         }
     }
 }
 
+/**
+ * Función global para copiar al portapapeles con feedback y fallback
+ */
+window.copyToClipboard = async function(text, el) {
+    if (!text) return;
+
+    const label = el.querySelector('.email-val');
+    const originalText = label.innerText;
+
+    try {
+        // Intentar con la API moderna
+        if (navigator.clipboard && window.isSecureContext) {
+            await navigator.clipboard.writeText(text);
+        } else {
+            // Fallback para contextos no seguros o navegadores viejos
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            textArea.style.position = "fixed";
+            textArea.style.left = "-999999px";
+            textArea.style.top = "-999999px";
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            
+            const successful = document.execCommand('copy');
+            document.body.removeChild(textArea);
+            if (!successful) throw new Error('execCommand copy failed');
+        }
+
+        // Feedback visual
+        label.innerText = '¡Copiado!';
+        label.classList.add('text-green-500');
+        label.classList.remove('text-[#fba931]');
+        
+        setTimeout(() => {
+            label.innerText = originalText;
+            label.classList.remove('text-green-500');
+            label.classList.add('text-[#fba931]');
+        }, 2000);
+
+    } catch (err) {
+        console.error('Error al copiar:', err);
+        label.innerText = 'Error al copiar';
+        setTimeout(() => label.innerText = originalText, 2000);
+    }
+}
+
+/**
+ * Función global para ampliar la imagen en pantalla completa (Lightbox)
+ */
+window.openImageZoom = function(url) {
+    if (!url) return;
+    
+    // Evitar múltiples zooms
+    if (document.getElementById('image-zoom-overlay')) return;
+
+    const overlay = document.createElement('div');
+    overlay.id = 'image-zoom-overlay';
+    overlay.className = "fixed inset-0 bg-black/95 backdrop-blur-xl z-[300000] flex items-center justify-center p-4 cursor-zoom-out opacity-0 transition-all duration-300";
+    
+    overlay.innerHTML = `
+        <div class="relative max-w-7xl w-full h-full flex items-center justify-center scale-95 transition-transform duration-300 pointer-events-none">
+            <img src="${url}" class="max-w-full max-h-full object-contain rounded-lg shadow-[0_0_80px_rgba(0,0,0,0.8)] border border-white/10 pointer-events-auto">
+        </div>
+        
+        <!-- Botón de Cierre Ultra-Visible para el Zoom -->
+        <button class="absolute top-8 right-8 bg-black/60 hover:bg-[#fba931] text-white hover:text-[#0f172a] w-16 h-16 rounded-full flex flex-col items-center justify-center backdrop-blur-2xl border border-white/20 transition-all duration-300 shadow-2xl group active:scale-90 z-[300001]" 
+                title="Volver al anuncio (Esc)">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+            <span class="text-[9px] font-black uppercase tracking-widest opacity-80 group-hover:opacity-100 transition-opacity mt-0.5">Cerrar</span>
+        </button>
+    `;
+
+    document.body.appendChild(overlay);
+    document.body.style.overflow = 'hidden';
+
+    // Animación de entrada
+    requestAnimationFrame(() => {
+        overlay.classList.remove('opacity-0');
+        overlay.firstElementChild.classList.remove('scale-95');
+    });
+
+    const close = () => {
+        overlay.classList.add('opacity-0');
+        overlay.firstElementChild.classList.add('scale-95');
+        setTimeout(() => {
+            overlay.remove();
+            document.body.style.overflow = '';
+        }, 300);
+    };
+
+    overlay.onclick = (e) => {
+        if (e.target === overlay || e.target.closest('button')) close();
+    };
+    
+    // Soporte para tecla ESC
+    const escHandler = (e) => {
+        if (e.key === 'Escape') {
+            close();
+            window.removeEventListener('keydown', escHandler);
+        }
+    };
+    window.addEventListener('keydown', escHandler);
+};
+
+window.copyToClipboard = copyToClipboard;
+
 export function handleModalImageError(img, url) {
     console.error("PNL Image Error: No se pudo cargar la imagen", url);
     const parent = img.parentElement;
     const loader = document.getElementById('img-loader');
     loader?.remove();
+
+    if (parent) {
+        parent.classList.remove('cursor-zoom-in', 'group');
+        parent.removeAttribute('onclick');
+    }
 
     // Fallback: Mostrar gradiente estético con el logo o simplemente ocultar
     parent.innerHTML = `
