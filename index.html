@@ -244,6 +244,39 @@
             color: #fff;
         }
 
+        .btn-servel {
+            background-color: #fba931;
+            color: white !important;
+            font-family: 'Sentient-Regular', serif;
+            font-weight: 1000;
+            /* Restaurado a 700 */
+            padding: 12px 25px;
+            /* Ajuste de padding solicitado */
+            border-radius: 8px;
+            /* Restaurado a 8px */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            /* Espacio ícono-texto */
+            text-decoration: none;
+            max-width: 400px;
+            /* Tamaño más equilibrado */
+            margin: 0 auto 50px auto;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            /* Sombra estándar */
+            transition: all 0.3s ease;
+            font-size: 16px;
+        }
+
+        .btn-servel:hover {
+            background-color: #e59a2c;
+        }
+
+        .btn-servel .material-symbols-outlined {
+            font-size: 24px;
+        }
+
         /* Footer */
         #main-footer {
             background-color: #182d56;
@@ -430,14 +463,20 @@
         </div>
     </section>
 
-    <section class="section interactions-section">
+    <section class="section interactions-section" style="padding-bottom: 10px;"> <!-- Reducido padding inferior -->
         <div class="container">
-            <h2 class="section-title">Espacio del <strong>Afiliado</strong></h2>
-            <p style="max-width: 700px; margin: 0 auto;">
+            <a href="https://portalpartidos.servel.cl/login" target="_blank" class="btn-servel">
+                <span class="material-symbols-outlined">how_to_reg</span>
+                AFILIACIÓN OFICIAL SERVEL
+            </a>
+            <h2 class="section-title" style="margin-top: 20px; margin-bottom: 20px;">Espacio del
+                <strong>Afiliado</strong>
+            </h2>
+            <p style="max-width: 700px; margin: 0 auto 30px auto;"> <!-- Mayor espacio inferior -->
                 Accede a las herramientas de participación regional. Recuerda que debes estar inscrito en la base de
                 datos nacional para validar tus credenciales.
             </p>
-            <div class="interaction-btns">
+            <div class="interaction-btns" style="margin-top: 20px;">
                 <a href="forja-login.html" class="btn btn-gold">
                     <span class="material-symbols-outlined">forum</span> FOROS INTERNOS
                 </a>
@@ -448,7 +487,7 @@
                     <span class="material-symbols-outlined">school</span> FORJA LIBERTARIA
                 </a>
             </div>
-            <p class="restricted-msg">
+            <p class="restricted-msg" style="margin-top: 20px; font-style: italic; opacity: 0.8;">
                 * Solo para miembros acreditados de la sede Biobío.
             </p>
         </div>
