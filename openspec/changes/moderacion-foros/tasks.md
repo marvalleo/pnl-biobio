@@ -24,8 +24,8 @@
 
 ## Phase 4: Testing & Verification
 
-- [ ] 4.1 Ejecutar Triggers/Funciones SQL en Postgres (Supabase SQL Editor) para probar la creación de `forum_reports`.
-- [ ] 4.2 Reportar un post real como Usuario A.
-- [ ] 4.3 Resolver reporte como Administrador y verificar en UI que desaparece para Admin.
-- [ ] 4.4 Ingresar como Usuario B al foro y ver reflejado "[Mensaje eliminado por moderación]" sin alterar al resto del hilo de conversación.
-- [ ] 4.5 Dar upvote a un comentario con Usuario B y verificar si el trigger alteró `reputation_score` correctamente.
+- [x] 4.1 Ejecutar Triggers/Funciones SQL en Postgres (Supabase SQL Editor) para probar la creación de `forum_reports`.
+- [x] 4.2 Reportar un post real como Usuario A.
+- [x] 4.3 Resolver reporte como Administrador y verificar en UI que desaparece para Admin.
+- [x] 4.4 Ingresar como Usuario B al foro y ver reflejado "[Mensaje eliminado por moderación]" sin alterar al resto del hilo de conversación.
+- [x] 4.5 Dar upvote a un comentario con Usuario B y verificar si el trigger alteró `reputation_score` correctamente.

@@ -137,12 +137,21 @@ export async function initNavbar() {
                 const { data, error } = await window.supabaseClient.rpc('get_my_push_history', { max_records: 50 });
                 if (error || !data) return;
 
-                // 2. Obtener leídos de localStorage
-                let readNotifs = [];
-                try { readNotifs = JSON.parse(localStorage.getItem('pnl_read_notifs') || '[]'); } catch (e) { }
+                // 2. Obtener leídos desde la DB para el perfil actual
+                const { data: profileData } = await window.supabaseClient.from('profiles').select('id').eq('auth_id', (await window.supabaseClient.auth.getUser()).data.user.id).single();
+                if (!profileData) return;
+                const profileId = profileData.id;
 
-                // 3. Calcular no leídos
-                const unread = data.filter(n => !readNotifs.includes(n.id)).length;
+                const { data: readData, error: readError } = await window.supabaseClient
+                    .from('notification_reads')
+                    .select('notification_id')
+                    .eq('profile_id', profileId);
+                
+                if (readError) throw readError;
+                const readIds = (readData || []).map(r => r.notification_id);
+
+                // 3. Calcular no leídos comparando con el historial
+                const unread = data.filter(n => !readIds.includes(n.id)).length;
 
                 // 4. Actualizar el DOM
                 const avatarBtn = document.getElementById('user-avatar-btn');
@@ -480,9 +489,18 @@ window.showNotificationHistory = async () => {
     try {
         if (!window.supabaseClient) throw new Error("Supabase no inicializado.");
 
-        // Obtener IDs de localStorage
-        let readNotifs = [];
-        try { readNotifs = JSON.parse(localStorage.getItem('pnl_read_notifs') || '[]'); } catch (e) { }
+        // Obtener perfil actual para filtrar
+        const { data: profileData } = await window.supabaseClient.from('profiles').select('id').eq('auth_id', (await window.supabaseClient.auth.getUser()).data.user.id).single();
+        if (!profileData) throw new Error("Perfil no encontrado.");
+        const profileId = profileData.id;
+
+        // Obtener IDs de leídos desde la DB
+        const { data: readData } = await window.supabaseClient
+            .from('notification_reads')
+            .select('notification_id')
+            .eq('profile_id', profileId);
+        
+        const readIds = (readData || []).map(r => r.notification_id);
 
         // Obtener historial desde RPC seguro
         const { data, error } = await window.supabaseClient.rpc('get_my_push_history', { max_records: 50 });
@@ -505,7 +523,7 @@ window.showNotificationHistory = async () => {
         let htmlList = '<div class="divide-y divide-slate-100">';
 
         data.forEach(notif => {
-            const isRead = readNotifs.includes(notif.id);
+            const isRead = readIds.includes(notif.id);
             const dateStr = new Date(notif.created_at).toLocaleString('es-CL', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
 
             const titleColor = isRead ? 'text-slate-600' : 'text-slate-900';
@@ -542,10 +560,18 @@ window.showNotificationHistory = async () => {
                 const notif = data.find(n => n.id === id);
                 if (!notif) return;
 
-                // Marcar como leído
-                if (!readNotifs.includes(id)) {
-                    readNotifs.push(id);
-                    localStorage.setItem('pnl_read_notifs', JSON.stringify(readNotifs));
+                // Marcar como leído en la DB
+                if (!readIds.includes(id)) {
+                    // Optimistic update visual
+                    readIds.push(id);
+                    // Persistir en Supabase
+                    window.supabaseClient.from('notification_reads').insert({
+                        profile_id: profileId,
+                        notification_id: id
+                    }).then(({ error }) => {
+                        if (error) console.error("Error persistiendo lectura:", error);
+                    });
+
                     // Apagar visualmente el badge "Nueva" de inmediato
                     const badge = item.querySelector('.bg-blue-500');
                     if (badge) badge.remove();

@@ -201,9 +201,9 @@
 
                 if (votesRes.error) throw votesRes.error;
 
-                const votes = votesRes.data;
+                const votes = votesRes.data || [];
                 const votedMap = new Map();
-                ballotsRes.data.forEach(b => votedMap.set(b.vote_id, b));
+                (ballotsRes.data || []).forEach(b => votedMap.set(b.vote_id, b));
 
                 if (votes.length === 0) {
                     grid.innerHTML = '<div class="col-span-full py-20 text-center border-2 border-dashed rounded-[3rem] text-gray-400 font-bold uppercase">No hay votaciones activas en este momento.</div>';
