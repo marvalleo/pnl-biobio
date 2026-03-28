@@ -1,5 +1,6 @@
 # Carpetas de documentación interna
 docs/
+sql/
 
 # Archivos temporales
 *.tmp

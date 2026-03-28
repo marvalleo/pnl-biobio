@@ -328,7 +328,7 @@ export async function checkAndShowAnnouncements() {
         console.log("PNL Biobío: Buscando anuncios activos...");
         const { data: announcement, error } = await window.supabaseClient
             .from('regional_announcements')
-            .select('*')
+            .select('id, title, content, image_url, cta_text, cta_url, cta_type, contact_email, contact_whatsapp, expires_at, target_audience')
             .eq('is_active', true)
             .order('created_at', { ascending: false })
             .limit(1)
