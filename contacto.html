@@ -100,7 +100,7 @@
                         </div>
                         <div>
                             <p class="text-[10px] font-black uppercase text-gray-400">Correo Oficial</p>
-                            <p class="font-bold text-sm">biobio@nacionallibertario.cl</p>
+                            <p class="font-bold text-sm">directivapnlbiobio.regional@gmail.com</p>
                         </div>
                     </div>
                     <div class="flex items-center gap-4">
@@ -118,7 +118,7 @@
                     <h3 class="serif text-xl mb-4 italic uppercase">¿Quieres ser parte?</h3>
                     <p class="text-xs text-gray-400 leading-relaxed mb-6">Únete a la resistencia cultural y política. Si
                         quieres formar un grupo de acción local en tu comuna, este es el momento.</p>
-                    <a href="forja-login.html"
+                    <a href="https://portalpartidos.servel.cl/login"
                         class="flex items-center justify-between bg-[#fba931] text-[#0f172a] px-6 py-3 rounded-xl font-black text-[10px] uppercase group transition-all">
                         Afiliarse Ahora
                         <span
@@ -130,9 +130,7 @@
             <!-- Contact Form -->
             <div class="lg:col-span-2">
                 <div class="premium-card p-10 md:p-16">
-                    <form
-                        onsubmit="event.preventDefault(); alert('Mensaje enviado correctamente a la Sede Regional.'); this.reset();"
-                        class="space-y-6">
+                    <form id="contactForm" class="space-y-6">
                         <div class="grid md:grid-cols-2 gap-6">
                             <div>
                                 <label class="text-[10px] font-black uppercase text-gray-400 ml-1">Nombre
@@ -179,6 +177,7 @@
     </script>
     <script src="/assets/components/navbar.js"></script>
     <script src="/assets/components/footer.js"></script>
+    <script src="/assets/js/contact-handler.js"></script>
 </body>
 
 </html>
