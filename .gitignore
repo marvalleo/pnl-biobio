@@ -1,6 +1,12 @@
 # Carpetas de documentación interna
 docs/
 sql/
+.vscode/
+Memory Bank/
+openspec/
+dist/
+cdnjs.cloudflare.com/
+PROYECTO_ESTADO.md
 
 # Archivos temporales
 *.tmp
