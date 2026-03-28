@@ -50,12 +50,14 @@
     <div class="max-w-md w-full bg-white rounded-3xl p-8 shadow-2xl text-center border-t-8 border-[#fba931] mx-auto">
         <a href="forja-login.html"
             class="absolute top-4 left-4 text-white opacity-50 hover:opacity-100 flex items-center gap-1 transition-opacity">
-            <span class="material-symbols-outlined">arrow_back</span> Volver
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg> Volver
         </a>
 
         <img src="/assets/images/logos/pnl-del-biobio01.png" alt="Logo PNL" class="h-20 mx-auto mb-6">
-        <h1 class="text-2xl font-900 uppercase mb-2 tracking-tighter">Activar Cuenta</h1>
-        <p class="text-gray-400 text-[10px] font-bold uppercase tracking-widest mb-8">Validación de Padrón Biobío</p>
+        <h1 id="main-title" class="text-2xl font-900 uppercase mb-2 tracking-tighter">Activar Cuenta</h1>
+        <p id="sub-title" class="text-gray-400 text-[10px] font-bold uppercase tracking-widest mb-8">Validación de Padrón Biobío</p>
 
         <div id="activation-container" class="space-y-4 text-left">
             <!-- Mensajes de Feedback -->
@@ -85,7 +87,9 @@
 
             <button onclick="handleActivation()"
                 class="w-full bg-[#fba931] text-[#0f172a] py-4 rounded-xl font-900 uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-all shadow-lg flex items-center justify-center gap-2">
-                <span class="material-symbols-outlined">send</span> Solicitar Link de Acceso
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                </svg> <span id="btn-text">Solicitar Link de Acceso</span>
             </button>
         </div>
 
@@ -100,6 +104,17 @@
     <script type="module" src="supabase-config.js"></script>
 
     <script>
+        // Configuración de MODO (Activar vs Recuperar)
+        document.addEventListener('DOMContentLoaded', () => {
+            const params = new URLSearchParams(window.location.search);
+            const mode = params.get('mode');
+            if (mode === 'recover') {
+                document.getElementById('main-title').textContent = 'Recuperar Clave';
+                document.getElementById('sub-title').textContent = 'Seguridad de tu Cuenta';
+                document.getElementById('btn-text').textContent = 'Enviar Enlace de Recuperación';
+            }
+        });
+
         async function handleActivation() {
             if (!window.isSupabaseInit) {
                 showFeedback('Conectando con la base de datos... Por favor, intenta de nuevo en un momento.', 'info');
@@ -140,8 +155,10 @@
                     return;
                 }
 
-                // 2. Generar URL de redirección
-                const redirectUrl = window.location.origin + '/forja-reset-password.html';
+                // 2. Generar URL de redirección Inteligente: Local vs Producción
+                const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+                const baseUrl = isLocal ? window.location.origin : 'https://nacionallibertariobiobio.cl';
+                const redirectUrl = baseUrl + '/forja-reset-password.html';
 
                 const { data, error } = await supabaseClient.auth.resetPasswordForEmail(email, {
                     redirectTo: redirectUrl
@@ -164,14 +181,57 @@
                     throw error;
                 }
 
-                // ÉXITO
-                showFeedback(`✅ ¡Casi listo! Hemos enviado el enlace a <strong>${email}</strong>.<br><br>Si el correo no llega en 2 minutos, revisa tu carpeta de <strong>SPAM o Correo No Deseado</strong>.`, 'success');
-                
+                // 3. ÉXITO: Cambiar de vista completa para el usuario
                 if (window.logSystemEvent) {
                     window.logSystemEvent('registration', 'info', `Solicitud de enlace de activación para: ${email}`);
                 }
 
-                document.getElementById('email-input').value = ''; // Limpiar
+                const container = document.getElementById('activation-container');
+                container.innerHTML = `
+                    <div class="text-center p-8 animate-fade-in">
+                        <div class="w-24 h-24 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg border-4 border-white">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                            </svg>
+                        </div>
+                        <h2 class="text-2xl font-black text-[#0f172a] mb-2 uppercase tracking-tight">¡Correo Enviado!</h2>
+                        <p class="text-slate-600 mb-6 text-sm">Se ha enviado un correo electrónico a <b>${email}</b>.</p>
+                        
+                        <div class="bg-slate-50 border border-slate-200 rounded-2xl p-6 mb-8 text-left shadow-inner">
+                            <h3 class="font-black text-[10px] uppercase text-slate-400 tracking-widest mb-4 flex items-center gap-2">
+                                Qué hacer ahora:
+                            </h3>
+                            <ul class="text-slate-700 space-y-4">
+                                <li class="flex gap-4">
+                                    <span class="bg-[#0f172a] text-white rounded-full w-7 h-7 flex items-center justify-center shrink-0 font-bold text-sm shadow-sm">1</span>
+                                    <span class="text-sm">Revisa tu bandeja de entrada en los próximos minutos.</span>
+                                </li>
+                                <li class="flex gap-4">
+                                    <span class="bg-amber-500 text-[#0f172a] rounded-full w-7 h-7 flex items-center justify-center shrink-0 font-bold text-sm shadow-sm">2</span>
+                                    <span class="text-sm">Busca el mensaje del <b>"Partido Nacional Libertario"</b>. Por seguridad, el asunto puede decir <b>"Reset Password"</b>.</span>
+                                </li>
+                                <li class="flex gap-4">
+                                    <span class="bg-[#0f172a] text-white rounded-full w-7 h-7 flex items-center justify-center shrink-0 font-bold text-sm shadow-sm">3</span>
+                                    <span class="text-sm">Haz clic en el enlace para definir tu contraseña y activar tu cuenta.</span>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <div class="p-4 bg-amber-50 rounded-xl border border-amber-100 mb-8">
+                            <p class="text-amber-800 text-[11px] font-medium flex items-center justify-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                </svg>
+                                IMPORTANTE: Si no ves el mensaje, revisa en la carpeta de SPAM.
+                            </p>
+                        </div>
+
+                        <button onclick="location.reload()" 
+                                class="text-slate-400 hover:text-amber-500 font-black text-[10px] uppercase tracking-widest transition-colors flex items-center justify-center gap-2 mx-auto">
+                            Volver a intentar
+                        </button>
+                    </div>
+                `;
 
             } catch (err) {
                 console.error("Activation Error:", err);
