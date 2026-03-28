@@ -60,19 +60,33 @@
             </div>
             <div>
                 <label class="text-[10px] font-black uppercase text-gray-400 ml-1">Contraseña</label>
-                <input type="password" id="pass-input" placeholder="••••••••"
-                    class="w-full bg-gray-50 border border-gray-100 p-4 rounded-xl focus:ring-2 focus:ring-[#fba931] outline-none transition-all">
+                <div class="relative group">
+                    <input type="password" id="pass-input" placeholder="••••••••"
+                        class="w-full bg-gray-50 border border-gray-100 p-4 rounded-xl focus:ring-2 focus:ring-[#fba931] outline-none transition-all pr-12">
+                    <button type="button" onclick="togglePasswordVisibility()" 
+                        class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#fba931] transition-colors p-1 flex items-center justify-center">
+                        <svg id="eye-icon-svg" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path id="eye-path" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path id="eye-body" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                    </button>
+                </div>
             </div>
+            
             <button onclick="handleLogin()"
                 class="w-full bg-[#fba931] text-[#0f172a] py-4 rounded-xl font-900 uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-all shadow-lg">
                 Ingresar a la Forja
             </button>
 
-            <!-- Link de Activación / Recuperación -->
-            <div class="text-center py-2">
-                <a href="forja-activar.html"
-                    class="text-[10px] font-black uppercase text-[#fba931] hover:underline tracking-wider">
-                    ¿Primera vez? Activa tu cuenta o Recupera tu clave
+            <!-- Links de Ayuda Claros -->
+            <div class="flex flex-col gap-3 pt-4 text-center">
+                <a href="forja-activar.html?mode=activate"
+                    class="bg-amber-50 text-amber-600 py-4 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-amber-100 transition-all border border-amber-200/50 shadow-sm">
+                    ¿Primera vez? Activa tu cuenta
+                </a>
+                <a href="forja-activar.html?mode=recover"
+                    class="text-slate-400 hover:text-amber-500 text-[10px] font-black uppercase tracking-widest transition-colors py-2">
+                    Olvidé mi contraseña
                 </a>
             </div>
 
@@ -302,5 +316,25 @@
         document.getElementById('confirm-password').addEventListener('keypress', function (e) {
             if (e.key === 'Enter') handlePasswordChange();
         });
+
+        // Visibilidad de contraseña
+        function togglePasswordVisibility() {
+            const input = document.getElementById('pass-input');
+            const eyePath = document.getElementById('eye-path');
+            const eyeBody = document.getElementById('eye-body');
+            
+            if (input.type === 'password') {
+                input.type = 'text';
+                // Cambiar a icono de "ojo tachado" (visibility_off)
+                eyePath.setAttribute('d', 'M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878l-3.42-3.42M21 21l-3.42-3.42m-1.58-1.58L12 12m-2.58-2.58l-3.42-3.42m14.542 1.942A11.026 11.026 0 0012 5c-4.478 0-8.268 2.943-9.543 7a4.902 4.902 0 001.373 2.128');
+                eyeBody.setAttribute('style', 'display:none');
+            } else {
+                input.type = 'password';
+                // Volver a icono de "ojo abierto" (visibility)
+                eyePath.setAttribute('d', 'M15 12a3 3 0 11-6 0 3 3 0 016 0z');
+                eyeBody.setAttribute('style', 'display:block');
+                eyeBody.setAttribute('d', 'M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z');
+            }
+        }
     </script>
 </body>
