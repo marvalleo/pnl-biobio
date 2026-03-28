@@ -10,10 +10,10 @@ export function showImpactModal(config) {
 
     const overlay = document.createElement('div');
     overlay.id = 'impact-modal-overlay';
-    overlay.className = "fixed inset-0 bg-black/80 backdrop-blur-md z-[5000] flex items-center justify-center p-4 opacity-0 transition-opacity duration-500 text-left";
+    overlay.className = "fixed inset-0 bg-black/80 backdrop-blur-md z-[5000] flex items-start sm:items-center justify-center p-4 opacity-0 transition-opacity duration-500 text-left overflow-y-auto custom-scrollbar";
 
     const modal = document.createElement('div');
-    modal.className = "bg-white w-full max-w-2xl rounded-2xl overflow-hidden shadow-2xl relative translate-y-20 transition-transform duration-500 border border-white/20";
+    modal.className = "bg-white w-full max-w-2xl rounded-2xl overflow-hidden shadow-2xl relative translate-y-20 transition-transform duration-500 border border-white/20 my-auto";
 
     const closeIcon = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`;
     const arrowIcon = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>`;
@@ -50,12 +50,6 @@ export function showImpactModal(config) {
     modal.innerHTML = `
         ${imageBlock}
         
-        <button onclick="closeImpactModal('${id}', false)" 
-                title="Cerrar por ahora"
-                class="absolute top-6 right-6 w-10 h-10 bg-black/20 hover:bg-black/40 text-white rounded-full flex items-center justify-center backdrop-blur-md transition-all z-10">
-            ${closeIcon}
-        </button>
-
         <div class="p-8 sm:p-10 text-center">
             <h2 class="serif text-3xl sm:text-4xl text-[#0f172a] mb-6 leading-tight">${title}</h2>
             <div class="text-xs sm:text-sm text-gray-500 mb-8 leading-relaxed font-medium max-h-48 overflow-y-auto custom-scrollbar">
@@ -101,6 +95,18 @@ export function showImpactModal(config) {
     `;
 
     overlay.appendChild(modal);
+
+    // Botón de Cierre Flotante (Siempre Visible en Mobile)
+    const floatingCloseBtn = document.createElement('button');
+    floatingCloseBtn.innerHTML = closeIcon;
+    floatingCloseBtn.title = "Cerrar Anuncio";
+    floatingCloseBtn.className = "fixed top-6 right-6 w-14 h-14 bg-black/60 text-white rounded-full flex items-center justify-center backdrop-blur-2xl border border-white/20 shadow-2xl z-[6000] transition-all active:scale-90 hover:bg-[#fba931] hover:text-[#0f172a]";
+    floatingCloseBtn.onclick = (e) => {
+        e.stopPropagation();
+        closeImpactModal(id, false);
+    };
+    overlay.appendChild(floatingCloseBtn);
+
     document.body.appendChild(overlay);
 
     // Animación de entrada
@@ -109,6 +115,20 @@ export function showImpactModal(config) {
         modal.classList.remove('translate-y-20');
         modal.classList.add('translate-y-0');
     }, 100);
+
+    // Cerrar al tocar el fondo (overlay)
+    overlay.onclick = (e) => {
+        if (e.target === overlay) closeImpactModal(id, false);
+    };
+
+    // Soporte para tecla ESC
+    const contactEscHandler = (e) => {
+        if (e.key === 'Escape') {
+            closeImpactModal(id, false);
+            window.removeEventListener('keydown', contactEscHandler);
+        }
+    };
+    window.addEventListener('keydown', contactEscHandler);
 
     // Ocultar loader si hay imagen
     if (image_url) {
