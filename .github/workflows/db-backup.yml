@@ -17,11 +17,20 @@ jobs:
       - name: Install PostgreSQL Client
         run: |
           sudo apt-get update
-          sudo apt-get install -y postgresql-client
+          sudo apt-get install -y postgresql-client netcat-openbsd
+
+      - name: Network Diagnostic
+        env:
+          DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          # Extraer el host de la URL
+          DB_HOST=$(echo "$DB_URL" | sed -e 's|[^/]*//||' -e 's|[:/@].*||')
+          echo "🔍 Probando conexión con: $DB_HOST"
+          # Probar puerto 5432 o el que venga en la URL
+          nc -zv -w 5 $DB_HOST 5432 || nc -zv -w 5 $DB_HOST 6543 || echo "❌ No se puede llegar al host en los puertos estándar."
 
       - name: Database Dump (pg_dump)
         env:
-          # Para que esto funcione, vas a tener que cargar el Secret "SUPABASE_DB_URL" en GitHub
           DB_URL: ${{ secrets.SUPABASE_DB_URL }}
         run: |
           if [ -z "$DB_URL" ]; then
