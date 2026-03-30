@@ -2,10 +2,10 @@ name: Daily Database Backup
 
 on:
   schedule:
-    # Corre todos los días a las 03:00 AM UTC
+    # Se ejecuta todos los días a las 03:00 UTC (12:00 AM ARG aprox)
     - cron: '0 3 * * *'
   workflow_dispatch:
-    # Permite disparar el backup manualmente desde GitHub Actions
+    # Permite ejecución manual si tenés ganas de dormir tranquilo
 
 jobs:
   backup:
@@ -14,33 +14,16 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Force Install PostgreSQL Client 17
+      - name: Install PostgreSQL Client 17 (Production Method)
         run: |
-          sudo apt-get purge -y postgresql-client-common postgresql-common postgresql-client
           sudo apt-get update
           sudo apt-get install -y postgresql-common
           yes | sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh
-          sudo apt-get install -y postgresql-client-17 netcat-openbsd dnsutils
-
-      - name: Network Diagnostic
-        env:
-          DB_URL: ${{ secrets.SUPABASE_DB_URL }}
-        run: |
-          # Extraer el host de forma más robusta
-          DB_HOST=$(echo "$DB_URL" | awk -F'[@/]' '{print $4}' | cut -d':' -f1)
-          echo "🔍 Probando conexión con: $DB_HOST (Puerto 5432)"
-          
-          # Ver que IPs resuelve
-          echo "🌐 DNS Lookup (IPv4):"
-          dig +short A $DB_HOST || echo "Sin registro A (IPv4)"
-          echo "🌐 DNS Lookup (IPv6):"
-          dig +short AAAA $DB_HOST || echo "Sin registro AAAA (IPv6)"
-          
-          # Probar puertos usando la versión 17 de pg_isready
-          /usr/lib/postgresql/17/bin/pg_isready -h $DB_HOST -p 5432 || /usr/lib/postgresql/17/bin/pg_isready -h $DB_HOST -p 6543 || echo "❌ No se puede llegar al host."
+          sudo apt-get install -y postgresql-client-17
 
       - name: Database Dump (pg_dump)
         env:
+          # Para que esto funcione, recordá que ya tenés cargado el Secret "SUPABASE_DB_URL"
           DB_URL: ${{ secrets.SUPABASE_DB_URL }}
         run: |
           if [ -z "$DB_URL" ]; then
@@ -48,18 +31,18 @@ jobs:
             exit 1
           fi
           
-          # Crear carpeta para backups si no existe
+          # Crear carpeta temporal para backups
           mkdir -p backups
           
-          # Ejecutar el dump con la versión exacta 17
+          # Ejecutar el dump con compresión y la versión exacta 17
           /usr/lib/postgresql/17/bin/pg_dump "$DB_URL" --format=c --no-owner --no-privileges > backups/pnl_backup_$(date +%Y-%m-%d).dump
           
-          echo "✅ Backup generado con éxito: backups/pnl_backup_$(date +%Y-%m-%d).dump"
+          echo "✅ Backup generado con éxito: pnl_backup_$(date +%Y-%m-%d).dump"
 
       - name: Upload Backup Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: pnl_db_backup_${{ github.run_id }}
+          name: supabase-db-backup-${{ github.run_id }}
           path: backups/*.dump
-          retention-days: 30 # Guardamos los backups por 30 días
-          if-no-files-found: error
+          retention-days: 7
+          # Lo guardamos por 7 días para no llenar el disco de GitHub al cuete
