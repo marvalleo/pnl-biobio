@@ -17,17 +17,24 @@ jobs:
       - name: Install PostgreSQL Client
         run: |
           sudo apt-get update
-          sudo apt-get install -y postgresql-client netcat-openbsd
+          sudo apt-get install -y postgresql-client netcat-openbsd dnsutils
 
       - name: Network Diagnostic
         env:
           DB_URL: ${{ secrets.SUPABASE_DB_URL }}
         run: |
-          # Extraer el host de la URL
-          DB_HOST=$(echo "$DB_URL" | sed -e 's|[^/]*//||' -e 's|[:/@].*||')
+          # Extraer el host de forma más robusta
+          DB_HOST=$(echo "$DB_URL" | awk -F'[@/]' '{print $4}' | cut -d':' -f1)
           echo "🔍 Probando conexión con: $DB_HOST"
-          # Probar puerto 5432 o el que venga en la URL
-          nc -zv -w 5 $DB_HOST 5432 || nc -zv -w 5 $DB_HOST 6543 || echo "❌ No se puede llegar al host en los puertos estándar."
+          
+          # Ver que IPs resuelve
+          echo "🌐 DNS Lookup (IPv4):"
+          dig +short A $DB_HOST || echo "Sin registro A (IPv4)"
+          echo "🌐 DNS Lookup (IPv6):"
+          dig +short AAAA $DB_HOST || echo "Sin registro AAAA (IPv6)"
+          
+          # Probar puertos
+          nc -zv -w 5 $DB_HOST 5432 || nc -zv -w 5 $DB_HOST 6543 || echo "❌ No se puede llegar al host."
 
       - name: Database Dump (pg_dump)
         env:
