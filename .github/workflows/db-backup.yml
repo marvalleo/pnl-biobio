@@ -1,0 +1,47 @@
+name: Daily Database Backup
+
+on:
+  schedule:
+    # Corre todos los días a las 03:00 AM UTC
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+    # Permite disparar el backup manualmente desde GitHub Actions
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install PostgreSQL Client
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+
+      - name: Database Dump (pg_dump)
+        env:
+          # Para que esto funcione, vas a tener que cargar el Secret "SUPABASE_DB_URL" en GitHub
+          DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          if [ -z "$DB_URL" ]; then
+            echo "❌ ERROR: El Secret SUPABASE_DB_URL no está configurado en GitHub."
+            exit 1
+          fi
+          
+          # Crear carpeta para backups si no existe
+          mkdir -p backups
+          
+          # Ejecutar el dump con compresión
+          # Se usa el Connection String completo de Supabase (Database settings > Connection string > URI)
+          pg_dump "$DB_URL" --format=c --no-owner --no-privileges > backups/pnl_backup_$(date +%Y-%m-%d).dump
+          
+          echo "✅ Backup generado con éxito: backups/pnl_backup_$(date +%Y-%m-%d).dump"
+
+      - name: Upload Backup Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: pnl_db_backup_${{ github.run_id }}
+          path: backups/*.dump
+          retention-days: 30 # Guardamos los backups por 30 días
+          if-no-files-found: error
