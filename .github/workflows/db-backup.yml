@@ -14,13 +14,13 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install PostgreSQL Client 17 (Official Script)
+      - name: Force Install PostgreSQL Client 17
         run: |
+          sudo apt-get purge -y postgresql-client-common postgresql-common postgresql-client
           sudo apt-get update
           sudo apt-get install -y postgresql-common
-          sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
+          yes | sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh
           sudo apt-get install -y postgresql-client-17 netcat-openbsd dnsutils
-          pg_dump --version
 
       - name: Network Diagnostic
         env:
@@ -36,8 +36,8 @@ jobs:
           echo "🌐 DNS Lookup (IPv6):"
           dig +short AAAA $DB_HOST || echo "Sin registro AAAA (IPv6)"
           
-          # Probar puertos
-          pg_isready -h $DB_HOST -p 5432 || pg_isready -h $DB_HOST -p 6543 || echo "❌ No se puede llegar al host."
+          # Probar puertos usando la versión 17 de pg_isready
+          /usr/lib/postgresql/17/bin/pg_isready -h $DB_HOST -p 5432 || /usr/lib/postgresql/17/bin/pg_isready -h $DB_HOST -p 6543 || echo "❌ No se puede llegar al host."
 
       - name: Database Dump (pg_dump)
         env:
@@ -51,9 +51,8 @@ jobs:
           # Crear carpeta para backups si no existe
           mkdir -p backups
           
-          # Ejecutar el dump con compresión
-          # Se usa el Connection String completo de Supabase (Database settings > Connection string > URI)
-          pg_dump "$DB_URL" --format=c --no-owner --no-privileges > backups/pnl_backup_$(date +%Y-%m-%d).dump
+          # Ejecutar el dump con la versión exacta 17
+          /usr/lib/postgresql/17/bin/pg_dump "$DB_URL" --format=c --no-owner --no-privileges > backups/pnl_backup_$(date +%Y-%m-%d).dump
           
           echo "✅ Backup generado con éxito: backups/pnl_backup_$(date +%Y-%m-%d).dump"
 
