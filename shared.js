@@ -5,6 +5,8 @@ import { showImpactModal, handleModalImageError, closeImpactModal, checkAndShowA
 import { logSystemEvent, logError } from '/public/assets/js/modules/logger.js';
 import { PushNotificationManager } from '/public/assets/js/modules/push-manager.js';
 import { showIOSInstallPrompt } from '/public/assets/js/modules/ios-prompt.js';
+import { PNLWizard } from '/public/assets/js/modules/wizard.js';
+import DOMPurify from 'dompurify';
 
 // --- EXPOSICIÓN GLOBAL AL OBJETO WINDOW ---
 window.showToast = showToast;
@@ -19,6 +21,25 @@ window.closeImpactModal = closeImpactModal;
 window.checkAndShowAnnouncements = checkAndShowAnnouncements;
 window.logSystemEvent = logSystemEvent;
 window.logError = logError;
+
+/**
+ * 🛡️ Sanitiza HTML para prevenir XSS manteniendo estilos de Tailwind.
+ */
+export function sanitizeHTML(dirty) {
+    return DOMPurify.sanitize(dirty, {
+        ALLOWED_TAGS: ['b', 'i', 'em', 'strong', 'a', 'ul', 'ol', 'li', 'br', 'p', 'span', 'img', 'div', 'button', 'select', 'option', 'style'],
+        ALLOWED_ATTR: ['class', 'id', 'href', 'target', 'src', 'alt', 'style', 'title', 'data-*', 'onclick', 'onchange', 'required', 'placeholder', 'rows', 'type'],
+        KEEP_CONTENT: true
+    });
+}
+window.sanitizeHTML = sanitizeHTML;
+
+// Función para reiniciar el Wizard voluntariamente
+window.restartWizard = () => {
+    localStorage.removeItem('pnl_wizard_done');
+    const wizard = new PNLWizard();
+    wizard.start();
+};
 
 // Instanciar Push Manager (disponible globalmente para auth.js y el toggle)
 const pushManager = new PushNotificationManager();
@@ -132,9 +153,17 @@ if (document.readyState === 'loading') {
         initNavbar();
         checkAndShowAnnouncements();
         setupPushNotifications();
+        
+        // Inicializar el Wizard
+        const wizard = new PNLWizard();
+        wizard.start();
     });
 } else {
     initNavbar();
     checkAndShowAnnouncements();
     setupPushNotifications();
+    
+    // Inicializar el Wizard
+    const wizard = new PNLWizard();
+    wizard.start();
 }

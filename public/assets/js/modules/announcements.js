@@ -47,7 +47,8 @@ export function showImpactModal(config) {
         formattedCtaUrl = `mailto:${cta_url}`;
     }
 
-    modal.innerHTML = `
+    const sanitize = (html) => (window.sanitizeHTML ? window.sanitizeHTML(html) : html);
+    modal.innerHTML = sanitize(`
         ${imageBlock}
         
         <div class="p-8 sm:p-10 text-center">
@@ -92,13 +93,13 @@ export function showImpactModal(config) {
                 </button>
             </div>
         </div>
-    `;
+    `);
 
     overlay.appendChild(modal);
 
     // Botón de Cierre Flotante (Siempre Visible en Mobile)
     const floatingCloseBtn = document.createElement('button');
-    floatingCloseBtn.innerHTML = closeIcon;
+    floatingCloseBtn.innerHTML = sanitize(closeIcon);
     floatingCloseBtn.title = "Cerrar Anuncio";
     floatingCloseBtn.className = "fixed top-6 right-6 w-14 h-14 bg-black/60 text-white rounded-full flex items-center justify-center backdrop-blur-2xl border border-white/20 shadow-2xl z-[6000] transition-all active:scale-90 hover:bg-[#fba931] hover:text-[#0f172a]";
     floatingCloseBtn.onclick = (e) => {
@@ -208,7 +209,8 @@ window.openImageZoom = function(url) {
     overlay.id = 'image-zoom-overlay';
     overlay.className = "fixed inset-0 bg-black/95 backdrop-blur-xl z-[300000] flex items-center justify-center p-4 cursor-zoom-out opacity-0 transition-all duration-300";
     
-    overlay.innerHTML = `
+    const sanitize = (html) => (window.sanitizeHTML ? window.sanitizeHTML(html) : html);
+    overlay.innerHTML = sanitize(`
         <div class="relative max-w-7xl w-full h-full flex items-center justify-center scale-95 transition-transform duration-300 pointer-events-none">
             <img src="${url}" class="max-w-full max-h-full object-contain rounded-lg shadow-[0_0_80px_rgba(0,0,0,0.8)] border border-white/10 pointer-events-auto">
         </div>
@@ -222,7 +224,7 @@ window.openImageZoom = function(url) {
             </svg>
             <span class="text-[9px] font-black uppercase tracking-widest opacity-80 group-hover:opacity-100 transition-opacity mt-0.5">Cerrar</span>
         </button>
-    `;
+    `);
 
     document.body.appendChild(overlay);
     document.body.style.overflow = 'hidden';
@@ -270,13 +272,14 @@ export function handleModalImageError(img, url) {
     }
 
     // Fallback: Mostrar gradiente estético con el logo o simplemente ocultar
-    parent.innerHTML = `
+    const sanitize = (html) => (window.sanitizeHTML ? window.sanitizeHTML(html) : html);
+    parent.innerHTML = sanitize(`
         <div class="w-full h-full bg-[#0f172a] flex items-center justify-center overflow-hidden">
             <div class="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
             <span class="serif text-4xl text-white opacity-20 italic">PNL Biobío</span>
             <div class="absolute inset-0 bg-gradient-to-t from-[#0f172a] to-transparent"></div>
         </div>
-    `;
+    `);
 }
 
 export function closeImpactModal(id, permanent = false) {

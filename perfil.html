@@ -196,7 +196,14 @@
 
                 document.getElementById('profile-name').innerText = fullName;
                 document.getElementById('profile-email').innerText = user.email;
-                document.getElementById('profile-avatar').innerText = initials;
+
+                const avatarEl = document.getElementById('profile-avatar');
+                if (profile?.avatar_url) {
+                    avatarEl.innerHTML = `<img src="${profile.avatar_url}" alt="${fullName}" class="w-full h-full object-cover rounded-full">`;
+                    avatarEl.classList.remove('bg-[#0f172a]', 'text-white');
+                } else {
+                    avatarEl.innerText = initials;
+                }
 
             } catch (err) {
                 console.error("Error cargando perfil:", err);

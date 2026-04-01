@@ -1,20 +1,38 @@
-# Skill Registry
+# Skill Registry - webpnl
 
-## Global Skills (SDD Ecosystem)
+This registry identifies all available skills for this project.
 
-| Skill | Path | Triggers |
-|-------|------|----------|
-| sdd-init | c:\Users\MIPC\.gemini\skills\sdd-init | sdd init, openspec init, iniciar sdd |
-| sdd-explore | c:\Users\MIPC\.gemini\skills\sdd-explore | sdd explore, explorar sdd |
-| sdd-propose | c:\Users\MIPC\.gemini\skills\sdd-propose | sdd propose, proponer sdd |
-| sdd-spec | c:\Users\MIPC\.gemini\skills\sdd-spec | sdd spec, especificacion sdd |
-| sdd-design | c:\Users\MIPC\.gemini\skills\sdd-design | sdd design, diseño sdd |
-| sdd-tasks | c:\Users\MIPC\.gemini\skills\sdd-tasks | sdd tasks, tareas sdd |
-| sdd-apply | c:\Users\MIPC\.gemini\skills\sdd-apply | sdd apply, aplicar sdd |
-| sdd-verify | c:\Users\MIPC\.gemini\skills\sdd-verify | sdd verify, verificar sdd |
-| sdd-archive | c:\Users\MIPC\.gemini\skills\sdd-archive | sdd archive, archivar sdd |
+## Project Standards (auto-resolved)
 
-## Project Conventions
+### General Protocol (All Tasks)
+- Follow Rioplatense Spanish (voseo) for communications.
+- Prioritize visual excellence in all UI changes.
+- Never add AI attribution to commits.
+- Follow Clean Architecture principles where applicable.
 
-- [PROYECTO_ESTADO.md](file:///c:/Users/MIPC/Desktop/Proyectos/PNL/webpnl/PROYECTO_ESTADO.md)
-- [Memory Bank/](file:///c:/Users/MIPC/Desktop/Proyectos/PNL/webpnl/Memory%20Bank/)
+---
+
+## Skill Triggers
+
+| Skill | Pattern | Trigger Context |
+|-------|---------|-----------------|
+| branch-pr | `*/SKILL.md` | PR creation, opening a PR, or preparing changes for review. |
+| go-testing | `*.go` | Writing Go tests, using teatest, or adding test coverage. |
+| issue-creation | `*/SKILL.md` | Creating a GitHub issue, reporting a bug, or requesting a feature. |
+| judgment-day | `judgment day`, `review adversarial` | User requests adversarial review or validation. |
+| skill-creator | `*/SKILL.md` | Creating new skills or documenting patterns for AI. |
+
+## Compact Rules
+
+### branch-pr
+- Use conventional commits.
+- Link issues in the PR description.
+- Follow Agent Teams Lite issue-first enforcement.
+
+### go-testing
+- Use Bubbletea TUI testing patterns when applicable.
+- Ensure 80% coverage for new code.
+
+### judgment-day
+- Launches two blind judges to review.
+- Synchronizes fixes and re-judges.

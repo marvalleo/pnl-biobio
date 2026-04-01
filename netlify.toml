@@ -19,5 +19,9 @@
     X-Content-Type-Options = "nosniff"
     X-XSS-Protection = "1; mode=block"
     Referrer-Policy = "strict-origin-when-cross-origin"
-    Content-Security-Policy = "upgrade-insecure-requests; block-all-mixed-content;"
+    Content-Security-Policy = "default-src 'self' https://*.supabase.co; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://*.supabase.co https://*.googleusercontent.com; connect-src 'self' https://*.supabase.co;"
+
+[[edge-functions]]
+  path = "/*"
+  function = "rate-limit"
 

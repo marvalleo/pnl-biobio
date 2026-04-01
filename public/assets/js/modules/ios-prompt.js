@@ -10,7 +10,8 @@ export function showIOSInstallPrompt() {
     prompt.id = 'ios-install-prompt';
     prompt.className = 'fixed bottom-4 left-4 right-4 z-[9999] bg-[#0f172a] text-white p-6 rounded-3xl shadow-2xl border border-gray-800 animate-slide-up md:max-w-md md:left-auto md:right-8';
 
-    prompt.innerHTML = `
+    const sanitize = (html) => (window.sanitizeHTML ? window.sanitizeHTML(html) : html);
+    prompt.innerHTML = sanitize(`
         <div class="relative">
             <button id="close-ios-prompt" class="absolute -top-2 -right-2 text-gray-400 hover:text-white p-2">✕</button>
             <div class="flex items-center gap-4 mb-4">
@@ -40,7 +41,7 @@ export function showIOSInstallPrompt() {
                 </div>
             </div>
         </div>
-    `;
+    `);
 
     document.body.appendChild(prompt);
 

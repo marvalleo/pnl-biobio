@@ -43,7 +43,8 @@ export function showPushPermissionBanner(onAccept, isDenied = false) {
         const acceptLabel = isDenied ? 'Entendido' : 'Activar';
         const dismissLabel = isDenied ? 'Cerrar' : 'Ahora no';
 
-        banner.innerHTML = `
+        const sanitize = (html) => (window.sanitizeHTML ? window.sanitizeHTML(html) : html);
+        banner.innerHTML = sanitize(`
             <style>
                 @keyframes slideUpBanner {
                     from { transform: translateY(120%); opacity: 0; }
@@ -67,7 +68,7 @@ export function showPushPermissionBanner(onAccept, isDenied = false) {
                     </button>
                 </div>
             </div>
-        `;
+        `);
 
         document.body.appendChild(banner);
 

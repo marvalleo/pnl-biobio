@@ -18,13 +18,14 @@ export async function initNavbar() {
             const warning = document.createElement('div');
             warning.id = 'pnl-config-warning';
             warning.className = "fixed top-0 left-0 w-full bg-red-600 text-white text-[10px] font-black uppercase py-2 px-4 shadow-xl z-[9000] text-center flex justify-center items-center gap-4";
-            warning.innerHTML = `
+            const sanitize = (html) => (window.sanitizeHTML ? window.sanitizeHTML(html) : html);
+            warning.innerHTML = sanitize(`
                 <span>⚠️ Error de Configuración: Conexión con Supabase no inicializada</span>
                 <button onclick="localStorage.setItem('SUPABASE_URL', prompt('URL Supabase:')); localStorage.setItem('SUPABASE_ANON_KEY', prompt('Anon Key:')); location.reload();" 
                         class="bg-white text-red-600 px-3 py-1 rounded-full hover:bg-gray-100 transition-colors">
                     Configurar Ahora
                 </button>
-            `;
+            `);
             document.body.appendChild(warning);
         }
         return;
@@ -40,14 +41,20 @@ export async function initNavbar() {
 
         // Obtener perfil (sessionStorage como caché)
         let profile = JSON.parse(sessionStorage.getItem('pnl_profile'));
-        if (!profile) {
-            const { data } = await window.supabaseClient.from('profiles').select('full_name, role').eq('auth_id', user.id).single();
+        if (!profile || !profile.hasOwnProperty('avatar_url')) {
+            const { data } = await window.supabaseClient.from('profiles').select('full_name, role, avatar_url').eq('auth_id', user.id).single();
             profile = data;
             if (profile) sessionStorage.setItem('pnl_profile', JSON.stringify(profile));
         }
 
         const fullName = profile?.full_name || user.user_metadata?.full_name || user.email || 'Miembro';
-        const initials = fullName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+        
+        // Generación de iniciales mejorada
+        const initials = fullName
+            ? fullName.trim().split(/\s+/).map(n => n[0]).join('').substring(0, 2).toUpperCase()
+            : 'M';
+
+        const avatarUrl = profile?.avatar_url;
 
         if (adminLink && ['super_admin', 'admin_forja', 'admin_votos', 'admin_foros', 'admin_usuarios'].includes(profile?.role)) {
             adminLink.classList.remove('hidden');
@@ -84,20 +91,25 @@ export async function initNavbar() {
                 font-size:9px; font-weight:900;
                 display:flex; align-items:center; justify-content:center;
                 border:2px solid white; line-height:1;
-                pointer-events:none;
+                pointer-events:none; z-index: 10;
               ">${unreadCount > 9 ? '9+' : unreadCount}</span>`
             : '';
 
         const toggleHTML = buildToggleHTML(toggleOn, permStatus, isSupported);
 
-        navContainer.innerHTML = `
+        const sanitize = (html) => (window.sanitizeHTML ? window.sanitizeHTML(html) : html);
+        navContainer.innerHTML = sanitize(`
             <style>
                 #push-toggle-thumb { transition: transform 0.2s ease; }
             </style>
             <div class="relative" id="user-menu-wrapper">
                 <button id="user-avatar-btn"
-                        style="position:relative; display:inline-flex; align-items:center; justify-content:center; width:36px; height:36px; border-radius:9999px; background:#fba931; color:#0f172a; font-size:11px; font-weight:900; border:2px solid white; box-shadow:0 1px 4px rgba(0,0,0,0.15); cursor:pointer; flex-shrink:0;">
-                    ${initials}
+                        style="position:relative; display:inline-flex; align-items:center; justify-content:center; width:36px; height:36px; background:transparent; border:none; cursor:pointer; flex-shrink:0; padding:0;">
+                    <div style="width:100%; height:100%; border-radius:9999px; background:#fba931; color:#0f172a; font-size:11px; font-weight:900; border:2px solid white; box-shadow:0 1px 4px rgba(0,0,0,0.15); display:flex; align-items:center; justify-content:center; overflow:hidden;">
+                        ${avatarUrl 
+                            ? `<img src="${avatarUrl}" alt="${fullName}" style="width:100%; height:100%; object-fit:cover;">` 
+                            : initials}
+                    </div>
                     ${badgeHTML}
                 </button>
                 <div id="user-dropdown" class="hidden absolute right-0 mt-3 w-64 bg-white rounded-2xl shadow-2xl border border-gray-100 py-3 z-[100]"
@@ -126,7 +138,7 @@ export async function initNavbar() {
                     </button>
                 </div>
             </div>
-        `;
+        `);
 
         // Función para actualizar el contador visual (globo rojo)
         window.updateUnreadCount = async () => {
@@ -172,6 +184,7 @@ export async function initNavbar() {
                             display:flex; align-items:center; justify-content:center;
                             border:2px solid white; line-height:1;
                             pointer-events:none; transition: all 0.3s ease;
+                            z-index: 10;
                         `;
                         avatarBtn.appendChild(badge);
                     }
@@ -270,7 +283,8 @@ function buildToggleHTML(isOn, permStatus, isSupported = true) {
         title = 'Ve a la configuración del navegador para habilitarlas.';
     }
 
-    return `
+    const sanitize = (html) => (window.sanitizeHTML ? window.sanitizeHTML(html) : html);
+    return sanitize(`
         <div class="px-5 py-3 border-b border-gray-50 flex items-center justify-between gap-3">
             <div class="flex items-center gap-3 flex-1 min-w-0">
                 <span class="material-symbols-outlined text-lg text-gray-400 shrink-0">notifications</span>
@@ -285,7 +299,7 @@ function buildToggleHTML(isOn, permStatus, isSupported = true) {
                 <span id="push-toggle-thumb" style="position:absolute; top:2px; left:0; width:18px; height:18px; background:white; border-radius:9999px; box-shadow:0 1px 3px rgba(0,0,0,0.3); transition:transform 0.2s ease; transform:${thumbPos};"></span>
             </button>
         </div>
-    `;
+    `);
 }
 
 function bindPushToggle(isCurrentlyOn, permStatus, isSupported = true) {
@@ -320,7 +334,8 @@ function bindPushToggle(isCurrentlyOn, permStatus, isSupported = true) {
                 // Estructura exacta del overlay de abogados
                 modal.className = "fixed inset-0 z-[99999] flex items-center justify-center p-4 sm:p-6 bg-slate-900/60 backdrop-blur-sm transition-opacity duration-300";
 
-                modal.innerHTML = `
+                const sanitize = (html) => (window.sanitizeHTML ? window.sanitizeHTML(html) : html);
+                modal.innerHTML = sanitize(`
                     <div class="bg-white rounded-2xl md:rounded-3xl shadow-2xl w-full max-w-lg md:max-w-2xl overflow-hidden transform transition-all duration-300 border border-slate-100/50">
                         <div class="relative bg-slate-900 border-b border-slate-800 px-6 py-4 flex items-center justify-between">
                             <h3 class="text-sm font-black uppercase tracking-widest text-[#fba931] flex items-center gap-2">
@@ -343,7 +358,7 @@ function bindPushToggle(isCurrentlyOn, permStatus, isSupported = true) {
                             </div>
                         </div>
                     </div>
-                `;
+                `);
 
                 document.body.appendChild(modal);
                 document.getElementById('pwa-debug-close').addEventListener('click', () => modal.remove());
@@ -456,7 +471,8 @@ window.showNotificationHistory = async () => {
     modal.id = 'notif-history-modal';
     modal.className = "fixed inset-0 z-[99999] flex items-center justify-center p-4 sm:p-6 bg-slate-900/60 backdrop-blur-sm transition-opacity duration-300";
 
-    modal.innerHTML = `
+    const sanitize = (html) => (window.sanitizeHTML ? window.sanitizeHTML(html) : html);
+    modal.innerHTML = sanitize(`
         <div class="bg-white rounded-2xl md:rounded-3xl shadow-2xl w-full max-w-lg md:max-w-xl overflow-hidden transform transition-all duration-300 border border-slate-100/50 flex flex-col max-h-[85vh]">
             <div class="relative bg-slate-900 border-b border-slate-800 px-6 py-4 flex items-center justify-between shrink-0">
                 <h3 class="text-sm font-black uppercase tracking-widest text-blue-400 flex items-center gap-2">
@@ -476,7 +492,7 @@ window.showNotificationHistory = async () => {
                 </div>
             </div>
         </div>
-    `;
+    `);
 
     document.body.appendChild(modal);
 
@@ -508,7 +524,8 @@ window.showNotificationHistory = async () => {
         if (error) throw error;
 
         if (!data || data.length === 0) {
-            contentContainer.innerHTML = `
+            const sanitize = (html) => (window.sanitizeHTML ? window.sanitizeHTML(html) : html);
+            contentContainer.innerHTML = sanitize(`
                 <div class="p-10 flex flex-col items-center justify-center text-center">
                     <div class="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-4 text-slate-300">
                         <span class="material-symbols-outlined text-3xl">inbox</span>
@@ -516,7 +533,7 @@ window.showNotificationHistory = async () => {
                     <h4 class="text-slate-800 font-black text-sm mb-1">Bandeja Vacía</h4>
                     <p class="text-slate-500 text-xs">Aún no hay mensajes o anuncios enviados.</p>
                 </div>
-            `;
+            `);
             return;
         }
 
@@ -599,7 +616,8 @@ window.showNotificationHistory = async () => {
 
                 const dateStr = new Date(notif.created_at).toLocaleString('es-CL', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
 
-                readModal.innerHTML = `
+                const sanitize = (html) => (window.sanitizeHTML ? window.sanitizeHTML(html) : html);
+                readModal.innerHTML = sanitize(`
                     <div class="bg-white rounded-2xl md:rounded-3xl shadow-2xl w-full max-w-sm md:max-w-md overflow-hidden transform transition-all duration-300 border border-slate-100/50 flex flex-col animation-scale-up">
                         <div class="relative bg-slate-50 border-b border-slate-100 px-6 py-4 flex items-center justify-between shrink-0">
                             <h3 class="text-sm font-black uppercase tracking-widest text-slate-800 flex items-center gap-2">
@@ -618,7 +636,7 @@ window.showNotificationHistory = async () => {
                             ${urlBtnHTML}
                         </div>
                     </div>
-                `;
+                `);
 
                 document.body.appendChild(readModal);
 

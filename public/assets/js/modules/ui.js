@@ -25,10 +25,11 @@ export function showToast(message, type = 'info') {
     };
 
     toast.className = `${baseClasses} ${types[type] || types.info}`;
-    toast.innerHTML = `
+    const sanitize = (html) => (window.sanitizeHTML ? window.sanitizeHTML(html) : html);
+    toast.innerHTML = sanitize(`
         <span class="material-symbols-outlined text-lg">${icons[type] || 'info'}</span>
         ${message}
-    `;
+    `);
 
     document.body.appendChild(toast);
 
@@ -70,13 +71,15 @@ export function setButtonLoading(button, isLoading, loadingText = 'Procesando') 
     if (isLoading) {
         button.disabled = true;
         button.classList.add('opacity-70', 'cursor-wait');
-        button.innerHTML = `
+        const sanitize = (html) => (window.sanitizeHTML ? window.sanitizeHTML(html) : html);
+        button.innerHTML = sanitize(`
             <span class="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full shrink-0"></span>
             <span>${loadingText}</span>
-        `;
+        `);
     } else {
         button.disabled = false;
         button.classList.remove('opacity-70', 'cursor-wait');
-        button.innerHTML = button.dataset.originalHtml;
+        const sanitize = (html) => (window.sanitizeHTML ? window.sanitizeHTML(html) : html);
+        button.innerHTML = sanitize(button.dataset.originalHtml);
     }
 }
