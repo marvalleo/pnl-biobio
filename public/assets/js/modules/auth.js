@@ -29,7 +29,7 @@ export async function initNavbar() {
             const origin = window.location.hostname;
             const isLocal = ['localhost', '127.0.0.1'].includes(origin);
             warning.innerHTML = sanitize(`
-                <span>⚠️ ERROR DE CONFIGURACIÓN: Supabase no pudo inicializar en ${origin}. Verificá tus credenciales o el acceso por CORS.</span>
+                <span>⚠️ ERROR DE CONFIGURACIÓN: Supabase no pudo inicializar en ${origin}. Verifica tus credenciales o el acceso por CORS.</span>
                 <button onclick="localStorage.setItem('SUPABASE_URL', prompt('URL Supabase:')); localStorage.setItem('SUPABASE_ANON_KEY', prompt('Anon Key:')); location.reload();" 
                         class="bg-white text-red-600 px-3 py-1 rounded-full hover:bg-gray-100 transition-colors">
                     🔧 Configurar Ahora

@@ -18,21 +18,21 @@ export class PNLWizard {
             return {
                 title: 'Navegación del Portal',
                 tips: [
-                    'Revisá los comunicados arriba.',
+                    'Revisa los comunicados arriba.',
                     'Tu centro de acción es la Forja.',
-                    'Educate en la Academia PNL.'
+                    'Edúcate en la Academia PNL.'
                 ],
                 steps: [
-                    { target: 'pnl-navbar img', title: 'Identidad Regional', text: 'Este es el sitio oficial para todos los guerreros del Biobío. Acá centralizamos la acción.' },
-                    { target: 'a[href="forja-login.html"]', title: 'Acceso a la Forja', text: 'Entrá acá para ver tu perfil, tus insignias y tu centro de votación soberana.' },
-                    { target: '#academia', title: 'Academia Biobío', text: 'Nuestra trinchera de ideas. Inscribite y educate antes de la próxima batalla.' },
-                    { target: '#votaciones', title: 'Poder de Voto', text: 'Tu voz es la que manda. Acá gestionamos las decisiones regionales del partido.' }
+                    { target: 'pnl-navbar img', title: 'Identidad Regional', text: 'Este es el sitio oficial para todos los simpatizantes del Biobío. Aquí centralizamos la acción.' },
+                    { target: 'a[href="forja-login.html"]', title: 'Acceso a la Forja', text: 'Ingresa aquí para ver tu perfil, tus insignias y tu centro de votación soberana.' },
+                    { target: '#academia', title: 'Academia Biobío', text: 'Nuestra trinchera de ideas. Inscríbete y edúcate antes de la próxima batalla.' },
+                    { target: '#votaciones', title: 'Poder de Voto', text: 'Tu voz es la que manda. Aquí gestionamos las decisiones regionales del partido.' }
                 ]
             };
         }
         return { 
             title: 'Asistente LSC', 
-            tips: ['Explorá el portal regional.', 'Mantené tu soberanía digital.'],
+            tips: ['Explora el portal regional.', 'Mantén tu soberanía digital.'],
             steps: [] 
         };
     }
