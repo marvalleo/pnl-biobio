@@ -12,6 +12,13 @@ function withTimeout(promise, ms, fallback) {
 }
 
 export async function initNavbar() {
+    // ⏱️ Esperar a que Supabase se inicialice (Max 5s)
+    let attempts = 0;
+    while (!window.isSupabaseInit && attempts < 10) {
+        await new Promise(r => setTimeout(r, 500));
+        attempts++;
+    }
+
     if (!window.isSupabaseInit) {
         console.warn("initNavbar: Supabase no está configurado.");
         if (!document.getElementById('pnl-config-warning')) {
@@ -19,12 +26,15 @@ export async function initNavbar() {
             warning.id = 'pnl-config-warning';
             warning.className = "fixed top-0 left-0 w-full bg-red-600 text-white text-[10px] font-black uppercase py-2 px-4 shadow-xl z-[9000] text-center flex justify-center items-center gap-4";
             const sanitize = (html) => (window.sanitizeHTML ? window.sanitizeHTML(html) : html);
+            const origin = window.location.hostname;
+            const isLocal = ['localhost', '127.0.0.1'].includes(origin);
             warning.innerHTML = sanitize(`
-                <span>⚠️ Error de Configuración: Conexión con Supabase no inicializada</span>
+                <span>⚠️ ERROR DE CONFIGURACIÓN: Supabase no pudo inicializar en ${origin}. Verificá tus credenciales o el acceso por CORS.</span>
                 <button onclick="localStorage.setItem('SUPABASE_URL', prompt('URL Supabase:')); localStorage.setItem('SUPABASE_ANON_KEY', prompt('Anon Key:')); location.reload();" 
                         class="bg-white text-red-600 px-3 py-1 rounded-full hover:bg-gray-100 transition-colors">
-                    Configurar Ahora
+                    🔧 Configurar Ahora
                 </button>
+                <div class="text-[8px] opacity-70 ml-2">Timeout: 5s</div>
             `);
             document.body.appendChild(warning);
         }
