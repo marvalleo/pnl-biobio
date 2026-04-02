@@ -27,7 +27,7 @@ window.logError = logError;
  */
 export function sanitizeHTML(dirty) {
     return DOMPurify.sanitize(dirty, {
-        ALLOWED_TAGS: ['b', 'i', 'em', 'strong', 'a', 'ul', 'ol', 'li', 'br', 'p', 'span', 'img', 'div', 'button', 'select', 'option', 'style'],
+        ALLOWED_TAGS: ['b', 'i', 'em', 'strong', 'a', 'ul', 'ol', 'li', 'br', 'p', 'span', 'img', 'div', 'button', 'select', 'option', 'style', 'input', 'label'],
         ALLOWED_ATTR: ['class', 'id', 'href', 'target', 'src', 'alt', 'style', 'title', 'data-*', 'onclick', 'onchange', 'required', 'placeholder', 'rows', 'type'],
         KEEP_CONTENT: true
     });
