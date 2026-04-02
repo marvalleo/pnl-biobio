@@ -9,15 +9,16 @@ const ALLOWED_ORIGINS = [
     '127.0.0.1',
     'pnl-biobio.netlify.app',
     'nacionallibertariobiobio.cl',
+    'nacionalllibertariobiobio.cl', // Soporte para typo común (3 Ls)
     'pnlbiobio.cl'
 ];
 
 function isOriginAllowed() {
-    const hostname = window.location.hostname;
+    const hostname = window.location.hostname.toLowerCase();
     // Permite Netlify deploys previews
     if (hostname.includes('pnl-biobio') && hostname.includes('netlify.app')) return true;
-    // Permite el dominio oficial y sus variaciones
-    if (hostname.includes('nacionallibertariobiobio.cl') || hostname.includes('pnlbiobio.cl')) return true;
+    // Permite el dominio oficial y sus variaciones (Case insensitive y flexible con Ls)
+    if (hostname.includes('nacionallibertario') || hostname.includes('nacionalllibertario') || hostname.includes('pnlbiobio.cl')) return true;
     return ALLOWED_ORIGINS.includes(hostname);
 }
 
