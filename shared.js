@@ -27,8 +27,8 @@ window.logError = logError;
  */
 export function sanitizeHTML(dirty) {
     return DOMPurify.sanitize(dirty, {
-        ALLOWED_TAGS: ['b', 'i', 'em', 'strong', 'a', 'ul', 'ol', 'li', 'br', 'p', 'span', 'img', 'div', 'button', 'select', 'option', 'style', 'input', 'label'],
-        ALLOWED_ATTR: ['class', 'id', 'href', 'target', 'src', 'alt', 'style', 'title', 'data-*', 'onclick', 'onchange', 'required', 'placeholder', 'rows', 'type'],
+        ALLOWED_TAGS: ['b', 'i', 'em', 'strong', 'a', 'ul', 'ol', 'li', 'br', 'p', 'span', 'img', 'div', 'button', 'select', 'option', 'style', 'input', 'label', 'svg', 'line', 'polyline', 'path', 'rect', 'g', 'circle'],
+        ALLOWED_ATTR: ['class', 'id', 'href', 'target', 'src', 'alt', 'style', 'title', 'data-*', 'onclick', 'onchange', 'required', 'placeholder', 'rows', 'type', 'viewBox', 'fill', 'stroke', 'stroke-width', 'stroke-linecap', 'stroke-linejoin', 'd', 'points', 'x', 'y', 'width', 'height', 'rx', 'ry', 'x1', 'y1', 'x2', 'y2'],
         KEEP_CONTENT: true
     });
 }

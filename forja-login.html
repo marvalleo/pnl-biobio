@@ -174,8 +174,12 @@
             btn.textContent = "Verificando...";
 
             try {
+                if (!window.supabaseClient) {
+                    throw new Error("Conexión en progreso. Intenta de nuevo en un segundo.");
+                }
+
                 // 1. Intentar Loguearse en Supabase Auth
-                const { data: authData, error: authError } = await supabaseClient.auth.signInWithPassword({
+                const { data: authData, error: authError } = await window.supabaseClient.auth.signInWithPassword({
                     email: email,
                     password: password
                 });
@@ -183,7 +187,7 @@
                 if (authError) throw authError;
 
                 // 2. Obtener el rol desde la tabla 'profiles'
-                const { data: profile, error: profileError } = await supabaseClient
+                const { data: profile, error: profileError } = await window.supabaseClient
                     .from('profiles')
                     .select('role, must_change_password')
                     .eq('auth_id', authData.user.id)
@@ -203,6 +207,7 @@
                 }
 
                 // Limpiar caché de perfil previo para forzar recarga con el nuevo usuario
+                sessionStorage.removeItem('pnl_profile');
                 sessionStorage.removeItem('pnl_user_profile');
 
                 // 4. Guardar datos de sesión (compatibilidad con frontend existente)
@@ -213,7 +218,7 @@
                 const redirectPath = ROLE_REDIRECTS[profile.role] || 'forja-eventos.html';
                 
                 // 6. Registrar evento de login exitoso
-                if (window.logSystemEvent) {
+                if (typeof window.logSystemEvent === 'function') {
                     await window.logSystemEvent('login', 'info', `Inicio de sesión exitoso: ${email}`);
                 }
 
@@ -221,12 +226,18 @@
 
             } catch (err) {
                 // Registrar el error en el sistema de logs (si es posible)
-                if (window.logError) {
+                if (typeof window.logError === 'function') {
                     window.logError(`Fallo en inicio de sesión para: ${email}`, { error: err.message });
                 }
 
                 // Mostrar alerta de error con Toast
-                showToast(`Error: ${err.message || 'Error desconocido'}`, 'error');
+                if (typeof window.showToast === 'function') {
+                    window.showToast(`Error: ${err.message || 'Error desconocido'}`, 'error');
+                } else if (typeof showToast !== 'undefined') {
+                    showToast(`Error: ${err.message || 'Error desconocido'}`, 'error');
+                } else {
+                    alert(`Error: ${err.message || 'Error desconocido'}`);
+                }
 
                 loginContainer.classList.add('error-shake');
                 setTimeout(() => {
@@ -283,14 +294,14 @@
 
             try {
                 // 1. Actualizar la contraseña en Supabase Auth
-                const { error: authError } = await supabaseClient.auth.updateUser({
+                const { error: authError } = await window.supabaseClient.auth.updateUser({
                     password: newPassword
                 });
 
                 if (authError) throw authError;
 
                 // 2. Actualizar el flag en la base de datos
-                const { error: profileError } = await supabaseClient
+                const { error: profileError } = await window.supabaseClient
                     .from('profiles')
                     .update({ must_change_password: false })
                     .eq('auth_id', currentUserId);
