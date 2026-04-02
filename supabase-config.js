@@ -1,7 +1,7 @@
 // --- CONFIGURACIÓN DE CREDENCIALES ---
 // Vite reemplaza import.meta.env durante el build. Si no hay variables, FALLBACK será ""
-const FALLBACK_URL = import.meta.env?.VITE_SUPABASE_URL || import.meta.env?.SUPABASE_URL || "";
-const FALLBACK_KEY = import.meta.env?.VITE_SUPABASE_ANON_KEY || import.meta.env?.SUPABASE_ANON_KEY || "";
+const FALLBACK_URL = import.meta.env.VITE_SUPABASE_URL || import.meta.env.SUPABASE_URL || "";
+const FALLBACK_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || import.meta.env.SUPABASE_ANON_KEY || "";
 
 // --- VALIDACIÓN DE ORÍGENES (Chile / Local) ---
 const ALLOWED_ORIGINS = [
