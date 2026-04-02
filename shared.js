@@ -124,6 +124,11 @@ async function setupPushNotifications() {
         attempts++;
     }
 
+    if (!window.supabaseClient || !window.supabaseClient.auth) {
+        console.warn("[Push] Supabase no disponible para suscripción.");
+        return;
+    }
+
     const { data: { user } } = await window.supabaseClient.auth.getUser();
     if (!user) return;
 

@@ -8,8 +8,6 @@ export class PNLWizard {
 
     start() {
         this.initHelpCenter();
-        if (this.isDisabled || localStorage.getItem('pnl_wizard_done')) return;
-        setTimeout(() => this.showStep(), 1200);
     }
 
     getContextData() {
@@ -48,7 +46,7 @@ export class PNLWizard {
                 <div id="help-menu" class="hidden absolute bottom-20 right-0 md:bottom-24 w-[85vw] md:w-80 bg-white/95 backdrop-blur-xl rounded-[2.5rem] shadow-[0_20px_50px_rgba(15,23,42,0.4)] border-4 border-[#fba931] p-6 md:p-8 pnl-wizard-animate overflow-hidden origin-bottom-right">
                     <div class="flex items-center gap-4 mb-6">
                         <div class="w-10 h-10 md:w-12 md:h-12 bg-[#0f172a] rounded-full flex items-center justify-center border-2 border-[#fba931] flex-shrink-0">
-                            <img src="/public/assets/images/logos/pwa-icon-70.png" class="w-6 h-6 md:w-8 md:h-8 object-contain">
+                            <img src="/assets/images/logos/pwa-icon-70.png" class="w-6 h-6 md:w-8 md:h-8 object-contain">
                         </div>
                         <div>
                             <h4 class="text-xl md:text-2xl font-900 uppercase text-[#0f172a] tracking-tight leading-none">${this.context.title}</h4>
@@ -186,7 +184,7 @@ export class PNLWizard {
         const sanitize = (html) => (window.sanitizeHTML ? window.sanitizeHTML(html) : html);
         card.innerHTML = sanitize(`
             <div class="flex justify-center mb-6">
-                <img src="/public/assets/images/logos/pwa-icon-70.png" class="w-14 h-14 object-contain" alt="LSC">
+                <img src="/assets/images/logos/pwa-icon-70.png" class="w-14 h-14 object-contain" alt="LSC">
             </div>
             <h3 class="text-xl font-900 uppercase text-center text-[#0f172a] mb-3 tracking-tighter">${step.title}</h3>
             <p class="text-sm font-bold text-slate-500 text-center leading-relaxed mb-6">${step.text}</p>
