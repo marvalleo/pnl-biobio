@@ -8,7 +8,12 @@ This registry identifies all available skills for this project.
 - Follow Rioplatense Spanish (voseo) for communications.
 - Prioritize visual excellence in all UI changes.
 - Never add AI attribution to commits.
-- Follow Clean Architecture principles where applicable.
+- Architecture: HTML/JS (Frontend) + Supabase Edge Functions (Backend) + Netlify.
+
+### Mass Email Standards
+- **Provider**: Resend API.
+- **Verification**: Mandatory domain DNS (SPF, DKIM, DMARC) before mass sending.
+- **Constraints**: 100 emails/day limit on free tier; use Batch API for +1 recipient.
 
 ---
 
@@ -17,22 +22,18 @@ This registry identifies all available skills for this project.
 | Skill | Pattern | Trigger Context |
 |-------|---------|-----------------|
 | branch-pr | `*/SKILL.md` | PR creation, opening a PR, or preparing changes for review. |
-| go-testing | `*.go` | Writing Go tests, using teatest, or adding test coverage. |
+| go-testing | `*.go` | Writing Go tests (Inactive: no Go testing in this project). |
 | issue-creation | `*/SKILL.md` | Creating a GitHub issue, reporting a bug, or requesting a feature. |
 | judgment-day | `judgment day`, `review adversarial` | User requests adversarial review or validation. |
-| skill-creator | `*/SKILL.md` | Creating new skills or documenting patterns for AI. |
+| sdd-* | `openspec/`, `sdd-*` | Spec-Driven Development cycles (Init, Explore, Propose, Spec, Design, Tasks, Apply, Verify, Archive). |
 
 ## Compact Rules
 
-### branch-pr
-- Use conventional commits.
-- Link issues in the PR description.
-- Follow Agent Teams Lite issue-first enforcement.
-
-### go-testing
-- Use Bubbletea TUI testing patterns when applicable.
-- Ensure 80% coverage for new code.
+### sdd-apply
+- Implement following specs/design strictly.
+- Use Vanilla JS + Tailwind CDN for frontend.
+- Maintain Supabase config with system retries.
 
 ### judgment-day
-- Launches two blind judges to review.
-- Synchronizes fixes and re-judges.
+- Parallel adversarial review protocol.
+- Blind judge synthesis and automatic fixes.

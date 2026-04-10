@@ -159,16 +159,16 @@ if (document.readyState === 'loading') {
         checkAndShowAnnouncements();
         setupPushNotifications();
         
-        // Inicializar el Wizard
-        const wizard = new PNLWizard();
-        wizard.start();
+        // Inicializar el Wizard (Deshabilitado temporalmente a pedido del usuario)
+        // const wizard = new PNLWizard();
+        // wizard.start();
     });
 } else {
     initNavbar();
     checkAndShowAnnouncements();
     setupPushNotifications();
     
-    // Inicializar el Wizard
-    const wizard = new PNLWizard();
-    wizard.start();
+    // Inicializar el Wizard (Deshabilitado temporalmente a pedido del usuario)
+    // const wizard = new PNLWizard();
+    // wizard.start();
 }
