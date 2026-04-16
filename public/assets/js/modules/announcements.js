@@ -10,10 +10,11 @@ export function showImpactModal(config) {
 
     const overlay = document.createElement('div');
     overlay.id = 'impact-modal-overlay';
-    overlay.className = "fixed inset-0 bg-black/80 backdrop-blur-md z-[5000] flex items-start sm:items-center justify-center p-4 opacity-0 transition-opacity duration-500 text-left overflow-y-auto custom-scrollbar";
+    overlay.style.cssText = "position:fixed; inset:0; background:rgba(0,0,0,0.85); backdrop-filter:blur(10px); z-index:99999; display:flex; align-items:center; justify-content:center; padding:1.5rem; opacity:0; transition:opacity 0.5s; overflow-y:auto;";
+    overlay.className = "custom-scrollbar";
 
     const modal = document.createElement('div');
-    modal.className = "bg-white w-full max-w-2xl rounded-2xl overflow-hidden shadow-2xl relative translate-y-20 transition-transform duration-500 border border-white/20 my-auto";
+    modal.style.cssText = "background:white; width:100%; max-width:42rem; border-radius:1.5rem; overflow:hidden; box-shadow:0 25px 50px -12px rgba(0,0,0,0.5); position:relative; transform:translateY(50px); transition:transform 0.5s;";
 
     const closeIcon = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`;
     const arrowIcon = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>`;
@@ -112,9 +113,8 @@ export function showImpactModal(config) {
 
     // Animación de entrada
     setTimeout(() => {
-        overlay.classList.remove('opacity-0');
-        modal.classList.remove('translate-y-20');
-        modal.classList.add('translate-y-0');
+        overlay.style.opacity = "1";
+        modal.style.transform = "translateY(0)";
     }, 100);
 
     // Cerrar al tocar el fondo (overlay)
@@ -207,12 +207,12 @@ window.openImageZoom = function(url) {
 
     const overlay = document.createElement('div');
     overlay.id = 'image-zoom-overlay';
-    overlay.className = "fixed inset-0 bg-black/95 backdrop-blur-xl z-[300000] flex items-center justify-center p-4 cursor-zoom-out opacity-0 transition-all duration-300";
+    overlay.style.cssText = "position:fixed; inset:0; background:rgba(0,0,0,0.95); backdrop-filter:blur(20px); z-index:300000; display:flex; items-center; justify-content:center; padding:1rem; cursor:zoom-out; opacity:0; transition:all 0.3s;";
     
     const sanitize = (html) => (window.sanitizeHTML ? window.sanitizeHTML(html) : html);
     overlay.innerHTML = sanitize(`
-        <div class="relative max-w-7xl w-full h-full flex items-center justify-center scale-95 transition-transform duration-300 pointer-events-none">
-            <img src="${url}" class="max-w-full max-h-full object-contain rounded-lg shadow-[0_0_80px_rgba(0,0,0,0.8)] border border-white/10 pointer-events-auto">
+        <div style="position:relative; width:100%; height:100%; display:flex; align-items:center; justify-content:center; transition:transform 0.3s; pointer-events:none;">
+            <img src="${url}" style="max-width:100%; max-height:100%; object-fit:contain; border-radius:0.5rem; box-shadow:0 0 80px rgba(0,0,0,0.8); border:1px solid rgba(255,255,255,0.1); pointer-events:auto;">
         </div>
         
         <!-- Botón de Cierre Ultra-Visible para el Zoom -->
@@ -287,8 +287,8 @@ export function closeImpactModal(id, permanent = false) {
     const modal = overlay?.querySelector('div');
 
     if (overlay && modal) {
-        modal.classList.add('translate-y-20');
-        overlay.classList.add('opacity-0');
+        modal.style.transform = 'translateY(50px)';
+        overlay.style.opacity = '0';
 
         if (id) {
             if (permanent) {

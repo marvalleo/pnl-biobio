@@ -1,7 +1,7 @@
 import { showToast, toggleUserMenu, setButtonLoading } from '/public/assets/js/modules/ui.js';
 import { logout, initNavbar } from '/public/assets/js/modules/auth.js';
 import { validateRUT } from '/public/assets/js/modules/validation.js';
-import { showImpactModal, handleModalImageError, closeImpactModal, checkAndShowAnnouncements } from '/public/assets/js/modules/announcements.js';
+import { showImpactModal, handleModalImageError, closeImpactModal, checkAndShowAnnouncements, openImageZoom, copyToClipboard } from '/public/assets/js/modules/announcements.js';
 import { logSystemEvent, logError } from '/public/assets/js/modules/logger.js';
 import { PushNotificationManager } from '/public/assets/js/modules/push-manager.js';
 import { showIOSInstallPrompt } from '/public/assets/js/modules/ios-prompt.js';
@@ -19,6 +19,8 @@ window.showImpactModal = showImpactModal;
 window.handleModalImageError = handleModalImageError;
 window.closeImpactModal = closeImpactModal;
 window.checkAndShowAnnouncements = checkAndShowAnnouncements;
+window.openImageZoom = openImageZoom;
+window.copyToClipboard = copyToClipboard;
 window.logSystemEvent = logSystemEvent;
 window.logError = logError;
 

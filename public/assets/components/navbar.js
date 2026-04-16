@@ -29,10 +29,17 @@ class PnlNavbar extends HTMLElement {
 
         let navLinksHTML = '';
         links.forEach(link => {
-            const isActive = currentPath === link.path
-                ? 'text-[#0f172a] border-b-[3px] border-[#fba931] pb-1'
-                : 'text-gray-400 border-b-[3px] border-transparent pb-1 hover:text-[#0f172a] hover:border-[#fba931]/40';
-            navLinksHTML += `<a href="${link.path}" class="cursor-pointer font-extrabold uppercase text-sm tracking-[0.1em] transition-all duration-300 ${isActive} whitespace-nowrap">${link.label}</a>`;
+            const isActive = currentPath === link.path;
+            const linkStyle = isActive 
+                ? "color: #0f172a; border-bottom: 3px solid #fba931; padding-bottom: 6px; font-weight: 800;" 
+                : "color: #9ca3af; border-bottom: 3px solid transparent; padding-bottom: 6px; font-weight: 800;";
+            
+            navLinksHTML += `
+                <a href="${link.path}" 
+                   style="text-decoration: none; text-transform: uppercase; font-size: 14px; letter-spacing: 0.1em; font-family: 'Montserrat', sans-serif !important; transition: all 0.3s; ${linkStyle} display: inline-block;" 
+                   class="cursor-pointer whitespace-nowrap">
+                   ${link.label}
+                </a>`;
         });
 
         let mobileLinksHTML = '';
@@ -46,34 +53,41 @@ class PnlNavbar extends HTMLElement {
         // The 'Acceso Forja' button shouldn't appear directly on the desktop navbar for the homepage (index.html).
         let extraButton = '';
         let extraButtonMobile = '';
-        if (currentPath !== 'index.html' && currentPath !== '') {
-            extraButton = `<a href="forja-login.html" class="bg-[#0f172a] text-white px-6 py-2.5 rounded-lg text-[10px] font-black uppercase hover:bg-[#1e293b] hover:shadow-lg transition-all duration-300 shadow-md">Acceso Forja</a>`;
-            extraButtonMobile = `<a href="forja-login.html" class="block text-center bg-[#0f172a] text-white px-4 py-3 rounded-lg text-xs font-black uppercase mt-2">Acceso Forja</a>`;
+        const isHomePage = currentPath === 'index.html' || currentPath === '';
+        const buttonStyle = "background-color: #0f172a; color: white; padding: 10px 24px; border-radius: 8px; font-size: 11px; font-weight: 900; text-transform: uppercase; text-decoration: none; transition: all 0.3s; box-shadow: 0 4px 6px rgba(0,0,0,0.1); display: inline-block; font-family: 'Montserrat', sans-serif;";
+        
+        if (!isHomePage) {
+            const fixedButtonStyle = buttonStyle + " width: 160px; height: 42px; display: flex; align-items: center; justify-content: center; white-space: nowrap;";
+            extraButton = `<a href="forja-login.html" style="${fixedButtonStyle}" onmouseover="this.style.backgroundColor='#1e293b'" onmouseout="this.style.backgroundColor='#0f172a'">Acceso Forja</a>`;
+            extraButtonMobile = `<a href="forja-login.html" style="${buttonStyle} width: 100%; text-align: center; margin-top: 8px;">Acceso Forja</a>`;
+        } else {
+            extraButton = '';
         }
 
         this.innerHTML = `
-            <nav class="bg-white sticky top-0 z-50" style="box-shadow: 0 2px 16px rgba(15,23,42,0.08), 0 1px 3px rgba(251,169,49,0.1);">
-                <div class="max-w-[1360px] mx-auto px-10 h-[84px] flex justify-between items-center">
+            <nav class="bg-white sticky top-0 z-50" style="box-shadow: 0 4px 12px rgba(15,23,42,0.05);">
+                <div class="max-w-[1360px] mx-auto px-10 h-[120px] flex justify-between items-center">
                     <div class="flex items-center gap-5">
                         <a href="index.html" class="flex items-center">
-                            <img src="/assets/images/logos/pnl-del-biobio01.png" alt="PNL Biobío" class="h-[72px] py-1 transition-transform duration-300 hover:scale-[1.03]">
+                            <img src="/assets/images/logos/pnl-del-biobio01.png" alt="PNL Biobío" style="height: 80px; padding: 5px 0;" class="transition-transform duration-300 hover:scale-[1.02]">
                         </a>
-                        <div class="hidden lg:block w-px h-10 bg-gray-200"></div>
+                        <div class="hidden lg:block w-px h-10 bg-gray-100"></div>
                     </div>
-                    <!-- Menu PC -->
-                    <div class="hidden lg:flex items-center gap-7 xl:gap-9">
+                    
+                    <!-- Contenedor de links y botón (Se desplaza dinámicamente) -->
+                    <div class="hidden lg:flex" style="align-items: center; gap: 40px;">
                         ${navLinksHTML}
                         ${extraButton}
                     </div>
-                    <!-- Menu Mobile Button -->
+                    <!-- Menu Mobile Button (Oculto en desktop) -->
                     <div class="lg:hidden flex items-center">
-                        <button id="mobile-menu-btn" class="text-[#0f172a] p-2 rounded-lg hover:bg-gray-100 transition-colors">
-                            <span class="material-symbols-outlined text-3xl">menu</span>
+                        <button id="mobile-menu-btn" style="background: transparent; border: none; cursor: pointer; color: #0f172a; padding: 8px;">
+                            <span class="material-symbols-outlined" style="font-size: 32px;">menu</span>
                         </button>
                     </div>
                 </div>
                 <!-- Gold accent bar -->
-                <div class="h-[3px] bg-gradient-to-r from-[#fba931] via-[#f59e0b] to-[#fba931]"></div>
+                <div style="height: 3px; background-color: #fba931;"></div>
                 <!-- Mobile Dropdown -->
                 <div id="mobile-menu" class="hidden lg:hidden bg-white absolute w-full left-0 top-[87px] shadow-xl border-t border-gray-100">
                     <div class="flex flex-col px-4 py-3 space-y-1">
@@ -105,10 +119,17 @@ class PnlNavbar extends HTMLElement {
         // Links para desktop
         let desktopLinksHTML = '';
         links.forEach(link => {
-            const isActive = currentPath === link.path
-                ? 'text-[#0f172a] border-b-[3px] border-[#fba931] pb-1'
-                : 'text-gray-400 hover:text-[#fba931] border-b-[3px] border-transparent pb-1';
-            desktopLinksHTML += `<a href="${link.path}" class="cursor-pointer font-bold uppercase text-[11px] tracking-[0.05em] transition-all duration-300 ${isActive} whitespace-nowrap">${link.label}</a>`;
+            const isActive = currentPath === link.path;
+            const linkStyle = isActive 
+                ? "color: #0f172a; border-bottom: 3px solid #fba931; padding-bottom: 4px; font-weight: 800;" 
+                : "color: #9ca3af; border-bottom: 3px solid transparent; padding-bottom: 4px; font-weight: 800;";
+            
+            desktopLinksHTML += `
+                <a href="${link.path}" 
+                   style="text-decoration: none; text-transform: uppercase; font-size: 14px; letter-spacing: 0.1em; transition: all 0.3s; ${linkStyle}" 
+                   class="cursor-pointer whitespace-nowrap">
+                   ${link.label}
+                </a>`;
         });
 
         // Links para el menú mobile desplegable
@@ -130,12 +151,12 @@ class PnlNavbar extends HTMLElement {
                     #forja-mobile-menu { display: none !important; }
                 }
             </style>
-             <nav class="bg-white shadow-sm sticky top-0 z-50 border-b-4 border-[#fba931]">
-                <div class="max-w-[1360px] mx-auto px-3 md:px-10 h-16 md:h-20 flex justify-between items-center gap-3">
+             <nav class="bg-white sticky top-0 z-50" style="box-shadow: 0 4px 12px rgba(15,23,42,0.05);">
+                <div class="max-w-[1360px] mx-auto px-10 h-[120px] flex justify-between items-center">
                     <!-- Logo -->
-                    <div class="flex items-center gap-2 shrink-0">
+                    <div class="flex items-center gap-5">
                         <a href="forja-academia.html" class="flex items-center gap-2">
-                            <img src="/assets/images/logos/pnl-del-biobio01.png" alt="PNL Biobío" class="h-10 md:h-14">
+                            <img src="/assets/images/logos/pnl-del-biobio01.png" alt="PNL Biobío" style="height: 80px; padding: 5px 0;">
                             <div class="hidden lg:flex items-center gap-1.5 ml-1">
                                 <span class="font-black text-xl tracking-tighter uppercase leading-none text-[#0f172a]">FORJA</span>
                                 <span class="text-[#fba931] text-xl font-black tracking-widest uppercase leading-none">Biobío</span>
@@ -144,7 +165,7 @@ class PnlNavbar extends HTMLElement {
                     </div>
                     
                     <!-- Links desktop (controlados por media query) -->
-                    <div id="forja-desktop-links" class="flex-1 items-center justify-end gap-6 mx-8">
+                    <div id="forja-desktop-links" style="display: flex; items-center: center !important; gap: 40px;" class="items-center justify-end">
                         ${desktopLinksHTML}
                     </div>
 
@@ -208,24 +229,23 @@ class PnlNavbar extends HTMLElement {
 
     renderForjaDashboardNav(currentPath) {
         this.innerHTML = `
-            <nav id="main-nav" class="bg-white shadow-md sticky top-0 z-50 border-b-4 border-pnl-gold hidden">
-                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div class="flex justify-between h-24">
-                        <div class="flex items-center gap-4 cursor-pointer" onclick="navigate('dashboard')">
-                            <img src="/assets/images/logos/pnl-del-biobio01.png" alt="PNL" class="h-12">
-                            <div class="hidden sm:block">
-                                <span class="font-black text-lg tracking-tighter uppercase leading-none block">FORJA</span>
-                                <span class="text-[#fba931] text-xs font-bold tracking-widest uppercase">Biobío</span>
-                            </div>
-                        </div>
-
-                        <div class="flex items-center space-x-4 md:space-x-8">
-                            <span onclick="navigate('dashboard')" id="link-dashboard" class="nav-link text-[#0f172a] active">Academia</span>
-                            <span onclick="navigate('eventos')" id="link-eventos" class="nav-link text-[#0f172a]">Eventos</span>
-                            <button onclick="logout()" class="text-[9px] font-black uppercase bg-gray-100 px-3 py-2 rounded-lg hover:bg-gray-200 transition-colors">Salir</button>
+            <nav id="main-nav" class="bg-white sticky top-0 z-50 hidden" style="box-shadow: 0 4px 12px rgba(15,23,42,0.05);">
+                <div class="max-w-[1360px] mx-auto px-10 h-[120px] flex justify-between items-center">
+                    <div class="flex items-center gap-5 cursor-pointer" onclick="navigate('dashboard')">
+                        <img src="/assets/images/logos/pnl-del-biobio01.png" alt="PNL" style="height: 80px; padding: 5px 0;">
+                        <div class="hidden sm:block">
+                            <span class="font-black text-lg tracking-tighter uppercase leading-none block">FORJA</span>
+                            <span class="text-[#fba931] text-xs font-bold tracking-widest uppercase">Biobío</span>
                         </div>
                     </div>
+
+                    <div style="display: flex; items-center: center !important; gap: 40px;">
+                        <span onclick="navigate('dashboard')" id="link-dashboard" class="nav-link text-[#0f172a] active" style="font-weight: 800; text-transform: uppercase; font-size: 14px; cursor: pointer;">Academia</span>
+                        <span onclick="navigate('eventos')" id="link-eventos" class="nav-link text-[#0f172a]" style="font-weight: 800; text-transform: uppercase; font-size: 14px; cursor: pointer;">Eventos</span>
+                        <button onclick="logout()" style="font-weight: 800; text-transform: uppercase; font-size: 10px; background: #0f172a; color: white; padding: 10px 20px; border-radius: 8px;">Salir</button>
+                    </div>
                 </div>
+                <div style="height: 3px; background-color: #fba931;"></div>
             </nav>
         `;
     }
