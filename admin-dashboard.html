@@ -402,7 +402,7 @@
                 // Saludo personalizado
                 const profile = JSON.parse(sessionStorage.getItem('pnl_profile'));
                 if (profile && profile.full_name) {
-                    const firstName = profile.full_name.split(' ')[0];
+                    const firstName = (profile.full_name || 'Militante').split(' ')[0];
                     document.getElementById('welcome-msg').innerText = `Hola, ${firstName} — Estado Regional`;
                 } else {
                     document.getElementById('welcome-msg').innerText = `Estado Regional de la Gestión`;

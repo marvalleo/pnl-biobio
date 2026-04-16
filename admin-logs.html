@@ -213,7 +213,7 @@
 
             let query = supabaseClient
                 .from('system_logs')
-                .select('*, profiles(full_name, email)')
+                .select('*, profiles(*)')
                 .order('created_at', { ascending: false })
                 .limit(100);
 

@@ -10,6 +10,12 @@
         rel="stylesheet">
     <link rel="stylesheet"
         href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+    
+    <!-- Librerías de Terceros (Cargar antes que la lógica) -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script type="module" src="supabase-config.js"></script>
+    
     <style>
         :root {
             --pnl-blue: #0f172a;
@@ -273,12 +279,16 @@
                     </div>
                     <div class="flex gap-4">
                         <div class="flex flex-col items-end">
-                            <span class="text-[10px] font-black uppercase text-green-500">Exitosos</span>
-                            <span id="import-success-total" class="font-900 text-xl text-green-600">0</span>
+                            <span class="text-[8px] font-black uppercase text-green-500">Nuevos</span>
+                            <span id="import-new-total" class="font-900 text-lg text-green-600">0</span>
                         </div>
-                        <div class="flex flex-col items-end">
-                            <span class="text-[10px] font-black uppercase text-red-500">Fallidos</span>
-                            <span id="import-error-total" class="font-900 text-xl text-red-600">0</span>
+                        <div class="flex flex-col items-end border-l border-gray-200 pl-4">
+                            <span class="text-[8px] font-black uppercase text-gray-400">Existentes</span>
+                            <span id="import-existing-total" class="font-900 text-lg text-gray-500">0</span>
+                        </div>
+                        <div class="flex flex-col items-end border-l border-gray-200 pl-4">
+                            <span class="text-[8px] font-black uppercase text-red-500">Fallidos</span>
+                            <span id="import-error-total" class="font-900 text-lg text-red-500">0</span>
                         </div>
                     </div>
                 </div>
@@ -298,9 +308,9 @@
                         <span class="block text-[9px] font-black uppercase text-green-600 mb-1">Nuevos</span>
                         <span id="res-new" class="text-2xl font-900 text-green-700">0</span>
                     </div>
-                    <div class="bg-blue-50 p-4 rounded-2xl border border-blue-100 text-center">
-                        <span class="block text-[9px] font-black uppercase text-blue-600 mb-1">Actualizados</span>
-                        <span id="res-updated" class="text-2xl font-900 text-blue-700">0</span>
+                    <div class="bg-gray-50 p-4 rounded-2xl border border-gray-200 text-center">
+                        <span class="block text-[9px] font-black uppercase text-gray-500 mb-1">Ya Existentes</span>
+                        <span id="res-existing" class="text-2xl font-900 text-gray-600">0</span>
                     </div>
                     <div class="bg-red-50 p-4 rounded-2xl border border-red-100 text-center">
                         <span class="block text-[9px] font-black uppercase text-red-600 mb-1">Fallidos</span>
@@ -564,7 +574,8 @@
 
         let currentMsg = '';
         function showWhatsAppModal(user, pass) {
-            currentMsg = `Hola ${user.full_name.split(' ')[0]},\n\nYa puedes acceder a la Forja Libertaria:\n🌐 https://nacionallibertariobiobio.cl/forja-login.html\n\nUsuario: ${user.email}\nClave: ${pass}\n\nDeberás cambiarla al entrar por primera vez. ¡Bienvenid@!`;
+            const firstName = (user.full_name || 'Nuevo').split(' ')[0];
+            currentMsg = `Hola ${firstName},\n\nYa puedes acceder a la Forja Libertaria:\n🌐 https://nacionallibertariobiobio.cl/forja-login.html\n\nUsuario: ${user.email}\nClave: ${pass}\n\nDeberás cambiarla al entrar por primera vez. ¡Bienvenid@!`;
             document.getElementById('whatsapp-message').innerText = currentMsg;
             document.getElementById('whatsapp-modal').classList.remove('hidden');
         }
@@ -593,128 +604,199 @@
 
             const reader = new FileReader();
             reader.onload = async (e) => {
-                const data = new Uint8Array(e.target.result);
-                const workbook = XLSX.read(data, { type: 'array' });
-                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array', cellDates: true });
+                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
 
-                // Leer con cabeceras directas (header: 1 para inspeccionar primero)
-                const rowsRaw = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
-                if (rowsRaw.length < 2) return showToast('El archivo está vacío o no tiene cabeceras', 'error');
+                    // Convertir a matriz de arreglos primero para detectar cabeceras dinámicamente
+                    const rowsRaw = XLSX.utils.sheet_to_json(firstSheet, { header: 1, defval: null });
+                    if (rowsRaw.length < 2) return showToast('El archivo no tiene suficientes datos.', 'error');
 
-                const headersArr = rowsRaw[0];
-                const rows = XLSX.utils.sheet_to_json(firstSheet);
-
-                // Mostrar Modal de Progreso
-                const progressModal = document.getElementById('import-progress-modal');
-                const ongoingDiv = document.getElementById('import-ongoing');
-                const resultDiv = document.getElementById('import-result');
-                const progressBar = document.getElementById('import-bar');
-                const percentText = document.getElementById('import-percent');
-                const counterText = document.getElementById('import-counter');
-                const successTotal = document.getElementById('import-success-total');
-                const errorTotal = document.getElementById('import-error-total');
-                const statusMsg = document.getElementById('import-status-msg');
-
-                progressModal.classList.remove('hidden');
-                ongoingDiv.classList.remove('hidden');
-                resultDiv.classList.add('hidden');
-
-                const total = rows.length;
-                let processed = 0;
-                let successCount = 0;
-                let updatedCount = 0;
-                let newCount = 0;
-                let errorCount = 0;
-                let failures = [];
-
-                counterText.textContent = `0 / ${total}`;
-
-                // Configuración de Batch (5 peticiones concurrentes)
-                const BATCH_SIZE = 8;
-                const chunks = [];
-                for (let i = 0; i < rows.length; i += BATCH_SIZE) {
-                    chunks.push(rows.slice(i, i + BATCH_SIZE));
-                }
-
-                for (const chunk of chunks) {
-                    await Promise.all(chunk.map(async (row) => {
-                        // Sanitizar cabeceras raras detectadas (\r\nNombre Completo)
-                        const cleanRow = {};
-                        Object.keys(row).forEach(key => {
-                            const cleanKey = key.trim().replace(/[\r\n]/g, '');
-                            let value = row[key];
-                            if (typeof value === 'string') value = value.trim();
-                            cleanRow[cleanKey] = value;
-                        });
-
-                        const userData = {
-                            full_name: cleanRow['Nombre Completo'] || cleanRow['full_name'] || cleanRow['Nombre'],
-                            email: cleanRow['Email'] || cleanRow['email'] || cleanRow['Correo'],
-                            birth_date: cleanRow['Fecha de Nacimiento'] || cleanRow['birth_date'],
-                            comuna: cleanRow['Comuna'] || cleanRow['comuna'] || cleanRow['Ciudad'],
-                            role: cleanRow['Rol'] || cleanRow['role'] || 'normal'
-                        };
-
-                        if (userData.email) userData.email = userData.email.replace(/\s+/g, '').toLowerCase();
-
-                        if (userData.full_name && userData.email) {
-                            try {
-                                const { data, error } = await supabaseClient.functions.invoke('create-user-temp', { body: userData });
-                                if (error) throw error;
-
-                                successCount++;
-                                if (data.isNew) newCount++;
-                                else updatedCount++;
-
-                                successTotal.textContent = successCount;
-                            } catch (err) {
-                                console.error(`Error importando ${userData.email}:`, err);
-                                errorCount++;
-                                failures.push({ email: userData.email, reason: err.message || 'Error desconocido' });
-                                errorTotal.textContent = errorCount;
-                            }
-                        } else {
-                            errorCount++;
-                            failures.push({ email: userData.email || 'DESCONOCIDO', reason: 'Falta nombre o email' });
-                            errorTotal.textContent = errorCount;
+                    // 1. Detectar en qué fila están las cabeceras (buscamos una que tenga "email" o "nombre")
+                    let headerIndex = -1;
+                    const possibleHeaders = ['email', 'correo', 'nombre', 'rut'];
+                    
+                    for (let i = 0; i < Math.min(rowsRaw.length, 10); i++) {
+                        const row = rowsRaw[i];
+                        if (!row) continue;
+                        const hasHeader = row.some(cell => 
+                            cell && possibleHeaders.some(ph => String(cell).toLowerCase().includes(ph))
+                        );
+                        if (hasHeader) {
+                            headerIndex = i;
+                            break;
                         }
+                    }
 
-                        processed++;
-                        const pct = Math.round((processed / total) * 100);
-                        progressBar.style.width = `${pct}%`;
-                        percentText.textContent = `${pct}%`;
-                        counterText.textContent = `${processed} / ${total}`;
-                        statusMsg.textContent = `Sincronizando a ${userData.full_name.split(' ')[0]}...`;
-                    }));
-                }
+                    // Si no detectamos nada, asumimos la fila 0
+                    if (headerIndex === -1) headerIndex = 0;
 
-                // Mostrar Resultado Final
-                ongoingDiv.classList.add('hidden');
-                resultDiv.classList.remove('hidden');
+                    // Re-leer desde la fila detectada
+                    const rows = XLSX.utils.sheet_to_json(firstSheet, { range: headerIndex });
+                    console.log(`[Import] Filas detectadas: ${rows.length} (Headers en fila ${headerIndex})`);
+                    if (rows.length === 0) return showToast('No se encontraron filas con datos.', 'warning');
 
-                document.getElementById('res-new').textContent = newCount;
-                document.getElementById('res-updated').textContent = updatedCount;
-                document.getElementById('res-failed').textContent = errorCount;
+                    // Mostrar Modal de Progreso
+                    const progressModal = document.getElementById('import-progress-modal');
+                    const ongoingDiv = document.getElementById('import-ongoing');
+                    const resultDiv = document.getElementById('import-result');
+                    const progressBar = document.getElementById('import-bar');
+                    const percentText = document.getElementById('import-percent');
+                    const counterText = document.getElementById('import-counter');
+                    const statusMsg = document.getElementById('import-status-msg');
 
-                if (failures.length > 0) {
-                    const container = document.getElementById('error-log-container');
-                    const log = document.getElementById('import-error-log');
-                    container.classList.remove('hidden');
-                    log.innerHTML = failures.map(f => `
-                        <div class="mb-2 p-2 border-b border-gray-800">
-                            <span class="text-red-400 font-bold">[${f.email}]</span><br>
-                            <span class="text-gray-500">${f.reason}</span>
-                        </div>
-                    `).join('');
+                    const importNewTotal = document.getElementById('import-new-total');
+                    const importExistingTotal = document.getElementById('import-existing-total');
+                    const importErrorTotalView = document.getElementById('import-error-total');
+
+                    progressModal.classList.remove('hidden');
+                    ongoingDiv.classList.remove('hidden');
+                    resultDiv.classList.add('hidden');
+
+                    let processed = 0;
+                    let newCount = 0;
+                    let existingCount = 0;
+                    let errorCount = 0;
+                    let failures = [];
+
+                    const total = rows.length;
+                    counterText.textContent = `0 / ${total}`;
+
+                    // Helper para normalizar llaves de objetos (remover espacios, tildes, etc)
+                    const normalizeKey = (k) => k.toLowerCase().trim()
+                        .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // remover tildes
+                        .replace(/[^\w\s]/gi, '') // remover especiales
+                        .replace(/\s+/g, ' '); // colapsar espacios múltiples en uno solo
+
+                    // Configuración de Batch (8 concurrentes)
+                    const BATCH_SIZE = 8;
+                    const chunks = [];
+                    for (let i = 0; i < rows.length; i += BATCH_SIZE) {
+                        chunks.push(rows.slice(i, i + BATCH_SIZE));
+                    }
+
+                    // Helper para sleep
+                    const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+                    for (const chunk of chunks) {
+                        await Promise.all(chunk.map(async (row) => {
+                            // ... (lógica anterior se mantiene igual)
+                            const cleanRow = {};
+                            Object.keys(row).forEach(key => {
+                                cleanRow[normalizeKey(key)] = row[key];
+                            });
+
+                            let formattedBirthDate = cleanRow['fecha de nacimiento'] || cleanRow['fecha nacimiento'] || cleanRow['nacimiento'] || cleanRow['birth_date'];
+                            
+                            if (formattedBirthDate instanceof Date) {
+                                formattedBirthDate = formattedBirthDate.toISOString().split('T')[0];
+                            } else if (typeof formattedBirthDate === 'string' && formattedBirthDate.includes('/')) {
+                                const parts = formattedBirthDate.split('/');
+                                if (parts.length === 3) {
+                                    if (parts[2].length === 4) formattedBirthDate = `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+                                    else formattedBirthDate = `19${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+                                }
+                            }
+
+                            const userData = {
+                                full_name: cleanRow['nombre completo'] || cleanRow['fullname'] || cleanRow['nombre'] || cleanRow['militante'],
+                                email: cleanRow['email'] || cleanRow['correo'] || cleanRow['e mail'] || cleanRow['mail'],
+                                birth_date: formattedBirthDate,
+                                comuna: cleanRow['comuna'] || cleanRow['ciudad'] || cleanRow['localidad'],
+                                rut: cleanRow['rut'] || cleanRow['dni'] || cleanRow['identificacion'],
+                                phone_number: cleanRow['telefono'] || cleanRow['celular'] || cleanRow['phone_number'] || cleanRow['movil'],
+                                role: cleanRow['rol'] || cleanRow['role'] || 'normal'
+                            };
+
+                            if (userData.email && typeof userData.email === 'string') {
+                                userData.email = userData.email.replace(/\s+/g, '').toLowerCase();
+                            }
+
+                            if (userData.email && userData.full_name) {
+                                try {
+                                    const { data, error } = await supabaseClient.functions.invoke('create-user-temp', { body: userData });
+                                    if (error) throw error;
+
+                                    if (data.isNew) {
+                                        newCount++;
+                                        importNewTotal.textContent = newCount;
+                                    } else {
+                                        existingCount++;
+                                        importExistingTotal.textContent = existingCount;
+                                    }
+                                } catch (err) {
+                                    console.error(`Error importando ${userData.email}:`, err);
+                                    let reason = 'Error en DB/Auth';
+                                    
+                                    if (err.context && err.context.json) {
+                                        try {
+                                            const errorBody = await err.context.json();
+                                            reason = errorBody.error || JSON.stringify(errorBody) || reason;
+                                        } catch (e) {
+                                            reason = err.message || reason;
+                                        }
+                                    } else if (err.message) {
+                                        reason = err.message;
+                                    }
+
+                                    errorCount++;
+                                    failures.push({ email: userData.email, reason: reason });
+                                    importErrorTotalView.textContent = errorCount;
+                                }
+                            } else if (userData.email || userData.full_name) {
+                                errorCount++;
+                                failures.push({ 
+                                    email: userData.email || 'SIN EMAIL', 
+                                    reason: `Datos incompletos` 
+                                });
+                                importErrorTotalView.textContent = errorCount;
+                            }
+
+                            processed++;
+                            const pct = Math.round((processed / total) * 100);
+                            progressBar.style.width = `${pct}%`;
+                            percentText.textContent = `${pct}%`;
+                            counterText.textContent = `${processed} / ${total}`;
+                            const firstName = (userData.full_name || 'Procesando').split(' ')[0];
+                            statusMsg.textContent = `Sincronizando a ${firstName}...`;
+                        }));
+
+                        // Pausa táctica de 250ms entre batches para que Supabase respire
+                        await sleep(250);
+                    }
+
+                    // Mostrar Resultado Final
+                    ongoingDiv.classList.add('hidden');
+                    resultDiv.classList.remove('hidden');
+
+                    document.getElementById('res-new').textContent = newCount;
+                    document.getElementById('res-existing').textContent = existingCount;
+                    document.getElementById('res-failed').textContent = errorCount;
+
+                    if (failures.length > 0) {
+                        const container = document.getElementById('error-log-container');
+                        const log = document.getElementById('import-error-log');
+                        container.classList.remove('hidden');
+                        log.innerHTML = failures.map(f => `
+                            <div class="mb-2 p-2 border-b border-gray-100 flex flex-col gap-1">
+                                <span class="text-red-500 font-bold text-[10px] uppercase">${f.email}</span>
+                                <span class="text-gray-500 text-[10px] font-medium italic leading-none">${f.reason}</span>
+                            </div>
+                        `).join('');
+                    } else {
+                        document.getElementById('error-log-container').classList.add('hidden');
+                    }
+                } catch (err) {
+                    console.error("Error crítico en importación:", err);
+                    showToast('Error al procesar el archivo Excel.', 'error');
                 }
             };
+            reader.onerror = () => showToast('Error al leer el archivo.', 'error');
             reader.readAsArrayBuffer(file);
             event.target.value = '';
         }
     </script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
-    <script type="module" src="supabase-config.js"></script>
     <script type="module" src="/shared.js"></script>
 </body>
 

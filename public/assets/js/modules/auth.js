@@ -51,8 +51,8 @@ export async function initNavbar() {
 
         // Obtener perfil (sessionStorage como caché)
         let profile = JSON.parse(sessionStorage.getItem('pnl_profile'));
-        if (!profile || !profile.hasOwnProperty('avatar_url')) {
-            const { data } = await window.supabaseClient.from('profiles').select('full_name, role, avatar_url').eq('auth_id', user.id).single();
+        if (!profile || !profile.hasOwnProperty('full_name')) {
+            const { data } = await window.supabaseClient.from('profiles').select('*').eq('auth_id', user.id).single();
             profile = data;
             if (profile) sessionStorage.setItem('pnl_profile', JSON.stringify(profile));
         }

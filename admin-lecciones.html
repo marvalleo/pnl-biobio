@@ -443,7 +443,7 @@
             try {
                 const { data, error } = await supabaseClient
                     .from('lesson_registrations')
-                    .select('*, profiles(full_name, rut, email)')
+                    .select('*, profiles(*)')
                     .eq('lesson_id', lessonId);
 
                 if (error) throw error;

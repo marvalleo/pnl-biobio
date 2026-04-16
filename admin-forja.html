@@ -527,7 +527,7 @@
             list.innerHTML = '<div class="animate-pulse flex flex-col gap-4 p-8"><div class="h-10 bg-slate-100 rounded-xl w-full"></div><div class="h-10 bg-slate-100 rounded-xl w-full"></div></div>';
             document.getElementById('reg-modal').classList.remove('hidden');
             try {
-                const { data, error } = await supabaseClient.from('regional_event_registrations').select('*, profiles(full_name, rut, email)').eq('event_id', eventId);
+                const { data, error } = await supabaseClient.from('regional_event_registrations').select('*, profiles(*)').eq('event_id', eventId);
                 if (error) throw error;
                 currentModalData = { id: eventId, title: eventTitle, registrations: data || [] };
                 if (data.length === 0) { list.innerHTML = '<p class="text-center text-gray-400 py-10">Sin inscritos.</p>'; return; }
