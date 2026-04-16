@@ -152,8 +152,10 @@ export function showImpactModal(config) {
 /**
  * Función global para copiar al portapapeles con feedback y fallback
  */
-window.copyToClipboard = async function(text, el) {
+export async function copyToClipboard(text, el) {
     if (!text) return;
+
+    window.copyToClipboard = copyToClipboard; // Mantener compatibilidad global
 
     const label = el.querySelector('.email-val');
     const originalText = label.innerText;
@@ -199,15 +201,17 @@ window.copyToClipboard = async function(text, el) {
 /**
  * Función global para ampliar la imagen en pantalla completa (Lightbox)
  */
-window.openImageZoom = function(url) {
+export function openImageZoom(url) {
     if (!url) return;
     
+    window.openImageZoom = openImageZoom; // Mantener compatibilidad global
+
     // Evitar múltiples zooms
     if (document.getElementById('image-zoom-overlay')) return;
 
     const overlay = document.createElement('div');
     overlay.id = 'image-zoom-overlay';
-    overlay.style.cssText = "position:fixed; inset:0; background:rgba(0,0,0,0.95); backdrop-filter:blur(20px); z-index:300000; display:flex; items-center; justify-content:center; padding:1rem; cursor:zoom-out; opacity:0; transition:all 0.3s;";
+    overlay.style.cssText = "position:fixed; inset:0; background:rgba(0,0,0,0.95); backdrop-filter:blur(20px); z-index:300000; display:flex; align-items:center; justify-content:center; padding:1rem; cursor:zoom-out; opacity:0; transition:all 0.3s;";
     
     const sanitize = (html) => (window.sanitizeHTML ? window.sanitizeHTML(html) : html);
     overlay.innerHTML = sanitize(`
@@ -257,8 +261,6 @@ window.openImageZoom = function(url) {
     };
     window.addEventListener('keydown', escHandler);
 };
-
-window.copyToClipboard = copyToClipboard;
 
 export function handleModalImageError(img, url) {
     console.error("PNL Image Error: No se pudo cargar la imagen", url);
