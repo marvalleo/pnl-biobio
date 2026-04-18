@@ -30,10 +30,10 @@ class PnlNavbar extends HTMLElement {
         let navLinksHTML = '';
         links.forEach(link => {
             const isActive = currentPath === link.path;
-            const linkStyle = isActive 
-                ? "color: #0f172a; border-bottom: 3px solid #fba931; padding-bottom: 6px; font-weight: 800;" 
+            const linkStyle = isActive
+                ? "color: #0f172a; border-bottom: 3px solid #fba931; padding-bottom: 6px; font-weight: 800;"
                 : "color: #9ca3af; border-bottom: 3px solid transparent; padding-bottom: 6px; font-weight: 800;";
-            
+
             navLinksHTML += `
                 <a href="${link.path}" 
                    style="text-decoration: none; text-transform: uppercase; font-size: 14px; letter-spacing: 0.1em; font-family: 'Montserrat', sans-serif !important; transition: all 0.3s; ${linkStyle} display: inline-block;" 
@@ -55,13 +55,15 @@ class PnlNavbar extends HTMLElement {
         let extraButtonMobile = '';
         const isHomePage = currentPath === 'index.html' || currentPath === '';
         const buttonStyle = "background-color: #0f172a; color: white; padding: 10px 24px; border-radius: 8px; font-size: 11px; font-weight: 900; text-transform: uppercase; text-decoration: none; transition: all 0.3s; box-shadow: 0 4px 6px rgba(0,0,0,0.1); display: inline-block; font-family: 'Montserrat', sans-serif;";
-        
+
         if (!isHomePage) {
             const fixedButtonStyle = buttonStyle + " width: 160px; height: 42px; display: flex; align-items: center; justify-content: center; white-space: nowrap;";
             extraButton = `<a href="forja-login.html" style="${fixedButtonStyle}" onmouseover="this.style.backgroundColor='#1e293b'" onmouseout="this.style.backgroundColor='#0f172a'">Acceso Forja</a>`;
             extraButtonMobile = `<a href="forja-login.html" style="${buttonStyle} width: 100%; text-align: center; margin-top: 8px;">Acceso Forja</a>`;
         } else {
-            extraButton = '';
+            const fixedButtonStyle = buttonStyle + " width: 160px; height: 42px; display: flex; align-items: center; justify-content: center; white-space: nowrap;";
+            extraButton = `<a href="https://nacionallibertario.cl/" target="_blank" style="${fixedButtonStyle}" onmouseover="this.style.backgroundColor='#1e293b'" onmouseout="this.style.backgroundColor='#0f172a'">Sitio Nacional</a>`;
+            extraButtonMobile = `<a href="https://nacionallibertario.cl/" target="_blank" style="${buttonStyle} width: 100%; text-align: center; margin-top: 8px;">PNL Nacional</a>`;
         }
 
         this.innerHTML = `
@@ -120,10 +122,10 @@ class PnlNavbar extends HTMLElement {
         let desktopLinksHTML = '';
         links.forEach(link => {
             const isActive = currentPath === link.path;
-            const linkStyle = isActive 
-                ? "color: #0f172a; border-bottom: 3px solid #fba931; padding-bottom: 4px; font-weight: 800;" 
+            const linkStyle = isActive
+                ? "color: #0f172a; border-bottom: 3px solid #fba931; padding-bottom: 4px; font-weight: 800;"
                 : "color: #9ca3af; border-bottom: 3px solid transparent; padding-bottom: 4px; font-weight: 800;";
-            
+
             desktopLinksHTML += `
                 <a href="${link.path}" 
                    style="text-decoration: none; text-transform: uppercase; font-size: 14px; letter-spacing: 0.1em; transition: all 0.3s; ${linkStyle}" 
