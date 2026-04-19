@@ -110,6 +110,17 @@
                                     <button type="button" onclick="setAudience('admins', this)" class="audience-btn bg-gray-50 text-gray-400 py-3 rounded-2xl font-900 text-[9px] uppercase tracking-widest transition-all">Solo Administradores</button>
                                 </div>
                                 <input type="hidden" id="target_audience" value="all">
+                                
+                                <!-- Lista de Admins Dinámica -->
+                                <div id="admins-info" class="hidden mt-4 p-4 bg-blue-50/50 rounded-2xl border border-blue-100">
+                                    <span class="block text-[8px] font-black uppercase text-blue-400 mb-2 tracking-tighter">Destinatarios Confirmados:</span>
+                                    <div id="admins-list" class="flex flex-wrap gap-2">
+                                        <!-- Cargado por JS -->
+                                        <div class="animate-pulse flex space-x-4">
+                                            <div class="h-2 w-24 bg-blue-200 rounded"></div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
@@ -126,13 +137,54 @@
                                     <button type="button" onclick="insertImage()" class="w-7 h-7 rounded-lg bg-gray-50 flex items-center justify-center hover:bg-[#fba931] transition-all" title="Imagen"><span class="material-symbols-outlined text-sm">image</span></button>
                                 </div>
                             </div>
-                            <textarea id="body-html" required rows="12" placeholder="Escribe tu mensaje aquí..."
+                            <textarea id="body-html" required rows="12" 
                                 oninput="updatePreview()"
-                                class="w-full bg-gray-50 border-2 border-transparent rounded-2xl px-6 py-4 text-sm font-bold focus:border-[#fba931] focus:bg-white outline-none transition-all resize-none shadow-inner"></textarea>
+                                class="w-full bg-gray-50 border-2 border-transparent rounded-2xl px-6 py-4 text-sm font-bold focus:border-[#fba931] focus:bg-white outline-none transition-all resize-none shadow-inner">
+<div style="text-align: center; margin-bottom: 30px;">
+    <h2 style="color: #0f172a; font-size: 24px; font-weight: 800; border-bottom: 3px solid #fba931; display: inline-block; padding-bottom: 5px; text-transform: uppercase;">Estimados militantes del Partido Nacional Libertario del Biobío</h2>
+</div>
+
+<p>La Directiva regional Biobío da la bienvenida a todos nuestros militantes a nuestra página web: <a href="https://www.nacionallibertariobiobio.cl" style="color: #fba931; font-weight: 700;">nacionallibertariobiobio.cl</a></p>
+
+<p>Sitio creado como proyecto para poder tener mayor acercamiento con la militancia y que también ustedes se vean informados de lo que está pasando dentro del partido y acontecimientos nacionales.</p>
+
+<p>Esta página tendrá como objetivo el que ustedes puedan dejar consultas o temas a tratar, ya que no contamos aún con una sede oficial por el momento.</p>
+
+<p>Estamos seguros que será de gran apoyo a las 33 comunas de nuestras 3 provincias de nuestra <b>REGIÓN</b>.</p>
+
+<p>Interesados en contactar a la directiva pueden dejar un correo a: <a href="mailto:directivapnlbiobio@gmail.com" style="color: #fba931; font-weight: 800; text-decoration: none;">directivapnlbiobio@gmail.com</a></p>
+
+<div style="background-color: #f1f5f9; padding: 25px; border-radius: 12px; margin: 35px 0;">
+    <h3 style="color: #0f172a; margin-top: 0; font-weight: 800;">¿CÓMO INGRESO PARA PODER PARTICIPAR?</h3>
+    <ol style="margin-bottom: 0; line-height: 1.8;">
+        <li>Ingresar a la página web WWW.NACIONALLIBERTARIOBIOBIO.CL</li>
+        <li>Luego baje al último ítem: <b>Forja Libertaria</b>.</li>
+        <li>Ingresar con su correo y le llegará una clave.</li>
+        <li>Si gusta, puede cambiar la clave y ya estaría listo.</li>
+    </ol>
+</div>
+
+<p>Dentro tendrán beneficios como Academia, poder certificarse en cursos varios, entre ellos:</p>
+
+<div style="border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; margin: 20px 0;">
+    <div style="padding: 15px; border-bottom: 1px solid #e2e8f0; background-color: #ffffff;">
+        <b style="color: #0f172a;">Liderazgo político:</b> Forjando Líderes, comienza el 29 de abril a las 20:00 hrs.
+    </div>
+    <div style="padding: 15px; background-color: #ffffff;">
+        <b style="color: #0f172a;">Liderar para crecer:</b> Ordena tu Pyme, Caja llena cabeza fría / fecha por determinar.
+    </div>
+</div>
+
+<p style="text-align: center; color: #fba931; font-weight: 800; font-size: 14px; margin-top: 30px; text-transform: uppercase;">
+    Todos los cursos son exclusivos para Militantes.
+</p></textarea>
                         </div>
                     </div>
 
-                    <div class="pt-6 border-t border-dashed border-gray-100 flex justify-end">
+                    <div class="pt-6 border-t border-dashed border-gray-100 flex justify-end gap-4">
+                        <button type="button" onclick="openPreviewModal()" class="px-8 py-5 rounded-2xl font-900 text-[10px] uppercase tracking-widest flex items-center gap-3 text-gray-500 bg-white border-2 border-gray-100 hover:border-[#fba931] hover:text-[#0f172a] transition-all">
+                            <span class="material-symbols-outlined text-xl">visibility</span> Previsualizar
+                        </button>
                         <button type="submit" id="send-btn" class="btn-gold px-12 py-5 rounded-2xl font-900 text-[10px] uppercase tracking-widest flex items-center gap-3">
                             <span class="material-symbols-outlined text-xl">forward_to_inbox</span> Enviar Comunicado
                         </button>
@@ -184,7 +236,7 @@
 
     <!-- Modal de Previsualización -->
     <div id="preview-modal" class="fixed inset-0 bg-black/60 backdrop-blur-md z-[60] hidden flex items-center justify-center p-6">
-        <div class="bg-white w-full max-w-2xl rounded-[2.5rem] overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
+        <div class="bg-white w-full max-w-5xl rounded-[2.5rem] overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
             <div class="bg-[#0f172a] text-white p-6 flex justify-between items-center">
                 <h3 class="font-900 uppercase text-xs tracking-widest">Vista Previa del Comunicado</h3>
                 <button onclick="closePreviewModal()" class="material-symbols-outlined hover:text-[#fba931]">close</button>
@@ -243,7 +295,7 @@
             updatePreview();
         });
 
-        function setAudience(type, btn) {
+        async function setAudience(type, btn) {
             currentAudience = type;
             document.getElementById('target_audience').value = type;
             document.querySelectorAll('.audience-btn').forEach(b => {
@@ -252,6 +304,39 @@
             });
             btn.classList.add('active', 'bg-[#0f172a]', 'text-white');
             btn.classList.remove('bg-gray-50', 'text-gray-400');
+
+            const infoDiv = document.getElementById('admins-info');
+            if (type === 'admins') {
+                infoDiv.classList.remove('hidden');
+                await loadAdminList();
+            } else {
+                infoDiv.classList.add('hidden');
+            }
+        }
+
+        async function loadAdminList() {
+            const listContainer = document.getElementById('admins-list');
+            try {
+                const { data, error } = await supabaseClient
+                    .from('profiles')
+                    .select('full_name')
+                    .in('role', ['admin', 'super_admin']);
+                
+                if (error) throw error;
+
+                if (data && data.length > 0) {
+                    listContainer.innerHTML = data.map(adm => `
+                        <span class="px-3 py-1 bg-white border border-blue-100 rounded-full text-[10px] font-bold text-blue-700 shadow-sm">
+                            ${adm.full_name || 'Sin nombre'}
+                        </span>
+                    `).join('');
+                } else {
+                    listContainer.innerHTML = '<span class="text-[9px] text-red-400 font-bold">No se encontraron administradores.</span>';
+                }
+            } catch (err) {
+                console.error("Error al cargar administradores:", err);
+                listContainer.innerHTML = '<span class="text-[9px] text-red-500">Error al cargar lista.</span>';
+            }
         }
 
         // Helpers de Edición HTML
@@ -389,26 +474,7 @@
         }
 
         function openPreviewModal() {
-            const body = document.getElementById('body-html').value;
-            const container = document.getElementById('preview-container');
-            
-            // Estilo base para el mail
-            const wrappedHTML = `
-                <div style="font-family: Arial, sans-serif; color: #0f172a; max-width: 600px; margin: 0 auto; border: 1px solid #f1f5f9;">
-                    <div style="background-color: #0f172a; padding: 20px; text-align: center;">
-                        <img src="https://nacionallibertariobiobio.cl/assets/images/logos/pnl-del-biobio01.png" style="max-height: 80px;">
-                    </div>
-                    <div style="padding: 40px;">
-                        ${body || '<p class="text-gray-400 italic">El contenido está vacío...</p>'}
-                    </div>
-                    <div style="background-color: #f8fafc; padding: 20px; text-align: center; font-size: 10px; color: #94a3b8;">
-                        <p>© 2026 Partido Nacional Libertario - Sede Regional Biobío</p>
-                        <p>Recibiste este email porque eres militante registrado.</p>
-                    </div>
-                </div>
-            `;
-            
-            container.innerHTML = wrappedHTML;
+            updatePreview(); // Aseguramos que esté fresco
             document.getElementById('preview-modal').classList.remove('hidden');
         }
 
@@ -438,46 +504,50 @@
             try {
                 const { data: { session } } = await supabaseClient.auth.getSession();
                 
-                const response = await fetch('/.supabase/functions/send-mass-email', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${session.access_token}`
-                    },
-                    body: JSON.stringify({ 
-                        subject, 
-                        bodyHtml: `
-                            <style>
-                                .email-content h2 { font-size: 22px !important; font-weight: 800 !important; color: #0f172a !important; margin: 25px 0 15px 0 !important; line-height: 1.2 !important; }
-                                .email-content b, .email-content strong { font-weight: 900 !important; color: #0f172a !important; }
-                                .email-content a { color: #fba931 !important; text-decoration: underline !important; }
-                                .email-content ul { padding-left: 20px !important; margin-bottom: 20px !important; }
-                                .email-content li { margin-bottom: 8px !important; }
-                            </style>
-                            <div style="font-family: Arial, sans-serif; color: #475569; max-width: 600px; margin: 0 auto; background: white; border-radius: 20px; overflow: hidden; border: 1px solid #e2e8f0;">
-                                <div style="background-color: white; padding: 40px 20px; text-align: center;">
-                                    <img src="https://nacionallibertariobiobio.cl/assets/images/logos/pwa-icon-vfinal.png" style="max-height: 110px; width: auto; display: block; margin: 0 auto;">
-                                </div>
-                                <div class="email-content" style="padding: 10px 45px 60px 45px; line-height: 1.8; font-size: 16px;">
-                                    ${bodyHtml.includes('<p>') || bodyHtml.includes('<div>') ? bodyHtml : bodyHtml.replace(/\n/g, '<br>')}
-                                </div>
-                                <div style="background-color: #0f172a; padding: 50px 20px; text-align: center; color: white;">
-                                    <img src="https://nacionallibertariobiobio.cl/assets/images/logos/logo-footer.png" style="max-height: 65px; width: auto; display: block; margin: 0 auto 30px auto;">
-                                    <p style="margin: 0 0 12px 0; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 2px; color: white;">© 2026 Partido Nacional Libertario</p>
-                                    <p style="margin: 0 0 15px 0; font-size: 10px; color: rgba(255,255,255,0.5); font-weight: 600;">Sede Regional Biobío • Comunicado Oficial para Militantes</p>
-                                    <div style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;">
-                                        <p style="margin: 0; font-size: 9px; color: rgba(255,255,255,0.35); line-height: 1.5; font-style: italic;">Este es un comunicado oficial emitido de forma automática. Por favor, no responda a esta dirección de correo electrónico, ya que no se encuentra habilitada para recibir mensajes entrantes.</p>
-                                    </div>
-                                </div>
+                // Preparamos el HTML final igual que antes pero de forma más limpia
+                const finalHtml = `
+                    <style>
+                        .email-content h2 { font-size: 22px !important; font-weight: 800 !important; color: #0f172a !important; margin: 25px 0 15px 0 !important; line-height: 1.2 !important; }
+                        .email-content b, .email-content strong { font-weight: 900 !important; color: #0f172a !important; }
+                        .email-content a { color: #fba931 !important; text-decoration: underline !important; }
+                        .email-content ul { padding-left: 20px !important; margin-bottom: 20px !important; }
+                        .email-content li { margin-bottom: 8px !important; }
+                    </style>
+                    <div style="font-family: Arial, sans-serif; color: #475569; max-width: 600px; margin: 0 auto; background: white; border-radius: 20px; overflow: hidden; border: 1px solid #e2e8f0;">
+                        <div style="background-color: white; padding: 40px 20px; text-align: center;">
+                            <img src="https://nacionallibertariobiobio.cl/assets/images/logos/pwa-icon-vfinal.png" style="max-height: 110px; width: auto; display: block; margin: 0 auto;">
+                        </div>
+                        <div class="email-content" style="padding: 10px 45px 60px 45px; line-height: 1.8; font-size: 16px;">
+                            ${bodyHtml.includes('<p>') || bodyHtml.includes('<div>') ? bodyHtml : bodyHtml.replace(/\n/g, '<br>')}
+                        </div>
+                        <div style="background-color: #0f172a; padding: 50px 20px; text-align: center; color: white;">
+                            <img src="https://nacionallibertariobiobio.cl/assets/images/logos/logo-footer.png" style="max-height: 65px; width: auto; display: block; margin: 0 auto 30px auto;">
+                            <p style="margin: 0 0 12px 0; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 2px; color: white;">© 2026 Partido Nacional Libertario</p>
+                            <p style="margin: 0 0 15px 0; font-size: 10px; color: rgba(255,255,255,0.5); font-weight: 600;">Sede Regional Biobío • Comunicado Oficial para Militantes</p>
+                            <div style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;">
+                                <p style="margin: 0; font-size: 9px; color: rgba(255,255,255,0.35); line-height: 1.5; font-style: italic;">Este es un comunicado oficial emitido de forma automática. Por favor, no responda a esta dirección de correo electrónico, ya que no se encuentra habilitada para recibir mensajes entrantes.</p>
                             </div>
-                        `, 
-                        target_audience: audience 
-                    })
-                });
+                        </div>
+                    </div>
+                `;
 
-                const data = await response.json();
+                console.log("🚀 Iniciando despacho desde:", window.location.origin);
+                console.log("🔗 URL Supabase:", supabaseClient.supabaseUrl);
+
+                // Invocamos la función de Supabase asegurando headers completos para local
+                const { data, error } = await supabaseClient.functions.invoke('send-mass-email', {
+                    body: { 
+                        subject, 
+                        bodyHtml: finalHtml, 
+                        target_audience: audience 
+                    },
+                    headers: {
+                        'apikey': supabaseClient.supabaseKey,
+                        'Authorization': `Bearer ${session.access_token}`
+                    }
+                });
                 
-                if (data.error) throw new Error(data.error);
+                if (error) throw error;
 
                 showToast(`🚀 ¡Vuelo iniciado! Enviado a ${data.sent} militantes.`, 'success');
                 setTimeout(() => location.reload(), 2000);
