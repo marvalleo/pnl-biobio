@@ -463,9 +463,11 @@
                     </td>
                     <td class="px-8 py-5">
                         <div class="flex items-center gap-2">
-                            <div class="w-1.5 h-1.5 rounded-full ${c.status === 'completed' ? 'bg-green-500' : 'bg-red-500'}"></div>
-                            <span class="text-[9px] font-black uppercase tracking-widest ${c.status === 'completed' ? 'text-green-600' : 'text-red-600'}">
-                                ${c.status === 'completed' ? `Éxito: ${c.total_sent}/${c.total_recipients}` : (c.status === 'sending' ? 'Enviando...' : 'Fallo')}
+                            <div class="w-1.5 h-1.5 rounded-full ${c.status === 'completed' ? 'bg-green-500' : (c.status === 'sending' ? 'bg-blue-500 animate-pulse' : 'bg-red-500')}"></div>
+                            <span class="text-[9px] font-black uppercase tracking-widest ${c.status === 'completed' ? 'text-green-600' : (c.status === 'sending' ? 'text-blue-600' : 'text-red-600')}">
+                                ${c.status === 'completed' ? `Éxito: ${c.total_sent}/${c.total_recipients}` : 
+                                  (c.status === 'sending' ? 'Enviando...' : 
+                                  `<button onclick="viewErrorLog('${c.id}')" class="underline hover:text-red-800 transition-all">Fallo (Ver Log)</button>`)}
                             </span>
                         </div>
                     </td>
@@ -480,6 +482,26 @@
 
         function closePreviewModal() {
             document.getElementById('preview-modal').classList.add('hidden');
+        }
+
+        async function viewErrorLog(campaignId) {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('email_campaigns')
+                    .select('error_log, subject')
+                    .eq('id', campaignId)
+                    .single();
+                
+                if (error) throw error;
+
+                const logText = data.error_log && data.error_log.length > 0 
+                    ? data.error_log.join('\n') 
+                    : "No hay detalles adicionales del error.";
+
+                alert(`ASUNTO: ${data.subject}\n\nDETALLES DEL FALLO:\n${logText}`);
+            } catch (err) {
+                alert("Error al recuperar los logs.");
+            }
         }
 
         document.getElementById('email-form').onsubmit = (e) => {
