@@ -267,7 +267,7 @@
             <h3 class="text-2xl font-900 uppercase tracking-tighter mb-4">Acción de Alto Impacto</h3>
             <p class="text-gray-400 text-sm font-medium mb-8">Estás a punto de enviar un email a toda la comunidad. Esta acción no se puede deshacer.</p>
             <div class="space-y-3">
-                <button onclick="executeMassSend()" id="confirm-execute-btn" class="w-full bg-[#ef4444] text-white py-5 rounded-2xl font-900 text-xs uppercase tracking-widest shadow-lg shadow-red-500/20">Sí, ejecutar envío masivo</button>
+                <button onclick="executeMassSend()" id="confirm-execute-btn" style="background-color: #ef4444 !important; color: white !important; display: block; width: 100%;" class="py-5 rounded-2xl font-900 text-xs uppercase tracking-widest shadow-lg shadow-red-500/20">Sí, ejecutar envío masivo</button>
                 <button onclick="closeConfirmModal()" class="w-full py-4 font-900 text-[10px] uppercase text-gray-400">Cancelar y Revisar</button>
             </div>
         </div>
@@ -540,7 +540,7 @@
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${supabaseClient.supabaseKey}`, // Usamos la Anon Key como pide el dashboard
+                        'Authorization': `Bearer ${session.access_token}`, // Volvemos al token de usuario
                         'apikey': supabaseClient.supabaseKey
                     },
                     body: JSON.stringify({ 
