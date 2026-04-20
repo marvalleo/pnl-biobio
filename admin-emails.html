@@ -534,20 +534,28 @@
                 console.log("🚀 Iniciando despacho desde:", window.location.origin);
                 console.log("🔗 URL Supabase:", supabaseClient.supabaseUrl);
 
-                // Invocamos la función de Supabase asegurando headers completos para local
-                const { data, error } = await supabaseClient.functions.invoke('send-mass-email', {
-                    body: { 
+                // Intento de llamada directa vía fetch a la URL absoluta para descartar temas del SDK
+                const functionUrl = `${supabaseClient.supabaseUrl}/functions/v1/send-mass-email`;
+                const response = await fetch(functionUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${session.access_token}`,
+                        'apikey': supabaseClient.supabaseKey
+                    },
+                    body: JSON.stringify({ 
                         subject, 
                         bodyHtml: finalHtml, 
                         target_audience: audience 
-                    },
-                    headers: {
-                        'apikey': supabaseClient.supabaseKey,
-                        'Authorization': `Bearer ${session.access_token}`
-                    }
+                    })
                 });
-                
-                if (error) throw error;
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.error || `Error del servidor (${response.status})`);
+                }
+
+                const data = await response.json();
 
                 showToast(`🚀 ¡Vuelo iniciado! Enviado a ${data.sent} militantes.`, 'success');
                 setTimeout(() => location.reload(), 2000);
