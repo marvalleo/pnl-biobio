@@ -96,7 +96,7 @@
     <main class="max-w-7xl mx-auto px-6 py-10">
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
             <div>
-                <h1 class="text-3xl font-900 uppercase tracking-tighter">Padrón de Militantes</h1>
+                <h1 class="text-3xl font-900 uppercase tracking-tighter">Padrón de Militantes (V2)</h1>
                 <p class="text-gray-400 font-bold uppercase text-[10px] tracking-widest">Administración de Soberanía
                     Individual y Roles.</p>
             </div>
@@ -363,41 +363,36 @@
 
         async function loadUsers() {
             let allFetched = [];
-            let from = 0;
-            let hasMore = true;
+            let page = 0;
             const pageSize = 1000;
+            let finished = false;
 
-            console.log("📂 Iniciando carga completa del padrón...");
+            console.log("🚀 Cargando padrón completo...");
 
-            while (hasMore) {
+            while (!finished) {
                 const { data, error } = await supabaseClient
                     .from('profiles')
                     .select('*')
-                    .range(from, from + pageSize - 1)
-                    .order('full_name', { ascending: true });
+                    .range(page * pageSize, (page + 1) * pageSize - 1);
 
-                if (error) {
-                    console.error("Error cargando bloque:", error);
-                    hasMore = false;
+                if (error || !data || data.length === 0) {
+                    finished = true;
                     break;
                 }
 
-                if (data && data.length > 0) {
-                    allFetched = [...allFetched, ...data];
-                    if (data.length < pageSize) {
-                        hasMore = false;
-                    } else {
-                        from += pageSize;
-                    }
+                allFetched = allFetched.concat(data);
+                
+                if (data.length < pageSize) {
+                    finished = true;
                 } else {
-                    hasMore = false;
+                    page++;
                 }
             }
 
             allUsers = allFetched;
-            filteredUsers = [...allFetched];
+            filteredUsers = [...allUsers];
             applySortingAndRendering();
-            console.log(`✅ Padrón cargado: ${allUsers.length} registros.`);
+            console.log("✅ Total cargado:", allUsers.length);
         }
 
         function toggleSort(column) {
