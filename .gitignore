@@ -31,3 +31,5 @@ package-lock.json
 # IA y Auditoría
 .gemini/
 .atl/
+admin-backup-scripts/
+*.csv
