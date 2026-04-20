@@ -362,12 +362,42 @@
         });
 
         async function loadUsers() {
-            const { data, error } = await supabaseClient.from('profiles').select('*');
-            if (!error) {
-                allUsers = data;
-                filteredUsers = [...data];
-                applySortingAndRendering();
+            let allFetched = [];
+            let from = 0;
+            let hasMore = true;
+            const pageSize = 1000;
+
+            console.log("📂 Iniciando carga completa del padrón...");
+
+            while (hasMore) {
+                const { data, error } = await supabaseClient
+                    .from('profiles')
+                    .select('*')
+                    .range(from, from + pageSize - 1)
+                    .order('full_name', { ascending: true });
+
+                if (error) {
+                    console.error("Error cargando bloque:", error);
+                    hasMore = false;
+                    break;
+                }
+
+                if (data && data.length > 0) {
+                    allFetched = [...allFetched, ...data];
+                    if (data.length < pageSize) {
+                        hasMore = false;
+                    } else {
+                        from += pageSize;
+                    }
+                } else {
+                    hasMore = false;
+                }
             }
+
+            allUsers = allFetched;
+            filteredUsers = [...allFetched];
+            applySortingAndRendering();
+            console.log(`✅ Padrón cargado: ${allUsers.length} registros.`);
         }
 
         function toggleSort(column) {
