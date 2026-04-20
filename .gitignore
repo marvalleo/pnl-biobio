@@ -27,3 +27,7 @@ lessons_test.json
 # Node y Dependencias
 node_modules/
 package-lock.json
+
+# IA y Auditoría
+.gemini/
+.atl/
