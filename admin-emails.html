@@ -534,13 +534,13 @@
                 console.log("🚀 Iniciando despacho desde:", window.location.origin);
                 console.log("🔗 URL Supabase:", supabaseClient.supabaseUrl);
 
-                // Intento de llamada directa vía fetch a la URL absoluta para descartar temas del SDK
+                // Invocando según la recomendación del dashboard de Supabase para esta función
                 const functionUrl = `${supabaseClient.supabaseUrl}/functions/v1/send-mass-email`;
                 const response = await fetch(functionUrl, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${session.access_token}`,
+                        'Authorization': `Bearer ${supabaseClient.supabaseKey}`, // Usamos la Anon Key como pide el dashboard
                         'apikey': supabaseClient.supabaseKey
                     },
                     body: JSON.stringify({ 
