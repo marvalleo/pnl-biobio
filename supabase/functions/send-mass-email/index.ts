@@ -22,7 +22,7 @@ serve(async (req: Request) => {
     )
 
     // 2. Extraer Título y Contenido
-    const { subject, bodyHtml, target_audience } = await req.json()
+    const { subject, bodyHtml, target_audience, offset = 0 } = await req.json()
 
     if (!subject || !bodyHtml) {
       throw new Error('Asunto y contenido son requeridos')
@@ -48,17 +48,43 @@ serve(async (req: Request) => {
       throw new Error('Prohibido: Se requiere rol de Super Administrador')
     }
 
-    // 5. Obtener Destinatarios según Audiencia
-    const query = supabaseClient.from('profiles').select('email')
-    
-    if (target_audience === 'admins') {
-      query.neq('role', 'normal')
+    // 5. Obtener TODOS los Destinatarios (Manejando el límite de 1000 de Supabase)
+    let allEmails: string[] = []
+    let page = 0
+    const pageSize = 1000
+    let hasMore = true
+
+    while (hasMore) {
+      const from = (page * pageSize) + (offset || 0)
+      const to = from + pageSize - 1
+
+      const query = supabaseClient
+        .from('profiles')
+        .select('email')
+        .range(from, to)
+      
+      if (target_audience === 'admins') {
+        query.neq('role', 'normal')
+      }
+
+      const { data: recipients, error: recError } = await query
+      if (recError) throw recError
+
+      if (recipients && recipients.length > 0) {
+        const pageEmails = recipients.map(r => r.email).filter(Boolean) as string[]
+        allEmails = [...allEmails, ...pageEmails]
+        
+        if (recipients.length < pageSize) {
+          hasMore = false
+        } else {
+          page++
+        }
+      } else {
+        hasMore = false
+      }
     }
 
-    const { data: recipients, error: recError } = await query
-    if (recError) throw recError
-
-    const emails = recipients.map(r => r.email).filter(Boolean) as string[]
+    const emails = allEmails
     if (emails.length === 0) {
       return new Response(JSON.stringify({ message: 'No hay destinatarios encontrados' }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

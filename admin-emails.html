@@ -179,6 +179,18 @@
     Todos los cursos son exclusivos para Militantes.
 </p></textarea>
                         </div>
+
+                        <!-- Opciones Avanzadas -->
+                        <div class="mt-4 p-4 bg-gray-50 rounded-xl border border-dashed border-gray-300">
+                            <label class="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Opciones de Recuperación (Avanzado)</label>
+                            <div class="flex items-center gap-4">
+                                <div class="flex-1">
+                                    <span class="text-[9px] text-gray-500 block mb-1">Omitir los primeros X registros (Úsalo para completar envíos que fallaron)</span>
+                                    <input type="number" id="send-offset" value="0" min="0" placeholder="Ej: 1000"
+                                        class="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-xs font-bold focus:border-[#fba931] outline-none">
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="pt-6 border-t border-dashed border-gray-100 flex justify-end gap-4">
@@ -518,7 +530,6 @@
             const mainBtn = document.getElementById('send-btn');
             const subject = document.getElementById('subject').value;
             const bodyHtml = document.getElementById('body-html').value;
-            const audience = document.getElementById('target_audience').value;
             
             btn.disabled = true;
             btn.innerText = 'DESPACHANDO...';
@@ -554,7 +565,8 @@
                 `;
 
                 console.log("🚀 Iniciando despacho desde:", window.location.origin);
-                console.log("🔗 URL Supabase:", supabaseClient.supabaseUrl);
+                const audience = document.querySelector('button[onclick*="all"]').classList.contains('bg-[#0f172a]') ? 'all' : 'admins';
+                const offset = parseInt(document.getElementById('send-offset').value) || 0;
 
                 // Invocando según la recomendación del dashboard de Supabase para esta función
                 const functionUrl = `${supabaseClient.supabaseUrl}/functions/v1/send-mass-email`;
@@ -568,7 +580,8 @@
                     body: JSON.stringify({ 
                         subject, 
                         bodyHtml: finalHtml, 
-                        target_audience: audience 
+                        target_audience: audience,
+                        offset: offset
                     })
                 });
 
