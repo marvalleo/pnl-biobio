@@ -524,6 +524,14 @@
                 const isDirectiva = ['super_admin', 'admin_forja'].includes(t.profiles?.role);
                 const userRank = t.profiles?.rank || 'Iniciado';
                 const hasAcceptedRules = userProfile?.accepted_forum_rules === true;
+                
+                const postUrl = `forja-foros-post.html?id=${t.id}`;
+                const hrefAttr = hasAcceptedRules ? `href="${postUrl}"` : `href="javascript:void(0)" onclick="openRulesModal(); return false;" title="Debes leer y aceptar el reglamento para entrar al debate."`;
+                const classCursor = !hasAcceptedRules ? 'cursor-not-allowed opacity-70' : '';
+                const classHoverText = hasAcceptedRules ? 'group-hover:text-[#fba931]' : '';
+                const classHoverIcon = hasAcceptedRules ? 'hover:text-[#0f172a]' : '';
+                const classHoverBtn = hasAcceptedRules ? 'hover:brightness-90' : '';
+                const classDisabledBtn = !hasAcceptedRules ? 'cursor-not-allowed opacity-70 grayscale' : '';
 
                 const rankStyles = {
                     'Oro': 'bg-amber-50 text-amber-600 border border-amber-100',
@@ -532,7 +540,6 @@
                     'Iniciado': 'bg-gray-50 text-gray-300'
                 };
 
-                const postUrl = `forja-foros-post.html?id=${t.id}`;
 
                 return `
                     <article class="premium-card p-10 flex gap-10 topic-card group relative overflow-hidden">
@@ -557,15 +564,14 @@
                                     </span>
                                 </div>
                             </div>
-                            
-                            <a ${hasAcceptedRules ? `href="${postUrl}"` : `href="javascript:void(0)" onclick="openRulesModal(); return false;" title="Debes leer y aceptar el reglamento para entrar al debate."`} class="block group mb-6 ${!hasAcceptedRules ? 'cursor-not-allowed opacity-70' : ''}">
-                                <h3 class="text-2xl font-black text-[#0f172a] ${hasAcceptedRules ? 'group-hover:text-[#fba931]' : ''} transition-all leading-snug">
+                            <a ${hrefAttr} class="block group mb-6 ${classCursor}">
+                                <h3 class="text-2xl font-black text-[#0f172a] ${classHoverText} transition-all leading-snug">
                                     ${t.title}
                                 </h3>
                             </a>
 
                             <div class="flex items-center gap-8 mt-auto border-t border-gray-50 pt-6">
-                                <a ${hasAcceptedRules ? `href="${postUrl}"` : `href="javascript:void(0)" onclick="openRulesModal(); return false;" title="Debes leer y aceptar el reglamento para entrar al debate."`} class="flex items-center gap-2.5 text-gray-400 ${hasAcceptedRules ? 'hover:text-[#0f172a]' : ''} transition-all ${!hasAcceptedRules ? 'cursor-not-allowed opacity-70' : ''}">
+                                <a ${hrefAttr} class="flex items-center gap-2.5 text-gray-400 ${classHoverIcon} transition-all ${classCursor}">
                                     <span class="material-symbols-outlined text-xl">chat_bubble</span>
                                     <span class="text-[10px] font-black uppercase tracking-widest">${replyCount} Aportes</span>
                                 </a>
@@ -573,7 +579,7 @@
                                     <span class="material-symbols-outlined text-xl">schedule</span>
                                     <span class="text-[10px] font-bold uppercase tracking-widest">Activo ${new Date(t.last_activity).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })}</span>
                                 </div>
-                                <a ${hasAcceptedRules ? `href="${postUrl}"` : `href="javascript:void(0)" onclick="openRulesModal(); return false;" title="Debes leer y aceptar el reglamento para entrar al debate."`} class="ml-auto flex items-center gap-1.5 text-[10px] font-black uppercase text-[#fba931] ${hasAcceptedRules ? 'hover:brightness-90' : ''} transition-all ${!hasAcceptedRules ? 'cursor-not-allowed opacity-70 grayscale' : ''}">
+                                <a ${hrefAttr} class="ml-auto flex items-center gap-1.5 text-[10px] font-black uppercase text-[#fba931] ${classHoverBtn} transition-all ${classDisabledBtn}">
                                     Entrar al Debate <span class="material-symbols-outlined text-lg">chevron_right</span>
                                 </a>
                             </div>

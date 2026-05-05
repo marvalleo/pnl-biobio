@@ -225,20 +225,17 @@
                 .on('postgres_changes', { event: '*', schema: 'public', table: 'forum_post_votes' }, () => loadPosts())
                 .subscribe();
 
-            initRulesListeners();
         });
 
-        function initRulesListeners() {
-            document.getElementById('accept-rules-checkbox')?.addEventListener('change', (e) => {
-                const btn = document.getElementById('btn-accept-rules');
-                if (e.target.checked) {
-                    btn.disabled = false;
-                    btn.className = "w-full max-w-sm mx-auto bg-[#0f172a] text-white py-5 rounded-full font-black text-[11px] uppercase tracking-[0.2em] shadow-xl hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3 cursor-pointer";
-                } else {
-                    btn.disabled = true;
-                    btn.className = "w-full max-w-sm mx-auto bg-gray-200 text-gray-400 py-5 rounded-full font-black text-[11px] uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-3 cursor-not-allowed";
-                }
-            });
+        function toggleAcceptButton(checked) {
+            const btn = document.getElementById('btn-accept-rules');
+            if (checked) {
+                btn.disabled = false;
+                btn.className = "w-full max-w-sm mx-auto bg-[#0f172a] text-white py-5 rounded-full font-black text-[11px] uppercase tracking-[0.2em] shadow-xl hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3 cursor-pointer";
+            } else {
+                btn.disabled = true;
+                btn.className = "w-full max-w-sm mx-auto bg-gray-200 text-gray-400 py-5 rounded-full font-black text-[11px] uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-3 cursor-not-allowed";
+            }
         }
 
         async function loadTopicDetails() {
@@ -496,13 +493,18 @@
         function openRulesModal() { document.getElementById('rules-modal').classList.remove('hidden'); }
         function closeRulesModal() { document.getElementById('rules-modal').classList.add('hidden'); }
 
-        async function acceptRules() {
-            if (!document.getElementById('accept-rules-checkbox').checked) return;
-            
-            const btn = document.getElementById('btn-accept-rules');
-            window.setButtonLoading(btn, true);
 
+
+        async function acceptRules() {
             try {
+                if (!userProfile) {
+                    alert("Error: No se pudo cargar tu perfil. Verifica las reglas de Supabase (RLS).");
+                    return;
+                }
+                const btn = document.getElementById('btn-accept-rules');
+                btn.disabled = true;
+                btn.innerHTML = '<span class="material-symbols-outlined animate-spin">refresh</span> Guardando...';
+
                 const { error } = await supabaseClient.from('profiles')
                     .update({ accepted_forum_rules: true })
                     .eq('id', userProfile.id);
@@ -600,7 +602,7 @@
             <div class="mt-auto shrink-0 pt-6 w-full">
                 <label class="flex flex-col items-center gap-3 cursor-pointer group mb-6 text-center">
                     <div class="relative flex items-center justify-center mt-1">
-                        <input type="checkbox" id="accept-rules-checkbox" class="peer appearance-none w-6 h-6 border-2 border-gray-300 rounded-md checked:bg-[#fba931] checked:border-[#fba931] transition-colors cursor-pointer">
+                        <input type="checkbox" id="accept-rules-checkbox" onchange="toggleAcceptButton(this.checked)" class="peer appearance-none w-6 h-6 border-2 border-gray-300 rounded-md checked:bg-[#fba931] checked:border-[#fba931] transition-colors cursor-pointer">
                         <span class="material-symbols-outlined text-white text-base absolute opacity-0 peer-checked:opacity-100 pointer-events-none">check</span>
                     </div>
                     <span class="text-[11px] font-bold text-gray-500 group-hover:text-[#0f172a] transition-colors leading-relaxed">He leído el reglamento preliminar y entiendo que si no sigo las reglas mi cuenta puede ser bloqueada para el uso del foro.</span>
