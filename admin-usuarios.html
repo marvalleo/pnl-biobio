@@ -93,7 +93,7 @@
         </div>
     </nav>
 
-    <main class="max-w-7xl mx-auto px-6 py-10">
+    <main class="max-w-[1600px] mx-auto px-4 py-10">
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
             <div>
                 <h1 class="text-3xl font-900 uppercase tracking-tighter">Padrón de Militantes (V2)</h1>
@@ -121,6 +121,24 @@
             </div>
         </div>
 
+        <!-- Dashboard de Estadísticas -->
+        <div class="flex flex-wrap justify-center gap-4 mb-8">
+            <div class="bg-white px-6 py-4 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-3">
+                <span class="text-[10px] font-black uppercase text-gray-400">Total Militantes:</span>
+                <span id="stats-total" class="text-2xl font-900 italic">0</span>
+            </div>
+            <div
+                class="bg-white px-6 py-4 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-3 border-l-4 border-green-500">
+                <span class="text-[10px] font-black uppercase text-gray-400">Cuentas Activas:</span>
+                <span id="stats-active" class="text-2xl font-900 text-green-600 italic">0</span>
+            </div>
+            <div
+                class="bg-white px-6 py-4 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-3 border-l-4 border-orange-500">
+                <span class="text-[10px] font-black uppercase text-gray-400">Pendientes de Registro:</span>
+                <span id="stats-pending" class="text-2xl font-900 text-orange-600 italic">0</span>
+            </div>
+        </div>
+
         <div class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
             <table class="w-full text-left border-collapse">
                 <thead class="bg-gray-50 border-b border-gray-100">
@@ -133,6 +151,11 @@
                         <th onclick="toggleSort('email')"
                             class="sort-header px-6 py-3 text-[10px] font-black uppercase text-gray-400" id="th-email">
                             Email <span class="material-symbols-outlined sort-icon">unfold_more</span>
+                        </th>
+                        <th onclick="toggleSort('phone_number')"
+                            class="sort-header px-6 py-3 text-[10px] font-black uppercase text-gray-400"
+                            id="th-phone_number">
+                            Teléfono <span class="material-symbols-outlined sort-icon">unfold_more</span>
                         </th>
                         <th onclick="toggleSort('birth_date')"
                             class="sort-header px-6 py-3 text-[10px] font-black uppercase text-gray-400 text-center"
@@ -148,12 +171,17 @@
                             class="sort-header px-6 py-3 text-[10px] font-black uppercase text-gray-400" id="th-role">
                             Rol <span class="material-symbols-outlined sort-icon">unfold_more</span>
                         </th>
+                        <th onclick="toggleSort('must_change_password')"
+                            class="sort-header px-6 py-3 text-[10px] font-black uppercase text-gray-400 text-center"
+                            id="th-must_change_password">
+                            Estado <span class="material-symbols-outlined sort-icon">unfold_more</span>
+                        </th>
                         <th class="px-6 py-3 text-[10px] font-black uppercase text-gray-400 text-right">Acciones</th>
                     </tr>
                 </thead>
                 <tbody id="users-table-body">
                     <tr>
-                        <td colspan="10" class="p-8">
+                        <td colspan="12" class="p-8">
                             <div class="animate-pulse flex flex-col gap-4">
                                 <div class="h-10 bg-slate-100 rounded-xl w-full"></div>
                                 <div class="h-10 bg-slate-100 rounded-xl w-full"></div>
@@ -205,6 +233,11 @@
                     <div class="col-span-2">
                         <label class="text-[10px] font-black uppercase text-gray-400">Comuna</label>
                         <input type="text" id="comuna" placeholder="Ej: Concepción, Talcahuano..."
+                            class="w-full bg-gray-50 border p-4 rounded-xl focus:ring-2 focus:ring-[#fba931] outline-none">
+                    </div>
+                    <div class="col-span-2">
+                        <label class="text-[10px] font-black uppercase text-gray-400">Teléfono Celular</label>
+                        <input type="text" id="phone_number" placeholder="Ej: +569 1234 5678"
                             class="w-full bg-gray-50 border p-4 rounded-xl focus:ring-2 focus:ring-[#fba931] outline-none">
                     </div>
                     <div class="col-span-2">
@@ -381,7 +414,7 @@
                 }
 
                 allFetched = allFetched.concat(data);
-                
+
                 if (data.length < pageSize) {
                     finished = true;
                 } else {
@@ -391,8 +424,19 @@
 
             allUsers = allFetched;
             filteredUsers = [...allUsers];
+            updateStats();
             applySortingAndRendering();
             console.log("✅ Total cargado:", allUsers.length);
+        }
+
+        function updateStats() {
+            const total = allUsers.length;
+            const active = allUsers.filter(u => u.must_change_password === false).length;
+            const pending = total - active;
+
+            document.getElementById('stats-total').textContent = total.toLocaleString();
+            document.getElementById('stats-active').textContent = active.toLocaleString();
+            document.getElementById('stats-pending').textContent = pending.toLocaleString();
         }
 
         function toggleSort(column) {
@@ -408,7 +452,7 @@
         }
 
         function updateSortHeaders() {
-            const headers = ['full_name', 'email', 'birth_date', 'comuna', 'role'];
+            const headers = ['full_name', 'email', 'phone_number', 'birth_date', 'comuna', 'role', 'must_change_password'];
             headers.forEach(h => {
                 const el = document.getElementById(`th-${h}`);
                 if (!el) return;
@@ -481,6 +525,7 @@
                         </div>
                     </td>
                     <td class="px-6 compact-td text-[10px] text-gray-400 lowercase">${u.email}</td>
+                    <td class="px-6 compact-td text-[10px] font-bold text-gray-600">${u.phone_number || '---'}</td>
                     <td class="px-6 compact-td text-center">
                         <span class="text-[10px] font-bold ${isBirthdayMonth ? 'text-[#fba931] bg-yellow-50 px-2 py-0.5 rounded-lg' : 'text-gray-400'}">
                             ${isBirthdayMonth && !isBirthdayToday ? '🎉 ' : ''}${birthdayDisplay}
@@ -498,6 +543,12 @@
                             'bg-gray-100 text-gray-600'}">
                             ${u.role.replace('_', ' ')}
                         </span>
+                    </td>
+                    <td class="px-6 compact-td text-center">
+                        ${u.must_change_password
+                        ? '<span class="px-2 py-0.5 rounded-full text-[8px] font-black uppercase bg-gray-100 text-gray-400">Pendiente</span>'
+                        : '<span class="px-2 py-0.5 rounded-full text-[8px] font-black uppercase bg-green-100 text-green-700">Registrado</span>'
+                    }
                     </td>
                     <td class="px-6 compact-td text-right">
                         <button onclick='editUser(${JSON.stringify(u)})' class="p-1 text-blue-500 hover:bg-blue-50 rounded-lg"><span class="material-symbols-outlined text-lg">edit</span></button>
@@ -579,6 +630,7 @@
                 email: document.getElementById('email').value,
                 birth_date: document.getElementById('birth_date').value || null,
                 comuna: document.getElementById('comuna').value || null,
+                phone_number: document.getElementById('phone_number').value || null,
                 role: document.getElementById('role').value
             };
 
@@ -615,6 +667,7 @@
             document.getElementById('email').value = u.email;
             document.getElementById('birth_date').value = u.birth_date || '';
             document.getElementById('comuna').value = u.comuna || '';
+            document.getElementById('phone_number').value = u.phone_number || '';
             document.getElementById('role').value = u.role;
         }
         async function deleteUser(id) {
@@ -716,10 +769,10 @@
                             });
 
                             // Búsqueda de FECHA NACIMIENTO (ahora fechanacimiento)
-                            let birthVal = cleanRow['fechanacimiento'] || cleanRow['nacimiento'] || 
-                                           cleanRow['birthdate'] || cleanRow['cumpleanos'] || 
-                                           cleanRow['cumple'] || cleanRow['fecha'];
-                            
+                            let birthVal = cleanRow['fechanacimiento'] || cleanRow['nacimiento'] ||
+                                cleanRow['birthdate'] || cleanRow['cumpleanos'] ||
+                                cleanRow['cumple'] || cleanRow['fecha'];
+
                             let formattedBirthDate = null;
                             if (birthVal instanceof Date) {
                                 formattedBirthDate = birthVal.toISOString().split('T')[0];

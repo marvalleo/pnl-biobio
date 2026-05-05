@@ -527,7 +527,7 @@
             list.innerHTML = '<div class="animate-pulse flex flex-col gap-4 p-8"><div class="h-10 bg-slate-100 rounded-xl w-full"></div><div class="h-10 bg-slate-100 rounded-xl w-full"></div></div>';
             document.getElementById('reg-modal').classList.remove('hidden');
             try {
-                const { data, error } = await supabaseClient.from('regional_event_registrations').select('*, profiles(*)').eq('event_id', eventId);
+                const { data, error } = await supabaseClient.from('regional_event_registrations').select('*, profiles(full_name, email, phone_number, rut)').eq('event_id', eventId);
                 if (error) throw error;
                 currentModalData = { id: eventId, title: eventTitle, registrations: data || [] };
                 if (data.length === 0) { list.innerHTML = '<p class="text-center text-gray-400 py-10">Sin inscritos.</p>'; return; }
@@ -535,7 +535,8 @@
                     <div class="flex justify-between items-center p-4 bg-gray-50 rounded-2xl border border-gray-100">
                         <div>
                             <p class="font-black uppercase text-xs">${reg.profiles.full_name}</p>
-                            <p class="text-[9px] text-gray-400 font-bold uppercase tracking-wider">${reg.profiles.rut || 'SIN RUT'} • ${reg.profiles.email || 'SIN EMAIL'}</p>
+                            <p class="text-[9px] text-gray-400 font-bold uppercase tracking-wider">${reg.profiles.email || 'SIN EMAIL'}</p>
+                            <p class="text-[10px] text-green-600 font-black uppercase tracking-widest mt-0.5">${reg.profiles.phone_number || 'SIN TELÉFONO'}</p>
                         </div>
                         <button onclick="toggleAttendance('${reg.id}', ${!reg.attended}, '${eventId}', '${eventTitle.replace(/'/g, "\\'")}')" 
                                 class="px-4 py-2 rounded-xl text-[9px] font-black uppercase transition-all ${reg.attended ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-600'}">
@@ -562,14 +563,14 @@
 
             // Crear contenido CSV con BOM para visualización correcta en Excel (UTF-8)
             let csvContent = "\uFEFF"; 
-            csvContent += "Nombre Completo;RUT;Email;Asistencia\n";
+            csvContent += "Nombre Completo;Email;Teléfono;Asistencia\n";
 
             registrations.forEach(reg => {
                 const name = reg.profiles?.full_name || 'N/A';
-                const rut = reg.profiles?.rut || 'N/A';
                 const email = reg.profiles?.email || 'N/A';
+                const phone = reg.profiles?.phone_number || 'N/A';
                 const attendance = reg.attended ? 'SÍ' : 'NO';
-                csvContent += `"${name}";"${rut}";"${email}";"${attendance}"\n`;
+                csvContent += `"${name}";"${email}";"${phone}";"${attendance}"\n`;
             });
 
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });

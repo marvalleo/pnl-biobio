@@ -41,6 +41,13 @@
 
     <main class="flex-grow max-w-4xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-10">
 
+        <!-- Botón Volver -->
+        <a href="javascript:history.back()"
+            class="flex items-center gap-2 text-gray-400 hover:text-[#0f172a] transition-colors mb-6 group w-fit">
+            <span class="material-symbols-outlined text-lg group-hover:-translate-x-1 transition-transform">arrow_back</span>
+            <span class="text-[10px] font-black uppercase tracking-widest">Volver</span>
+        </a>
+
         <!-- Encabezado de Perfil -->
         <div
             class="bg-white rounded-3xl p-8 shadow-sm border border-gray-100 flex flex-col md:flex-row items-center gap-8 mb-8 relative overflow-hidden">
@@ -59,6 +66,9 @@
                 </h1>
                 <p id="profile-email" class="text-gray-500 font-bold text-sm">
                     <span class="inline-block w-32 h-4 bg-gray-200 rounded animate-pulse"></span>
+                </p>
+                <p id="profile-phone" class="text-gray-400 font-bold text-xs mt-1">
+                    <span class="inline-block w-24 h-3 bg-gray-100 rounded animate-pulse"></span>
                 </p>
                 <div
                     class="mt-4 inline-flex items-center gap-2 bg-green-50 text-green-700 px-4 py-1.5 rounded-full text-xs font-bold border border-green-100 uppercase">
@@ -187,7 +197,7 @@
                 // Obtener perfil desde Supabase (garantizado con la nueva función Security Definer)
                 const { data: profile } = await supabaseClient
                     .from('profiles')
-                    .select('full_name, avatar_url')
+                    .select('full_name, avatar_url, phone_number')
                     .eq('auth_id', user.id)
                     .single();
 
@@ -196,6 +206,7 @@
 
                 document.getElementById('profile-name').innerText = fullName;
                 document.getElementById('profile-email').innerText = user.email;
+                document.getElementById('profile-phone').innerText = profile?.phone_number || 'Sin teléfono registrado';
 
                 const avatarEl = document.getElementById('profile-avatar');
                 if (profile?.avatar_url) {
