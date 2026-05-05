@@ -11,6 +11,10 @@
         rel="stylesheet">
     <link rel="stylesheet"
         href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+    <!-- Quill Rich Text Editor -->
+    <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+    <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.6/dist/purify.min.js"></script>
     <style>
         :root {
             --pnl-blue: #0f172a;
@@ -34,17 +38,41 @@
             border: 1px solid #f1f5f9;
         }
 
+        .topic-card {
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .topic-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px rgba(15, 23, 42, 0.08);
+            border-color: #fba93133;
+        }
+
         .nav-link-active {
             background: #0f172a;
             color: white;
+            box-shadow: 0 10px 20px rgba(15, 23, 42, 0.1);
         }
 
-        .upvote-btn:hover {
-            color: #fba931;
+        /* Quill Editor Adjustments */
+        .ql-container.ql-snow {
+            border: none !important;
+            font-family: 'Montserrat', sans-serif !important;
+            font-size: 14px !important;
         }
 
-        .downvote-btn:hover {
-            color: #ef4444;
+        .ql-toolbar.ql-snow {
+            border: none !important;
+            border-bottom: 1px solid #f1f5f9 !important;
+            padding: 8px 16px !important;
+            background: #f8fafc;
+        }
+
+        #editor-wrapper {
+            background: #f8fafc;
+            border-radius: 1.5rem;
+            overflow: hidden;
+            border: 1px solid #f1f5f9;
         }
 
         ::-webkit-scrollbar {
@@ -70,22 +98,23 @@
     <div class="flex flex-1 max-w-[1600px] mx-auto w-full">
 
         <!-- Sidebar -->
-        <aside class="w-72 bg-white border-r border-gray-100 hidden md:block p-6 shrink-0">
-            <div class="mb-10">
+        <aside class="w-72 bg-white border-r border-gray-100 hidden md:block p-8 shrink-0">
+            <div class="mb-12">
                 <button onclick="openNewTopicModal()"
-                    class="w-full bg-[#0f172a] text-white py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl hover:scale-[1.02] transition-all flex items-center justify-center gap-2">
+                    class="w-full bg-[#0f172a] text-white py-5 rounded-3xl font-black text-[10px] uppercase tracking-widest shadow-xl hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3">
                     <span class="material-symbols-outlined text-lg">add_circle</span> Nuevo Hilo
                 </button>
             </div>
 
-            <div class="space-y-8">
+            <div class="space-y-10">
                 <div>
-                    <h3 class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4 px-4">Canales</h3>
-                    <div id="categories-list" class="space-y-1">
+                    <h3 class="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-6 px-4">Canales</h3>
+                    <div id="categories-list" class="space-y-2">
                         <!-- Categorías dinámicas -->
-                        <div class="animate-pulse space-y-2 px-4">
-                            <div class="h-8 bg-gray-50 rounded-xl"></div>
-                            <div class="h-8 bg-gray-50 rounded-xl"></div>
+                        <div class="animate-pulse space-y-3 px-4">
+                            <div class="h-10 bg-gray-50 rounded-xl"></div>
+                            <div class="h-10 bg-gray-50 rounded-xl"></div>
+                            <div class="h-10 bg-gray-50 rounded-xl"></div>
                         </div>
                     </div>
                 </div>
@@ -93,24 +122,45 @@
         </aside>
 
         <!-- Main Feed -->
-        <main class="flex-1 p-6 lg:p-10">
+        <main class="flex-1 p-6 lg:p-12">
             <div class="max-w-4xl mx-auto">
                 <div class="flex items-center justify-between mb-8">
-                    <h2 id="current-category-title" class="serif text-3xl text-[#0f172a] uppercase italic">Debate <span
+                    <h2 id="current-category-title" class="serif text-4xl text-[#0f172a] uppercase italic">Debate <span
                             class="text-[#fba931]">General</span></h2>
-                    <div class="flex gap-2">
-                        <button
-                            class="bg-white border border-gray-200 px-4 py-2 rounded-full text-[10px] font-black uppercase text-gray-400 hover:border-[#fba931] transition-all">Recientes</button>
-                        <button
-                            class="bg-white border border-[#fba931] px-4 py-2 rounded-full text-[10px] font-black uppercase text-[#fba931]">Populares</button>
+                    <div class="flex gap-3 bg-white p-1 rounded-full border border-gray-100 shadow-sm">
+                        <button onclick="sortBy('recent')" id="sort-recent"
+                            class="px-6 py-2 rounded-full text-[10px] font-black uppercase transition-all bg-[#0f172a] text-white">Recientes</button>
+                        <button onclick="sortBy('popular')" id="sort-popular"
+                            class="px-6 py-2 rounded-full text-[10px] font-black uppercase transition-all text-gray-400 hover:text-[#0f172a]">Populares</button>
                     </div>
                 </div>
 
-                <div id="topics-feed" class="space-y-6">
+                <!-- Reglas de Comportamiento -->
+                <div
+                    class="premium-card p-8 md:p-10 mb-10 border-t-4 border-t-[#fba931] bg-gradient-to-b from-white to-slate-50 shadow-sm flex flex-col items-center text-center gap-6">
+                    <span class="material-symbols-outlined text-[#fba931] text-4xl mt-1">gavel</span>
+                    <div>
+                        <h3 class="text-sm font-black text-[#0f172a] uppercase tracking-widest mb-4">Orden y Respeto en
+                            el Debate</h3>
+                        <p class="text-sm text-slate-600 leading-relaxed font-medium text-justify max-w-2xl mx-auto">
+                            La verdadera libertad requiere responsabilidad. Te invitamos a participar en un espacio
+                            diseñado para la construcción de ideas, donde el rigor intelectual y el respeto mutuo son
+                            nuestros pilares fundamentales. Para mantener la calidad de nuestras discusiones y asegurar
+                            que la región del Biobío sea un ejemplo de civilidad, te pedimos revisar detenidamente
+                            nuestro código de convivencia antes de participar.
+                        </p>
+                    </div>
+                    <button onclick="openRulesModal()"
+                        class="mt-2 bg-[#0f172a] text-white px-8 py-5 rounded-full text-[11px] font-black uppercase tracking-widest hover:text-[#fba931] transition-all shadow-md active:scale-95">
+                        Leer Reglamento del Foro
+                    </button>
+                </div>
+
+                <div id="topics-feed" class="space-y-8">
                     <!-- Hilos dinámicos -->
-                    <div class="animate-pulse space-y-4">
-                        <div class="h-48 bg-white rounded-[2rem]"></div>
-                        <div class="h-48 bg-white rounded-[2rem]"></div>
+                    <div class="animate-pulse space-y-6">
+                        <div class="h-56 bg-white rounded-[2.5rem]"></div>
+                        <div class="h-56 bg-white rounded-[2.5rem]"></div>
                     </div>
                 </div>
             </div>
@@ -118,27 +168,27 @@
 
         <!-- Sidebar Trends -->
         <aside class="w-80 bg-white border-l border-gray-100 hidden xl:block p-8 shrink-0">
-            <div class="space-y-10">
+            <div class="space-y-12">
                 <!-- Muro de Honor -->
                 <div>
                     <h3
-                        class="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-6 flex items-center gap-2">
+                        class="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-8 flex items-center gap-2">
                         <span class="material-symbols-outlined text-amber-500 text-lg">workspace_premium</span> Muro de
                         Honor
                     </h3>
-                    <div id="honor-wall" class="space-y-4">
+                    <div id="honor-wall" class="space-y-5">
                         <!-- Cargando... -->
-                        <div class="animate-pulse space-y-3">
-                            <div class="h-12 bg-gray-50 rounded-xl"></div>
-                            <div class="h-12 bg-gray-50 rounded-xl"></div>
+                        <div class="animate-pulse space-y-4">
+                            <div class="h-14 bg-gray-50 rounded-2xl"></div>
+                            <div class="h-14 bg-gray-50 rounded-2xl"></div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Estadísticas Sede -->
-                <div class="premium-card p-6 bg-slate-50 border-none">
-                    <h3 class="text-[10px] font-black text-[#0f172a] uppercase tracking-widest mb-4">Sede en Vivo</h3>
-                    <div class="space-y-4">
+                <div class="premium-card p-8 bg-slate-50 border-none">
+                    <h3 class="text-[10px] font-black text-[#0f172a] uppercase tracking-widest mb-6">Sede en Vivo</h3>
+                    <div class="space-y-5">
                         <div class="flex justify-between items-center">
                             <span class="text-[10px] font-bold text-gray-400 uppercase">Debates Activos</span>
                             <span id="stat-topics" class="text-xs font-black text-[#0f172a]">--</span>
@@ -147,26 +197,27 @@
                             <span class="text-[10px] font-bold text-gray-400 uppercase">Participación</span>
                             <span id="stat-posts" class="text-xs font-black text-[#0f172a]">--</span>
                         </div>
-                        <div class="w-full bg-gray-200 h-1 rounded-full overflow-hidden">
+                        <div class="w-full bg-gray-200 h-1.5 rounded-full overflow-hidden">
                             <div class="bg-[#fba931] h-full w-2/3"></div>
                         </div>
-                        <p class="text-[8px] font-bold text-gray-400 uppercase tracking-tighter">Alta actividad
-                            democratica hoy</p>
+                        <p class="text-[9px] font-bold text-gray-400 uppercase tracking-tighter leading-relaxed">Alta
+                            actividad democratica hoy en la región del Biobío</p>
                     </div>
                 </div>
 
-                <!-- Espacio de Anuncios -->
-                <div class="rounded-3xl bg-[#0f172a] p-8 relative overflow-hidden group">
+                <!-- Banner Informativo -->
+                <div
+                    class="rounded-[2rem] bg-gradient-to-br from-[#0f172a] to-slate-800 p-10 relative overflow-hidden group shadow-2xl">
                     <div
-                        class="absolute -right-4 -top-4 w-24 h-24 bg-[#fba931]/20 rounded-full blur-2xl group-hover:bg-[#fba931]/40 transition-all">
+                        class="absolute -right-6 -top-6 w-32 h-32 bg-[#fba931]/10 rounded-full blur-3xl group-hover:bg-[#fba931]/20 transition-all duration-700">
                     </div>
-                    <p class="text-[9px] font-black uppercase text-[#fba931] mb-2 tracking-widest relative z-10">Próximo
-                        Evento</p>
-                    <h4 class="text-white font-black text-sm uppercase leading-tight mb-4 relative z-10">Plenario
-                        Regional de Formación</h4>
-                    <button
-                        class="w-full bg-white/10 hover:bg-white/20 text-white text-[9px] font-black uppercase py-3 rounded-xl transition-all relative z-10 tracking-widest">Ver
-                        Detalles</button>
+                    <p class="text-[9px] font-black uppercase text-[#fba931] mb-3 tracking-widest relative z-10">
+                        Formación Libertaria</p>
+                    <h4 class="text-white font-black text-lg uppercase leading-tight mb-6 relative z-10">Próximo
+                        Plenario Regional</h4>
+                    <button onclick="window.location.href='eventos.html'"
+                        class="w-full bg-white/5 hover:bg-white/10 border border-white/10 text-white text-[9px] font-black uppercase py-4 rounded-2xl transition-all relative z-10 tracking-widest active:scale-95">Inscribirse
+                        Ahora</button>
                 </div>
             </div>
         </aside>
@@ -175,45 +226,141 @@
     <!-- Modal Nuevo Hilo -->
     <div id="new-topic-modal"
         class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-[200] flex items-center justify-center p-6">
-        <div class="bg-white rounded-[2.5rem] w-full max-w-2xl p-10 relative shadow-2xl">
+        <div class="bg-white rounded-[3rem] w-full max-w-3xl p-12 relative shadow-2xl overflow-hidden">
             <button onclick="closeNewTopicModal()"
-                class="absolute top-8 right-8 text-gray-400 hover:text-red-500 transition-colors">
-                <span class="material-symbols-outlined text-3xl">close</span>
+                class="absolute top-10 right-10 text-gray-400 hover:text-red-500 transition-colors active:scale-90">
+                <span class="material-symbols-outlined text-4xl">close</span>
             </button>
 
-            <h2 class="serif text-3xl text-[#0f172a] uppercase italic mb-8">Abrir nuevo <span
+            <h2 class="serif text-4xl text-[#0f172a] uppercase italic mb-10">Abrir nuevo <span
                     class="text-[#fba931]">Debate</span></h2>
 
-            <form id="topic-form" class="space-y-6">
-                <div>
-                    <label
-                        class="text-[10px] font-black uppercase text-gray-400 tracking-widest block mb-2 px-2">Categoría</label>
-                    <select id="form-category" required
-                        class="w-full bg-slate-50 border-none rounded-2xl px-6 py-4 text-xs font-bold text-[#0f172a] focus:ring-2 focus:ring-[#fba931]/50 outline-none">
-                        <!-- Categorías dinámicas -->
-                    </select>
+            <form id="topic-form" class="space-y-8">
+                <div class="grid md:grid-cols-2 gap-8">
+                    <div>
+                        <label
+                            class="text-[10px] font-black uppercase text-gray-400 tracking-widest block mb-3 px-4">Categoría</label>
+                        <select id="form-category" required
+                            class="w-full bg-slate-50 border-none rounded-2xl px-6 py-4 text-xs font-bold text-[#0f172a] focus:ring-2 focus:ring-[#fba931]/50 outline-none">
+                            <!-- Categorías dinámicas -->
+                        </select>
+                    </div>
+                    <div>
+                        <label
+                            class="text-[10px] font-black uppercase text-gray-400 tracking-widest block mb-3 px-4">Título
+                            del Debate</label>
+                        <input type="text" id="form-title" required placeholder="¿Sobre qué quieres hablar?"
+                            class="w-full bg-slate-50 border-none rounded-2xl px-6 py-4 text-xs font-bold text-[#0f172a] focus:ring-2 focus:ring-[#fba931]/50 outline-none">
+                    </div>
                 </div>
                 <div>
-                    <label class="text-[10px] font-black uppercase text-gray-400 tracking-widest block mb-2 px-2">Título
-                        del Debate</label>
-                    <input type="text" id="form-title" required placeholder="¿Sobre qué quieres hablar?"
-                        class="w-full bg-slate-50 border-none rounded-2xl px-6 py-4 text-xs font-bold text-[#0f172a] focus:ring-2 focus:ring-[#fba931]/50 outline-none">
-                </div>
-                <div>
                     <label
-                        class="text-[10px] font-black uppercase text-gray-400 tracking-widest block mb-2 px-2">Argumento
+                        class="text-[10px] font-black uppercase text-gray-400 tracking-widest block mb-3 px-4">Argumento
                         / Contexto</label>
-                    <textarea id="form-content" required rows="6" placeholder="Desarrolla tu idea con respeto..."
-                        class="w-full bg-slate-50 border-none rounded-2xl px-6 py-4 text-xs font-bold text-[#0f172a] focus:ring-2 focus:ring-[#fba931]/50 outline-none resize-none"></textarea>
+                    <div id="editor-wrapper">
+                        <div id="form-editor" style="height: 180px;"></div>
+                    </div>
                 </div>
 
-                <div class="pt-4">
+                <div class="pt-6">
                     <button type="submit"
-                        class="w-full bg-[#0f172a] text-white py-5 rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-xl hover:scale-[1.02] transition-all flex items-center justify-center gap-3">
-                        <span class="material-symbols-outlined">rocket_launch</span> Publicar Hilo
+                        class="w-full bg-[#0f172a] text-white py-6 rounded-3xl font-black text-[11px] uppercase tracking-[0.2em] shadow-xl hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-4">
+                        <span class="material-symbols-outlined">rocket_launch</span> Iniciar Conversación
                     </button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- Modal Reglamento -->
+    <div id="rules-modal"
+        class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-[250] flex items-center justify-center p-6">
+        <div class="bg-white rounded-[3rem] w-[90%] md:w-[60%] p-10 md:py-14 md:px-24 lg:px-32 relative shadow-2xl overflow-hidden max-h-[90vh] flex flex-col items-center"
+            style="max-width: 60vw;">
+            <button onclick="closeRulesModal()"
+                class="absolute top-10 right-10 text-gray-400 hover:text-red-500 transition-colors active:scale-90">
+                <span class="material-symbols-outlined text-4xl">close</span>
+            </button>
+
+            <h2 class="serif text-3xl md:text-4xl text-[#0f172a] uppercase italic mb-8 shrink-0 text-center">Reglamento
+                Interno <span class="text-[#fba931]">Preliminar</span></h2>
+
+            <div class="overflow-y-auto pr-4 mb-8 space-y-8 text-sm text-slate-600 leading-relaxed w-full">
+                <div class="text-center">
+                    <h3 class="text-xs font-black text-[#0f172a] uppercase tracking-widest mb-3">I. Propósito y Misión
+                    </h3>
+                    <p class="text-justify mx-auto">El foro es un espacio diseñado para la militancia con el fin de
+                        intercambiar ideas, proponer soluciones de política pública y fortalecer la base ideológica del
+                        partido mediante el debate abierto y racional.</p>
+                </div>
+                <div class="text-center">
+                    <h3 class="text-xs font-black text-[#0f172a] uppercase tracking-widest mb-3">II. Normas de
+                        Convivencia (Código de Honor)</h3>
+                    <ul class="list-none space-y-4 text-justify mx-auto">
+                        <li><strong class="text-[#0f172a] block text-center mb-1">Ataque al argumento, no al
+                                militante</strong> Se prohíben estrictamente los ataques personales (Ad Hominem),
+                            insultos o lenguaje denigrante hacia otros miembros del foro.</li>
+                        <li><strong class="text-[#0f172a] block text-center mb-1">Debate de Buena Fe</strong> Las
+                            participaciones deben buscar la construcción de conocimiento. Se sancionará el "trolleo" o
+                            la provocación deliberada sin sustento ideológico.</li>
+                        <li><strong class="text-[#0f172a] block text-center mb-1">Civilidad y Respeto</strong> Se
+                            mantiene la política de tolerancia cero ante discursos de odio, racismo o discriminación de
+                            cualquier índole, manteniendo el estándar de respeto de la Directiva Regional.</li>
+                    </ul>
+                </div>
+                <div class="text-center">
+                    <h3 class="text-xs font-black text-[#0f172a] uppercase tracking-widest mb-3">III. Lineamientos de
+                        Contenido</h3>
+                    <ul class="list-none space-y-4 text-justify mx-auto">
+                        <li><strong class="text-[#0f172a] block text-center mb-1">Sustentación de Afirmaciones</strong>
+                            Para elevar la calidad del debate, se insta a los militantes a respaldar sus opiniones con
+                            datos, fuentes bibliográficas o evidencia empírica.</li>
+                        <li><strong class="text-[#0f172a] block text-center mb-1">Temática Pertinente</strong> Las
+                            discusiones deben centrarse en asuntos políticos, económicos, sociales o de gestión interna
+                            del partido.</li>
+                        <li><strong class="text-[#0f172a] block text-center mb-1">Identidad y Transparencia</strong> El
+                            uso de la cuenta oficial asociada a la "Forja Libertaria" es obligatorio para garantizar la
+                            responsabilidad de cada opinión emitida.</li>
+                    </ul>
+                </div>
+                <div class="text-center">
+                    <h3 class="text-xs font-black text-[#0f172a] uppercase tracking-widest mb-3">IV. Moderación y
+                        Sanciones</h3>
+                    <p class="text-justify mb-4 mx-auto"><strong
+                            class="text-[#0f172a] block text-center mb-1">Moderación Activa</strong> El Equipo de
+                        Comunicaciones tendrá la facultad de advertir, editar o eliminar comentarios que infrinjan este
+                        reglamento.</p>
+                    <p class="font-bold text-[#0f172a] text-center mb-3">Gradualidad de Sanciones:</p>
+                    <ul class="list-none space-y-2 text-center mx-auto">
+                        <li><strong class="text-[#0f172a]">Advertencia:</strong> Por infracciones menores de etiqueta.
+                        </li>
+                        <li><strong class="text-[#0f172a]">Suspensión Temporal:</strong> Por reincidencia en ataques
+                            personales.</li>
+                        <li><strong class="text-[#0f172a]">Expulsión del Foro:</strong> Por violaciones graves a los
+                            principios de respeto y convivencia del partido.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="mt-auto shrink-0 pt-6 w-full">
+                <label class="flex flex-col items-center gap-3 cursor-pointer group mb-6 text-center">
+                    <div class="relative flex items-center justify-center mt-1">
+                        <input type="checkbox" id="accept-rules-checkbox"
+                            class="peer appearance-none w-6 h-6 border-2 border-gray-300 rounded-md checked:bg-[#fba931] checked:border-[#fba931] transition-colors cursor-pointer">
+                        <span
+                            class="material-symbols-outlined text-white text-base absolute opacity-0 peer-checked:opacity-100 pointer-events-none">check</span>
+                    </div>
+                    <span
+                        class="text-[11px] font-bold text-gray-500 group-hover:text-[#0f172a] transition-colors leading-relaxed">He
+                        leído el reglamento preliminar y entiendo que si no sigo las reglas mi cuenta puede ser
+                        bloqueada para el uso del foro.</span>
+                </label>
+
+                <button onclick="acceptRules()" id="btn-accept-rules" disabled
+                    class="w-full max-w-sm mx-auto bg-gray-200 text-gray-400 py-5 rounded-full font-black text-[11px] uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-3 cursor-not-allowed">
+                    <span class="material-symbols-outlined">gavel</span> Aceptar y Continuar
+                </button>
+            </div>
         </div>
     </div>
 
@@ -224,37 +371,61 @@
         let categories = [];
         let currentCategoryId = null;
         let userProfile = null;
+        let quill = null;
+        let currentSort = 'recent';
 
         window.addEventListener('DOMContentLoaded', async () => {
-            // Esperar a que Supabase se inicialice (máximo 6 segundos)
+            // Esperar a que Supabase se inicialice
             let attempts = 0;
             while (!window.isSupabaseInit && attempts < 60) {
                 await new Promise(r => setTimeout(r, 100));
                 attempts++;
             }
 
-            if (!window.isSupabaseInit) {
-                showToast("Conexión lenta: Intentando reconectar...", "warning");
-                console.warn("Timeout de inicialización de Supabase en forja-foros.");
-                // Dar un margen extra antes de rendirse
-                await new Promise(r => setTimeout(r, 2000));
-                if (!window.isSupabaseInit) return;
-            }
+            if (!window.isSupabaseInit) return;
 
             const { data: { user } } = await supabaseClient.auth.getUser();
             if (!user) { window.location.href = 'forja-login.html'; return; }
 
-            // Cargar perfil
             const { data: profile } = await supabaseClient.from('profiles').select('*').eq('auth_id', user.id).single();
             userProfile = profile;
 
             if (typeof initNavbar === 'function') initNavbar();
+            initEditor();
+            initRulesListeners();
             await loadCategories();
             await loadTopics();
             await loadHonorWall();
             await loadForumStats();
-            listenToVotes();
+            listenToChanges();
         });
+
+        function initRulesListeners() {
+            document.getElementById('accept-rules-checkbox')?.addEventListener('change', (e) => {
+                const btn = document.getElementById('btn-accept-rules');
+                if (e.target.checked) {
+                    btn.disabled = false;
+                    btn.className = "w-full max-w-sm mx-auto bg-[#0f172a] text-white py-5 rounded-full font-black text-[11px] uppercase tracking-[0.2em] shadow-xl hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3 cursor-pointer";
+                } else {
+                    btn.disabled = true;
+                    btn.className = "w-full max-w-sm mx-auto bg-gray-200 text-gray-400 py-5 rounded-full font-black text-[11px] uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-3 cursor-not-allowed";
+                }
+            });
+        }
+
+        function initEditor() {
+            quill = new Quill('#form-editor', {
+                theme: 'snow',
+                placeholder: 'Desarrolla tu idea con respeto y argumentos...',
+                modules: {
+                    toolbar: [
+                        ['bold', 'italic', 'underline'],
+                        [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+                        ['clean']
+                    ]
+                }
+            });
+        }
 
         async function loadForumStats() {
             const [topicsRes, postsRes] = await Promise.all([
@@ -266,7 +437,6 @@
         }
 
         async function loadHonorWall() {
-            // Ranking optimizado directo de BD
             const { data: topUsers } = await supabaseClient
                 .from('profiles')
                 .select('id, full_name, role, rank, reputation_score')
@@ -282,18 +452,17 @@
             }
 
             honorContainer.innerHTML = topUsers.map(u => `
-                <div class="flex items-center gap-3 p-3 rounded-2xl hover:bg-slate-50 transition-all border border-transparent hover:border-slate-100">
-                    <div class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-black text-slate-800 border-2 border-white shadow-sm shrink-0">
+                <div class="flex items-center gap-4 p-4 rounded-3xl hover:bg-slate-50 transition-all border border-transparent hover:border-slate-100 group cursor-default">
+                    <div class="w-10 h-10 rounded-full bg-white flex items-center justify-center text-[11px] font-black text-slate-800 border-2 border-slate-100 shadow-sm shrink-0 group-hover:border-[#fba931] transition-all">
                         ${u.full_name?.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}
                     </div>
                     <div class="flex flex-col flex-1">
                         <div class="flex justify-between items-center w-full">
-                            <span class="text-[10px] font-black text-[#0f172a] leading-none mb-1">${u.full_name}</span>
-                            <span class="text-[8px] text-gray-400 font-bold ml-2">${u.reputation_score || 0} rep</span>
+                            <span class="text-[11px] font-black text-[#0f172a] leading-none mb-1">${u.full_name}</span>
+                            <span class="text-[9px] text-[#fba931] font-black">${u.reputation_score || 0} REP</span>
                         </div>
-                        <span class="text-[8px] font-bold text-amber-600 uppercase tracking-widest">${u.rank}</span>
+                        <span class="text-[8px] font-bold text-gray-400 uppercase tracking-[0.2em]">${u.rank}</span>
                     </div>
-                    <span class="material-symbols-outlined ml-auto text-amber-400 text-lg shrink-0">verified</span>
                 </div>
             `).join('');
         }
@@ -306,9 +475,9 @@
             const select = document.getElementById('form-category');
 
             list.innerHTML = categories.map(cat => `
-                <button onclick="selectCategory('${cat.id}')" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${currentCategoryId === cat.id ? 'nav-link-active' : 'text-gray-500 hover:bg-gray-50 font-bold'}">
-                    <span class="material-symbols-outlined text-xl">${cat.icon}</span>
-                    <span class="text-xs font-bold uppercase tracking-tight">${cat.title}</span>
+                <button onclick="selectCategory('${cat.id}')" class="w-full flex items-center gap-4 px-5 py-4 rounded-2xl transition-all group ${currentCategoryId === cat.id ? 'nav-link-active' : 'text-gray-400 hover:bg-gray-50 hover:text-[#0f172a]'}">
+                    <span class="material-symbols-outlined text-2xl ${currentCategoryId === cat.id ? 'text-[#fba931]' : 'group-hover:text-[#fba931]'} transition-colors">${cat.icon}</span>
+                    <span class="text-[11px] font-black uppercase tracking-tight">${cat.title}</span>
                 </button>
             `).join('');
 
@@ -317,87 +486,95 @@
 
         async function loadTopics() {
             let query = supabaseClient.from('forum_topics').select(`
-                id, title, content, created_at, last_activity, category_id,
+                *,
                 profiles:profile_id (id, full_name, role, rank, reputation_score),
-                forum_votes (vote_type)
-            `).order('last_activity', { ascending: false });
+                forum_votes (vote_type),
+                forum_posts (id)
+            `);
+
+            if (currentSort === 'recent') {
+                query = query.order('created_at', { ascending: false });
+            } else {
+                // Para popularidad necesitaríamos una agregación en BD, 
+                // por ahora ordenamos por fecha de última actividad o similar.
+                query = query.order('last_activity', { ascending: false });
+            }
 
             if (currentCategoryId) query = query.eq('category_id', currentCategoryId);
 
             const { data, error } = await query;
-            if (error) {
-                console.error("Error al cargar tópicos:", error);
-                showToast("Error al obtener debates.", "error");
-                return;
-            }
-
-            console.log("🔍 Datos de debates recibidos:", data);
+            if (error) return;
 
             const feed = document.getElementById('topics-feed');
             if (!data || data.length === 0) {
                 feed.innerHTML = `
-                    <div class="premium-card p-20 text-center border-dashed border-2">
-                        <span class="material-symbols-outlined text-5xl text-gray-200 mb-4">move_to_inbox</span>
-                        <p class="text-gray-400 font-bold uppercase text-[10px] tracking-widest">No hay debates en esta categoría todavía.</p>
+                    <div class="premium-card p-24 text-center border-dashed border-2 bg-slate-50/50">
+                        <span class="material-symbols-outlined text-6xl text-gray-200 mb-6">forum</span>
+                        <p class="text-gray-400 font-black uppercase text-[11px] tracking-widest">No hay debates en esta categoría todavía.</p>
+                        <button onclick="openNewTopicModal()" class="mt-8 text-[#fba931] font-black text-[10px] uppercase tracking-widest hover:underline">Sé el primero en hablar</button>
                     </div>
                 `;
                 return;
             }
 
             feed.innerHTML = data.map(t => {
-                const tid = t.id || t['id'];
-                if (!tid) {
-                    console.error("⚠️ Topic sin ID detectado:", t);
-                    return '';
-                }
-
                 const voteCount = (t.forum_votes || []).reduce((acc, v) => acc + v.vote_type, 0);
+                const replyCount = (t.forum_posts || []).length;
                 const initials = t.profiles?.full_name?.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() || '??';
                 const isDirectiva = ['super_admin', 'admin_forja'].includes(t.profiles?.role);
                 const userRank = t.profiles?.rank || 'Iniciado';
+                const hasAcceptedRules = userProfile?.accepted_forum_rules === true;
 
                 const rankStyles = {
-                    'Oro': 'bg-amber-100 text-amber-600 border border-amber-200',
-                    'Plata': 'bg-slate-100 text-slate-500 border border-slate-200',
+                    'Oro': 'bg-amber-50 text-amber-600 border border-amber-100',
+                    'Plata': 'bg-slate-50 text-slate-500 border border-slate-100',
                     'Bronce': 'bg-orange-50 text-orange-600 border border-orange-100',
-                    'Iniciado': 'bg-gray-50 text-gray-400'
+                    'Iniciado': 'bg-gray-50 text-gray-300'
                 };
 
-                const postUrl = `forja-foros-post.html?id=${tid}`;
-                console.log(`🔗 Generando link para "${t.title}": ${postUrl}`);
+                const postUrl = `forja-foros-post.html?id=${t.id}`;
 
                 return `
-                    <article class="premium-card p-8 flex gap-6 hover:shadow-2xl transition-all group">
-                        <div class="flex flex-col items-center gap-1 shrink-0">
-                            <button onclick="vote('${tid}', 1)" class="material-symbols-outlined upvote-btn text-gray-300 transition-colors">arrow_drop_up</button>
+                    <article class="premium-card p-10 flex gap-10 topic-card group relative overflow-hidden">
+                        <div class="flex flex-col items-center gap-2 shrink-0 bg-slate-50 rounded-2xl p-3 h-fit border border-slate-100">
+                            <button onclick="vote('${t.id}', 1)" class="material-symbols-outlined upvote-btn text-gray-300 hover:text-green-500 transition-all scale-125">arrow_drop_up</button>
                             <span class="text-sm font-black text-[#0f172a]">${voteCount}</span>
-                            <button onclick="vote('${tid}', -1)" class="material-symbols-outlined downvote-btn text-gray-300 transition-colors">arrow_drop_down</button>
+                            <button onclick="vote('${t.id}', -1)" class="material-symbols-outlined downvote-btn text-gray-300 hover:text-red-500 transition-all scale-125">arrow_drop_down</button>
                         </div>
                         
                         <div class="flex-1">
-                            <div class="flex items-center gap-3 mb-3">
-                                <div class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-black text-slate-800">${initials}</div>
-                                <span class="text-[10px] font-black uppercase text-slate-800">${t.profiles?.full_name || 'Desconocido'}</span>
-                                <span class="w-1.5 h-1.5 rounded-full bg-gray-200"></span>
-                                <span class="text-[10px] font-bold text-gray-400 uppercase">${new Date(t.created_at).toLocaleDateString()}</span>
+                            <div class="flex items-center gap-4 mb-5">
+                                <div class="w-9 h-9 rounded-full bg-white border-2 border-slate-100 flex items-center justify-center text-[10px] font-black text-slate-600 shadow-sm">${initials}</div>
+                                <div class="flex flex-col">
+                                    <span class="text-[10px] font-black uppercase text-slate-800 leading-none">${t.profiles?.full_name || 'Desconocido'}</span>
+                                    <span class="text-[8px] font-bold text-gray-400 uppercase tracking-widest mt-1">${new Date(t.created_at).toLocaleDateString('es-CL')}</span>
+                                </div>
                                 
                                 <div class="flex gap-2 ml-auto">
-                                    ${isDirectiva ? '<span class="bg-[#0f172a] text-[#fba931] text-[8px] font-black px-2 py-0.5 rounded uppercase tracking-tighter">Directiva</span>' : ''}
-                                    <span class="${rankStyles[userRank]} text-[8px] font-black px-3 py-1 rounded-full uppercase tracking-tighter flex items-center gap-1">
+                                    ${isDirectiva ? '<span class="bg-[#0f172a] text-[#fba931] text-[8px] font-black px-3 py-1 rounded uppercase tracking-tighter shadow-sm">Directiva</span>' : ''}
+                                    <span class="${rankStyles[userRank]} text-[8px] font-black px-3 py-1 rounded uppercase tracking-tighter flex items-center gap-1">
                                         <span class="material-symbols-outlined text-[10px]">workspace_premium</span> ${userRank}
                                     </span>
                                 </div>
                             </div>
-                            <a href="${postUrl}" onclick="sessionStorage.setItem('current_topic_id', '${tid}')" class="block group">
-                                <h3 class="text-xl font-800 text-[#0f172a] mb-4 group-hover:text-[#fba931] transition-colors leading-tight cursor-pointer">
+                            
+                            <a ${hasAcceptedRules ? `href="${postUrl}"` : `href="javascript:void(0)" onclick="openRulesModal(); return false;" title="Debes leer y aceptar el reglamento para entrar al debate."`} class="block group mb-6 ${!hasAcceptedRules ? 'cursor-not-allowed opacity-70' : ''}">
+                                <h3 class="text-2xl font-black text-[#0f172a] ${hasAcceptedRules ? 'group-hover:text-[#fba931]' : ''} transition-all leading-snug">
                                     ${t.title}
                                 </h3>
                             </a>
-                            <p class="text-sm text-slate-500 leading-relaxed mb-6 line-clamp-3">${t.content}</p>
-                            <div class="flex items-center gap-6">
-                                <a href="${postUrl}" onclick="sessionStorage.setItem('current_topic_id', '${tid}')" class="flex items-center gap-2 text-gray-400 hover:text-[#fba931] transition-colors">
-                                    <span class="material-symbols-outlined text-lg">chat_bubble</span>
-                                    <span class="text-[10px] font-black uppercase tracking-widest cursor-pointer">Ver Debate</span>
+
+                            <div class="flex items-center gap-8 mt-auto border-t border-gray-50 pt-6">
+                                <a ${hasAcceptedRules ? `href="${postUrl}"` : `href="javascript:void(0)" onclick="openRulesModal(); return false;" title="Debes leer y aceptar el reglamento para entrar al debate."`} class="flex items-center gap-2.5 text-gray-400 ${hasAcceptedRules ? 'hover:text-[#0f172a]' : ''} transition-all ${!hasAcceptedRules ? 'cursor-not-allowed opacity-70' : ''}">
+                                    <span class="material-symbols-outlined text-xl">chat_bubble</span>
+                                    <span class="text-[10px] font-black uppercase tracking-widest">${replyCount} Aportes</span>
+                                </a>
+                                <div class="flex items-center gap-2.5 text-gray-300">
+                                    <span class="material-symbols-outlined text-xl">schedule</span>
+                                    <span class="text-[10px] font-bold uppercase tracking-widest">Activo ${new Date(t.last_activity).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })}</span>
+                                </div>
+                                <a ${hasAcceptedRules ? `href="${postUrl}"` : `href="javascript:void(0)" onclick="openRulesModal(); return false;" title="Debes leer y aceptar el reglamento para entrar al debate."`} class="ml-auto flex items-center gap-1.5 text-[10px] font-black uppercase text-[#fba931] ${hasAcceptedRules ? 'hover:brightness-90' : ''} transition-all ${!hasAcceptedRules ? 'cursor-not-allowed opacity-70 grayscale' : ''}">
+                                    Entrar al Debate <span class="material-symbols-outlined text-lg">chevron_right</span>
                                 </a>
                             </div>
                         </div>
@@ -406,16 +583,13 @@
             }).join('');
         }
 
-
-
         async function vote(topicId, type) {
             try {
-                // Upsert vote
                 const { error } = await supabaseClient.from('forum_votes').upsert([
                     { topic_id: topicId, profile_id: userProfile.id, vote_type: type }
                 ]);
                 if (error) throw error;
-                await loadTopics(); // Recargar para ver cambios
+                // loadTopics se llamará por Realtime
             } catch (err) {
                 showToast("Error al votar: " + err.message, 'error');
             }
@@ -429,18 +603,66 @@
             loadTopics();
         }
 
-        function openNewTopicModal() { document.getElementById('new-topic-modal').classList.remove('hidden'); }
+        function sortBy(mode) {
+            currentSort = mode;
+            document.getElementById('sort-recent').className = mode === 'recent' ? 'px-6 py-2 rounded-full text-[10px] font-black uppercase transition-all bg-[#0f172a] text-white' : 'px-6 py-2 rounded-full text-[10px] font-black uppercase transition-all text-gray-400 hover:text-[#0f172a]';
+            document.getElementById('sort-popular').className = mode === 'popular' ? 'px-6 py-2 rounded-full text-[10px] font-black uppercase transition-all bg-[#0f172a] text-white' : 'px-6 py-2 rounded-full text-[10px] font-black uppercase transition-all text-gray-400 hover:text-[#0f172a]';
+            loadTopics();
+        }
+
+        function openRulesModal() { document.getElementById('rules-modal').classList.remove('hidden'); }
+        function closeRulesModal() { document.getElementById('rules-modal').classList.add('hidden'); }
+
+        async function acceptRules() {
+            if (!document.getElementById('accept-rules-checkbox').checked) return;
+
+            const btn = document.getElementById('btn-accept-rules');
+            window.setButtonLoading(btn, true);
+
+            try {
+                const { error } = await supabaseClient.from('profiles')
+                    .update({ accepted_forum_rules: true })
+                    .eq('id', userProfile.id);
+
+                if (error) throw error;
+
+                userProfile.accepted_forum_rules = true;
+                closeRulesModal();
+                showToast("Reglamento aceptado. ¡Bienvenido al debate!", "success");
+                loadTopics();
+            } catch (e) {
+                showToast("Error al guardar: " + e.message, "error");
+            } finally {
+                window.setButtonLoading(btn, false);
+            }
+        }
+
+        function openNewTopicModal() {
+            if (!userProfile?.accepted_forum_rules) {
+                openRulesModal();
+                return;
+            }
+            document.getElementById('new-topic-modal').classList.remove('hidden');
+            quill.focus();
+        }
         function closeNewTopicModal() { document.getElementById('new-topic-modal').classList.add('hidden'); }
 
         document.getElementById('topic-form').onsubmit = async (e) => {
             e.preventDefault();
             const btn = e.target.querySelector('button');
+            const content = quill.root.innerHTML;
+
+            if (quill.getText().trim().length < 10) {
+                showToast("El argumento debe ser más extenso para fomentar el debate.", "warning");
+                return;
+            }
+
             window.setButtonLoading(btn, true);
 
             const topicData = {
                 category_id: document.getElementById('form-category').value,
                 title: document.getElementById('form-title').value,
-                content: document.getElementById('form-content').value,
+                content: content,
                 profile_id: userProfile.id
             };
 
@@ -453,14 +675,16 @@
                 showToast("¡Hilo publicado exitosamente!", 'success');
                 closeNewTopicModal();
                 e.target.reset();
+                quill.setContents([]);
                 await loadTopics();
             }
         };
 
-        function listenToVotes() {
-            supabaseClient.channel('forum_changes')
+        function listenToChanges() {
+            supabaseClient.channel('forum_global')
                 .on('postgres_changes', { event: '*', schema: 'public', table: 'forum_votes' }, () => loadTopics())
-                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'forum_topics' }, () => loadTopics())
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'forum_topics' }, () => { loadTopics(); loadForumStats(); })
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'forum_posts' }, () => { loadTopics(); loadForumStats(); })
                 .subscribe();
         }
     </script>
