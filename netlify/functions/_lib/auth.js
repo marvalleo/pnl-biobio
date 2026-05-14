@@ -15,7 +15,9 @@ function getSupabaseAdmin() {
 function decodeJwtSub(token) {
     const payloadBase64 = token.split('.')[1];
     if (!payloadBase64) throw new Error('Token malformado');
-    const payload = JSON.parse(Buffer.from(payloadBase64, 'base64').toString('utf8'));
+    // JWTs use base64url (no padding, '-' instead of '+', '_' instead of '/').
+    // Node 16+ supports 'base64url' as encoding.
+    const payload = JSON.parse(Buffer.from(payloadBase64, 'base64url').toString('utf8'));
     if (payload.exp && payload.exp < Math.floor(Date.now() / 1000)) {
         throw new Error('Token expirado');
     }
@@ -25,7 +27,17 @@ function decodeJwtSub(token) {
 
 /**
  * Valida el JWT del header Authorization y devuelve el perfil del usuario.
- * Resuelve a { profile, supabase } o lanza error con statusCode embebido.
+ * Resuelve a { profile, supabase, authUserId } o lanza error con statusCode embebido.
+ *
+ * IMPORTANTE - Trust model:
+ *   - El JWT NO se verifica criptográficamente (no validamos la firma). Confiamos
+ *     en que cualquier `sub` que aparezca en el token corresponde a un perfil real
+ *     en la tabla profiles. Si alguien fabrica un token con un sub arbitrario,
+ *     no encontraremos perfil y devolveremos 403.
+ *   - El cliente `supabase` retornado usa SERVICE_ROLE_KEY y bypasea RLS.
+ *     Úsalo solo para operaciones que genuinamente lo requieran (insertar en
+ *     tablas con RLS deny, leer información cross-user para procesamiento).
+ *     NO uses este cliente como sustituto de las queries normales del usuario.
  *
  * Uso típico desde un handler de Netlify:
  *   try {
@@ -49,7 +61,9 @@ async function authenticate(event) {
         const token = authHeader.replace(/^Bearer\s+/i, '');
         userId = decodeJwtSub(token);
     } catch (jwtErr) {
-        const e = new Error(`Token inválido: ${jwtErr.message}`);
+        // No exponemos jwtErr.message al cliente; podría contener fragmentos del payload.
+        console.error('[auth] JWT decode error:', jwtErr.message);
+        const e = new Error('Token inválido o expirado');
         e.statusCode = 401;
         throw e;
     }
@@ -61,6 +75,13 @@ async function authenticate(event) {
         .eq('auth_id', userId)
         .maybeSingle();
 
+    if (byAuthId.error) {
+        console.error('[auth] Supabase error (byAuthId):', byAuthId.error.message);
+        const e = new Error('Error consultando perfil de usuario');
+        e.statusCode = 500;
+        throw e;
+    }
+
     let profile = byAuthId.data;
     if (!profile) {
         const byId = await supabase
@@ -68,11 +89,17 @@ async function authenticate(event) {
             .select('id, role, accepted_forum_rules, full_name')
             .eq('id', userId)
             .maybeSingle();
+        if (byId.error) {
+            console.error('[auth] Supabase error (byId):', byId.error.message);
+            const e = new Error('Error consultando perfil de usuario');
+            e.statusCode = 500;
+            throw e;
+        }
         profile = byId.data;
     }
 
     if (!profile) {
-        const e = new Error('Perfil no encontrado para el token entregado');
+        const e = new Error('No autorizado');
         e.statusCode = 403;
         throw e;
     }
