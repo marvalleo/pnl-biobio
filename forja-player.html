@@ -150,7 +150,12 @@
         </div>
 
         <div id="certificate-container" class="px-6 py-4 bg-amber-500/5 border-b border-white/5 hidden">
-            <button onclick="generateCertificate()"
+            <button id="btn-final-exam" onclick="openFinalExam()"
+                class="hidden certificate-btn w-full py-3 rounded-xl flex items-center justify-center gap-3 text-[#0f172a] font-900 text-[10px] uppercase tracking-widest transition-all hover:scale-[1.02] active:scale-95 mb-3">
+                <span class="material-symbols-outlined text-sm">quiz</span>
+                Tomar Examen Final
+            </button>
+            <button id="btn-diploma" onclick="generateCertificate()"
                 class="certificate-btn w-full py-3 rounded-xl flex items-center justify-center gap-3 text-[#0f172a] font-900 text-[10px] uppercase tracking-widest transition-all hover:scale-[1.02] active:scale-95">
                 <span class="material-symbols-outlined text-sm">military_tech</span>
                 Descargar Diploma
@@ -460,20 +465,51 @@
             }).join('');
         }
 
-        function updateProgress() {
+        async function updateProgress() {
             const percent = Math.round((completedLessonIds.size / currentLessons.length) * 100) || 0;
             const bar = document.getElementById('progress-bar');
             if (bar) bar.style.width = `${percent}%`;
             const text = document.getElementById('course-progress-text');
             if (text) text.textContent = `${percent}% Completado`;
 
-            // Mostrar botón de certificado si está al 100%
             const certBox = document.getElementById('certificate-container');
-            if (percent >= 100) {
-                certBox.classList.remove('hidden');
-            } else {
+            const examBtn = document.getElementById('btn-final-exam');
+            const diplomaBtn = document.getElementById('btn-diploma');
+
+            if (percent < 100) {
                 certBox.classList.add('hidden');
+                return;
             }
+            certBox.classList.remove('hidden');
+
+            // Si hay examen final configurado, requerir aprobarlo antes del diploma
+            if (quizState.finalQuizId) {
+                // ¿Ya aprobó el examen final?
+                const { data: passed } = await supabaseClient
+                    .from('quiz_attempts')
+                    .select('id')
+                    .eq('quiz_id', quizState.finalQuizId)
+                    .eq('profile_id', profileId)
+                    .eq('passed', true)
+                    .limit(1)
+                    .maybeSingle();
+
+                if (passed) {
+                    examBtn.classList.add('hidden');
+                    diplomaBtn.classList.remove('hidden');
+                } else {
+                    examBtn.classList.remove('hidden');
+                    diplomaBtn.classList.add('hidden');
+                }
+            } else {
+                // Sin examen final: comportamiento legacy (diploma directo)
+                examBtn.classList.add('hidden');
+                diplomaBtn.classList.remove('hidden');
+            }
+        }
+
+        function openFinalExam() {
+            if (quizState.finalQuizId) openQuizModal(quizState.finalQuizId);
         }
 
         async function selectLesson(index) {
@@ -1016,6 +1052,7 @@
             // Si aprobó: refrescar progreso de lecciones
             if (result.passed) {
                 await loadLessons();
+                await updateProgress();
             }
         }
 
