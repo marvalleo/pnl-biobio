@@ -62,10 +62,17 @@
                     de Contenido</p>
                 <h1 id="course-name" class="text-3xl font-900 uppercase text-[#0f172a]">Lecciones del Curso</h1>
             </div>
-            <button id="btn-new-item" onclick="openModal()"
-                class="bg-[#fba931] text-[#0f172a] px-6 py-3 rounded-xl font-900 text-xs uppercase tracking-widest shadow-lg hover:brightness-110 flex items-center gap-2 transition-all">
-                <span class="material-symbols-outlined">add</span> Nueva Lección
-            </button>
+            <div class="flex gap-3">
+                <button id="btn-final-exam" onclick="openQuizBuilder(null)"
+                    class="bg-white border-2 border-[#fba931] text-[#fba931] px-6 py-3 rounded-xl font-900 text-xs uppercase tracking-widest hover:bg-[#fba931] hover:text-white flex items-center gap-2 transition-all">
+                    <span class="material-symbols-outlined">quiz</span>
+                    <span id="btn-final-exam-text">Examen Final del Curso</span>
+                </button>
+                <button id="btn-new-item" onclick="openModal()"
+                    class="bg-[#fba931] text-[#0f172a] px-6 py-3 rounded-xl font-900 text-xs uppercase tracking-widest shadow-lg hover:brightness-110 flex items-center gap-2 transition-all">
+                    <span class="material-symbols-outlined">add</span> Nueva Lección
+                </button>
+            </div>
         </div>
 
         <div class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
@@ -298,6 +305,26 @@
 
                 if (error) throw error;
 
+                // Cargar quizzes asociados (uno por lección + uno final por curso)
+                const { data: quizzes } = await supabaseClient
+                    .from('quizzes')
+                    .select('id, lesson_id')
+                    .eq('course_id', courseId);
+
+                const lessonsWithQuiz = new Set((quizzes || []).filter(q => q.lesson_id).map(q => q.lesson_id));
+                const finalQuiz = (quizzes || []).find(q => !q.lesson_id);
+
+                // Marcar el botón "Examen Final" con estado visual
+                const finalBtn = document.getElementById('btn-final-exam');
+                if (finalQuiz) {
+                    finalBtn.classList.remove('bg-white', 'text-[#fba931]', 'border-2', 'border-[#fba931]');
+                    finalBtn.classList.add('bg-[#fba931]', 'text-[#0f172a]', 'shadow-lg');
+                    document.getElementById('btn-final-exam-text').textContent = 'Examen Final ✓';
+                }
+
+                // Anotar has_quiz en cada lesson
+                data.forEach(l => l.has_quiz = lessonsWithQuiz.has(l.id));
+
                 if (data.length === 0) {
                     tableBody.innerHTML = '<tr><td colspan="6" class="p-10 text-center text-gray-400 italic">No hay lecciones creadas para este curso.</td></tr>';
                     return;
@@ -343,7 +370,8 @@
                                 ${cuposDisplay}
                             </button>
                         </td>
-                        <td class="p-6 text-right">
+                        <td class="p-6 text-right whitespace-nowrap">
+                            <button onclick="openQuizBuilder('${lesson.id}')" class="p-2 rounded-lg transition-colors ${lesson.has_quiz ? 'text-[#fba931] hover:bg-amber-50' : 'text-gray-300 hover:bg-gray-100 hover:text-[#fba931]'}" title="${lesson.has_quiz ? 'Editar examen' : 'Crear examen'}"><span class="material-symbols-outlined">quiz</span></button>
                             <button onclick='editLesson(${JSON.stringify(lesson)})' class="p-2 text-[#0f172a] hover:bg-gray-100 rounded-lg"><span class="material-symbols-outlined">edit</span></button>
                             <button onclick="deleteLesson('${lesson.id}')" class="p-2 text-red-500 hover:bg-red-50 rounded-lg"><span class="material-symbols-outlined">delete</span></button>
                         </td>
