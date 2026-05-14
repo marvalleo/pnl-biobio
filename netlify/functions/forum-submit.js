@@ -85,6 +85,13 @@ exports.handler = async (event) => {
     if (target_type === 'topic' && (!category_id || !title)) {
         return { statusCode: 400, body: JSON.stringify({ ok: false, message: 'topic requiere category_id y title' }) };
     }
+    let cleanTitle = null;
+    if (target_type === 'topic') {
+        cleanTitle = String(title).trim().substring(0, 300);
+        if (!cleanTitle) {
+            return { statusCode: 400, body: JSON.stringify({ ok: false, message: 'El título no puede estar vacío' }) };
+        }
+    }
     if (target_type === 'post' && !topic_id) {
         return { statusCode: 400, body: JSON.stringify({ ok: false, message: 'post requiere topic_id' }) };
     }
@@ -98,7 +105,7 @@ exports.handler = async (event) => {
     // 2. Extraer texto plano para la IA
     let plainForAI;
     if (target_type === 'topic') {
-        plainForAI = `${title}\n\n${htmlToPlainText(cleanHtml)}`;
+        plainForAI = `${cleanTitle}\n\n${htmlToPlainText(cleanHtml)}`;
     } else {
         plainForAI = htmlToPlainText(cleanHtml);
     }
@@ -117,6 +124,20 @@ exports.handler = async (event) => {
         modelUsed = r.model_used;
         rawResponse = r.raw;
     } catch (modErr) {
+        // Distinguimos misconfiguration (env vars mal seteadas) de fallo real del proveedor.
+        // En misconfiguration, fallar 500 explícitamente para que se note rápido en lugar
+        // de silenciosamente desactivar la moderación.
+        if (modErr.code === 'config_error') {
+            console.error('[forum-submit] Configuración AI inválida:', modErr.message);
+            return {
+                statusCode: 500,
+                body: JSON.stringify({
+                    ok: false,
+                    code: 'ai_misconfigured',
+                    message: 'El servicio de moderación no está configurado correctamente. Avisa a un administrador.'
+                })
+            };
+        }
         console.warn('[forum-submit] Moderación falló, fail-open:', modErr.message);
         unavailable = true;
         verdict = 'unavailable';
@@ -136,7 +157,7 @@ exports.handler = async (event) => {
             insertResult = await insertTopic(supabase, {
                 category_id,
                 profile_id: profile.id,
-                title,
+                title: cleanTitle,
                 content: cleanHtml,
                 moderation_status,
                 moderation_notes

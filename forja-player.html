@@ -362,6 +362,10 @@
             profileId = profile.id;
 
             await Promise.all([loadCourse(), loadLessons(), loadRegistrations(), loadQuizMetadata()]);
+            // updateProgress() depende de quizState.finalQuizId (set por loadQuizMetadata).
+            // Re-llamamos explícitamente porque loadLessons puede haber corrido antes
+            // de que loadQuizMetadata terminara.
+            await updateProgress();
             loadYoutubeAPI();
         });
 
@@ -411,7 +415,7 @@
                 }
 
                 renderLessons();
-                updateProgress();
+                await updateProgress();
 
                 // Auto-seleccionar primera lección si hay disponibles y ninguna activa
                 if (currentLessons.length > 0 && currentLessonIndex === -1) {
@@ -773,7 +777,7 @@
                     completedLessonIds.add(lesson.id);
                 }
                 updateButtonUI(!isCompleted);
-                updateProgress();
+                await updateProgress();
                 renderLessons();
             } catch (err) { console.error(err); }
         }
@@ -938,6 +942,10 @@
         function showCooldownView(untilIso) {
             document.querySelectorAll('#quiz-modal > div > div').forEach(v => v.classList.add('hidden'));
             document.getElementById('quiz-view-cooldown').classList.remove('hidden');
+
+            // Limpiar timer previo si quedó activo (evita doble interval).
+            if (quizState.cooldownTimer) clearInterval(quizState.cooldownTimer);
+            quizState.cooldownTimer = null;
 
             const display = document.getElementById('quiz-cooldown-display');
             const update = () => {
