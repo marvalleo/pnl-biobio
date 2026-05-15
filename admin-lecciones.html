@@ -62,10 +62,17 @@
                     de Contenido</p>
                 <h1 id="course-name" class="text-3xl font-900 uppercase text-[#0f172a]">Lecciones del Curso</h1>
             </div>
-            <button id="btn-new-item" onclick="openModal()"
-                class="bg-[#fba931] text-[#0f172a] px-6 py-3 rounded-xl font-900 text-xs uppercase tracking-widest shadow-lg hover:brightness-110 flex items-center gap-2 transition-all">
-                <span class="material-symbols-outlined">add</span> Nueva Lección
-            </button>
+            <div class="flex gap-3">
+                <button id="btn-final-exam" onclick="openQuizBuilder(null)"
+                    class="bg-white border-2 border-[#fba931] text-[#fba931] px-6 py-3 rounded-xl font-900 text-xs uppercase tracking-widest hover:bg-[#fba931] hover:text-white flex items-center gap-2 transition-all">
+                    <span class="material-symbols-outlined">quiz</span>
+                    <span id="btn-final-exam-text">Examen Final del Curso</span>
+                </button>
+                <button id="btn-new-item" onclick="openModal()"
+                    class="bg-[#fba931] text-[#0f172a] px-6 py-3 rounded-xl font-900 text-xs uppercase tracking-widest shadow-lg hover:brightness-110 flex items-center gap-2 transition-all">
+                    <span class="material-symbols-outlined">add</span> Nueva Lección
+                </button>
+            </div>
         </div>
 
         <div class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
@@ -196,6 +203,83 @@
         </div>
     </div>
 
+    <!-- Modal Quiz Builder -->
+    <div id="quiz-builder-modal" class="fixed inset-0 bg-black/50 z-[70] hidden flex items-start justify-center backdrop-blur-sm overflow-y-auto py-10">
+        <div class="bg-white rounded-3xl p-8 max-w-3xl w-full shadow-2xl mx-4 my-auto">
+            <h2 id="quiz-builder-title" class="text-2xl font-900 uppercase mb-6 text-[#0f172a]">Examen — </h2>
+
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6 p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                <div>
+                    <label class="text-[9px] font-black uppercase text-gray-400 ml-1">Aprobación %</label>
+                    <input type="number" id="qb-pass" min="1" max="100" value="70"
+                        class="w-full bg-white border border-gray-200 p-3 rounded-xl text-sm font-bold focus:ring-2 focus:ring-[#fba931] outline-none">
+                </div>
+                <div>
+                    <label class="text-[9px] font-black uppercase text-gray-400 ml-1">Cooldown (h)</label>
+                    <input type="number" id="qb-cooldown" min="0" value="24"
+                        class="w-full bg-white border border-gray-200 p-3 rounded-xl text-sm font-bold focus:ring-2 focus:ring-[#fba931] outline-none">
+                </div>
+                <div>
+                    <label class="text-[9px] font-black uppercase text-gray-400 ml-1">Preguntas/intento</label>
+                    <input type="number" id="qb-perattempt" min="1" placeholder="todas"
+                        class="w-full bg-white border border-gray-200 p-3 rounded-xl text-sm font-bold focus:ring-2 focus:ring-[#fba931] outline-none">
+                </div>
+                <div class="flex items-end pb-1">
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" id="qb-shuffle" checked class="w-5 h-5 accent-[#fba931]">
+                        <span class="text-[10px] font-black uppercase text-gray-600">Barajar opciones</span>
+                    </label>
+                </div>
+            </div>
+
+            <div id="qb-warning" class="hidden mb-4 p-3 bg-amber-50 border border-amber-200 rounded-xl text-[11px] font-bold text-amber-700"></div>
+
+            <h3 class="text-xs font-black uppercase text-gray-500 tracking-widest mb-3">Banco de preguntas (<span id="qb-count">0</span>)</h3>
+            <div id="qb-questions" class="space-y-2 mb-4 max-h-80 overflow-y-auto pr-2">
+                <!-- preguntas dinámicas -->
+            </div>
+
+            <button onclick="openQuestionEditor(null)" type="button"
+                class="w-full mb-6 bg-gray-100 text-[#0f172a] py-3 rounded-xl font-900 uppercase text-xs hover:bg-gray-200 flex items-center justify-center gap-2">
+                <span class="material-symbols-outlined">add</span> Nueva pregunta
+            </button>
+
+            <div class="flex gap-4">
+                <button type="button" onclick="closeQuizBuilder()"
+                    class="flex-1 bg-gray-100 text-gray-600 py-4 rounded-xl font-900 uppercase text-xs hover:bg-gray-200">Cancelar</button>
+                <button type="button" onclick="saveQuiz()"
+                    class="flex-1 bg-[#fba931] text-[#0f172a] py-4 rounded-xl font-900 uppercase text-xs hover:brightness-110 shadow-lg">Guardar Examen</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Question Editor -->
+    <div id="question-editor-modal" class="fixed inset-0 bg-black/60 z-[80] hidden flex items-center justify-center backdrop-blur-sm overflow-y-auto py-10">
+        <div class="bg-white rounded-3xl p-8 max-w-xl w-full shadow-2xl mx-4 my-auto">
+            <h3 class="text-lg font-900 uppercase mb-4 text-[#0f172a]">Editar Pregunta</h3>
+            <input type="hidden" id="qe-index">
+
+            <label class="text-[10px] font-black uppercase text-gray-400 ml-1">Pregunta</label>
+            <textarea id="qe-text" rows="3" required
+                class="w-full bg-gray-50 border border-gray-100 p-4 rounded-xl focus:ring-2 focus:ring-[#fba931] outline-none mb-4"></textarea>
+
+            <label class="text-[10px] font-black uppercase text-gray-400 ml-1">Opciones (marca la correcta)</label>
+            <div id="qe-options" class="space-y-2 mt-2 mb-2"></div>
+            <button type="button" onclick="addOption()" class="text-[10px] font-bold uppercase text-[#fba931] hover:underline mb-4">+ Agregar opción</button>
+
+            <label class="text-[10px] font-black uppercase text-gray-400 ml-1">Explicación opcional (post-aprobación)</label>
+            <textarea id="qe-explanation" rows="2"
+                class="w-full bg-gray-50 border border-gray-100 p-4 rounded-xl focus:ring-2 focus:ring-[#fba931] outline-none mb-4"></textarea>
+
+            <div class="flex gap-4">
+                <button type="button" onclick="closeQuestionEditor()"
+                    class="flex-1 bg-gray-100 text-gray-600 py-4 rounded-xl font-900 uppercase text-xs hover:bg-gray-200">Cancelar</button>
+                <button type="button" onclick="saveQuestion()"
+                    class="flex-1 bg-[#0f172a] text-white py-4 rounded-xl font-900 uppercase text-xs hover:bg-slate-800 shadow-lg">Guardar Pregunta</button>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script type="module" src="supabase-config.js"></script>
     <script type="module" src="/shared.js"></script>
@@ -298,6 +382,26 @@
 
                 if (error) throw error;
 
+                // Cargar quizzes asociados (uno por lección + uno final por curso)
+                const { data: quizzes } = await supabaseClient
+                    .from('quizzes')
+                    .select('id, lesson_id')
+                    .eq('course_id', courseId);
+
+                const lessonsWithQuiz = new Set((quizzes || []).filter(q => q.lesson_id).map(q => q.lesson_id));
+                const finalQuiz = (quizzes || []).find(q => !q.lesson_id);
+
+                // Marcar el botón "Examen Final" con estado visual
+                const finalBtn = document.getElementById('btn-final-exam');
+                if (finalQuiz) {
+                    finalBtn.classList.remove('bg-white', 'text-[#fba931]', 'border-2', 'border-[#fba931]');
+                    finalBtn.classList.add('bg-[#fba931]', 'text-[#0f172a]', 'shadow-lg');
+                    document.getElementById('btn-final-exam-text').textContent = 'Examen Final ✓';
+                }
+
+                // Anotar has_quiz en cada lesson
+                data.forEach(l => l.has_quiz = lessonsWithQuiz.has(l.id));
+
                 if (data.length === 0) {
                     tableBody.innerHTML = '<tr><td colspan="6" class="p-10 text-center text-gray-400 italic">No hay lecciones creadas para este curso.</td></tr>';
                     return;
@@ -343,7 +447,8 @@
                                 ${cuposDisplay}
                             </button>
                         </td>
-                        <td class="p-6 text-right">
+                        <td class="p-6 text-right whitespace-nowrap">
+                            <button onclick="openQuizBuilder('${lesson.id}')" class="p-2 rounded-lg transition-colors ${lesson.has_quiz ? 'text-[#fba931] hover:bg-amber-50' : 'text-gray-300 hover:bg-gray-100 hover:text-[#fba931]'}" title="${lesson.has_quiz ? 'Editar examen' : 'Crear examen'}"><span class="material-symbols-outlined">quiz</span></button>
                             <button onclick='editLesson(${JSON.stringify(lesson)})' class="p-2 text-[#0f172a] hover:bg-gray-100 rounded-lg"><span class="material-symbols-outlined">edit</span></button>
                             <button onclick="deleteLesson('${lesson.id}')" class="p-2 text-red-500 hover:bg-red-50 rounded-lg"><span class="material-symbols-outlined">delete</span></button>
                         </td>
@@ -517,6 +622,274 @@
             link.click();
             document.body.removeChild(link);
         }
+
+        // ===========================================
+        //  QUIZ BUILDER
+        // ===========================================
+        let qbState = {
+            quiz: null,        // {id, lesson_id, ...} o null si es examen final nuevo
+            lessonId: null,    // null = examen final del curso
+            questions: []      // array de {id?, question_text, options:[], explanation, order_index}
+        };
+
+        async function openQuizBuilder(lessonId) {
+            qbState = { quiz: null, lessonId, questions: [] };
+
+            // Cargar quiz existente si hay
+            let query = supabaseClient.from('quizzes').select('*').eq('course_id', courseId);
+            query = lessonId ? query.eq('lesson_id', lessonId) : query.is('lesson_id', null);
+            const { data: quiz } = await query.maybeSingle();
+
+            if (quiz) {
+                qbState.quiz = quiz;
+                document.getElementById('qb-pass').value = quiz.pass_threshold;
+                document.getElementById('qb-cooldown').value = quiz.cooldown_hours;
+                document.getElementById('qb-perattempt').value = quiz.questions_per_attempt || '';
+                document.getElementById('qb-shuffle').checked = quiz.shuffle_options;
+
+                const { data: questions } = await supabaseClient
+                    .from('quiz_questions')
+                    .select('*')
+                    .eq('quiz_id', quiz.id)
+                    .order('order_index', { ascending: true });
+                qbState.questions = (questions || []).map(q => ({ ...q }));
+            } else {
+                document.getElementById('qb-pass').value = 70;
+                document.getElementById('qb-cooldown').value = 24;
+                document.getElementById('qb-perattempt').value = '';
+                document.getElementById('qb-shuffle').checked = true;
+            }
+
+            // Título contextual
+            if (lessonId) {
+                const lessonTitle = document.querySelector(`button[onclick*="${lessonId}"]`)
+                    ?.closest('tr')?.querySelector('.font-bold')?.textContent || '...';
+                document.getElementById('quiz-builder-title').textContent = `Examen — ${lessonTitle}`;
+            } else {
+                document.getElementById('quiz-builder-title').textContent = 'Examen Final del Curso';
+            }
+
+            renderQbQuestions();
+            document.getElementById('quiz-builder-modal').classList.remove('hidden');
+        }
+
+        function closeQuizBuilder() {
+            document.getElementById('quiz-builder-modal').classList.add('hidden');
+        }
+
+        function renderQbQuestions() {
+            const container = document.getElementById('qb-questions');
+            document.getElementById('qb-count').textContent = qbState.questions.length;
+
+            // Warning de banco ajustado
+            const N = parseInt(document.getElementById('qb-perattempt').value) || qbState.questions.length;
+            const warningEl = document.getElementById('qb-warning');
+            if (N > 0 && N > qbState.questions.length - 3 && qbState.questions.length > 0) {
+                warningEl.textContent = '⚠ Banco muy ajustado: el alumno verá casi las mismas preguntas en cada intento. Recomendado al menos 3 preguntas extra.';
+                warningEl.classList.remove('hidden');
+            } else {
+                warningEl.classList.add('hidden');
+            }
+
+            if (qbState.questions.length === 0) {
+                container.innerHTML = '<p class="text-center text-gray-400 italic py-8 text-xs">Sin preguntas. Agrega la primera abajo.</p>';
+                return;
+            }
+
+            container.innerHTML = qbState.questions.map((q, i) => `
+                <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-gray-100">
+                    <span class="text-[10px] font-black text-gray-400 w-6 text-center">${i + 1}</span>
+                    <p class="flex-1 text-xs font-bold text-[#0f172a] truncate">${escapeHtml(q.question_text)}</p>
+                    <button type="button" onclick="openQuestionEditor(${i})" class="p-1 text-[#0f172a] hover:bg-white rounded"><span class="material-symbols-outlined text-base">edit</span></button>
+                    <button type="button" onclick="deleteQuestion(${i})" class="p-1 text-red-500 hover:bg-red-50 rounded"><span class="material-symbols-outlined text-base">delete</span></button>
+                </div>
+            `).join('');
+        }
+
+        function escapeHtml(s) {
+            return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        }
+
+        function deleteQuestion(idx) {
+            if (!confirm('¿Eliminar esta pregunta del banco?')) return;
+            qbState.questions.splice(idx, 1);
+            renderQbQuestions();
+        }
+
+        // ===========================================
+        //  QUESTION EDITOR
+        // ===========================================
+        let qeIndex = null; // null = nueva
+        let qeOptions = []; // {id:'a', text:'...', is_correct:bool}
+
+        function openQuestionEditor(idx) {
+            qeIndex = idx;
+            if (idx === null) {
+                document.getElementById('qe-text').value = '';
+                document.getElementById('qe-explanation').value = '';
+                qeOptions = [
+                    { id: 'a', text: '', is_correct: true },
+                    { id: 'b', text: '', is_correct: false }
+                ];
+            } else {
+                const q = qbState.questions[idx];
+                document.getElementById('qe-text').value = q.question_text;
+                document.getElementById('qe-explanation').value = q.explanation || '';
+                qeOptions = JSON.parse(JSON.stringify(q.options));
+            }
+            renderOptions();
+            document.getElementById('question-editor-modal').classList.remove('hidden');
+        }
+
+        function closeQuestionEditor() {
+            document.getElementById('question-editor-modal').classList.add('hidden');
+        }
+
+        function renderOptions() {
+            const container = document.getElementById('qe-options');
+            container.innerHTML = qeOptions.map((opt, i) => `
+                <div class="flex items-center gap-2">
+                    <input type="radio" name="qe-correct" ${opt.is_correct ? 'checked' : ''}
+                        onchange="markCorrect(${i})"
+                        class="w-5 h-5 accent-[#fba931] cursor-pointer">
+                    <span class="text-[10px] font-black text-gray-400 w-4">${opt.id.toUpperCase()}</span>
+                    <input type="text" value="${escapeHtml(opt.text)}"
+                        oninput="qeOptions[${i}].text = this.value"
+                        placeholder="Texto de la opción"
+                        class="flex-1 bg-gray-50 border border-gray-100 p-2 rounded-lg text-sm focus:ring-2 focus:ring-[#fba931] outline-none">
+                    <button type="button" onclick="removeOption(${i})"
+                        ${qeOptions.length <= 2 ? 'disabled class="opacity-30 cursor-not-allowed p-1"' : 'class="text-red-500 hover:bg-red-50 p-1 rounded"'}>
+                        <span class="material-symbols-outlined text-base">close</span>
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        function markCorrect(i) {
+            qeOptions = qeOptions.map((o, j) => ({ ...o, is_correct: i === j }));
+        }
+
+        function addOption() {
+            if (qeOptions.length >= 6) {
+                showToast('Máximo 6 opciones por pregunta.', 'warning');
+                return;
+            }
+            const nextId = String.fromCharCode('a'.charCodeAt(0) + qeOptions.length);
+            qeOptions.push({ id: nextId, text: '', is_correct: false });
+            renderOptions();
+        }
+
+        function removeOption(i) {
+            if (qeOptions.length <= 2) return;
+            qeOptions.splice(i, 1);
+            // Re-asignar ids a, b, c... para mantener contigüidad
+            qeOptions = qeOptions.map((o, idx) => ({
+                ...o,
+                id: String.fromCharCode('a'.charCodeAt(0) + idx)
+            }));
+            // Si la eliminada era la correcta, marcar la primera
+            if (!qeOptions.some(o => o.is_correct)) qeOptions[0].is_correct = true;
+            renderOptions();
+        }
+
+        function saveQuestion() {
+            const text = document.getElementById('qe-text').value.trim();
+            const explanation = document.getElementById('qe-explanation').value.trim();
+
+            if (!text) { showToast('La pregunta no puede estar vacía.', 'warning'); return; }
+            if (qeOptions.length < 2) { showToast('Mínimo 2 opciones.', 'warning'); return; }
+            if (qeOptions.some(o => !o.text.trim())) { showToast('Todas las opciones deben tener texto.', 'warning'); return; }
+            if (!qeOptions.some(o => o.is_correct)) { showToast('Marca una opción como correcta.', 'warning'); return; }
+
+            const newQ = {
+                question_text: text,
+                options: qeOptions,
+                explanation: explanation || null,
+                order_index: qeIndex === null ? qbState.questions.length + 1 : qbState.questions[qeIndex].order_index
+            };
+            if (qeIndex !== null && qbState.questions[qeIndex].id) {
+                newQ.id = qbState.questions[qeIndex].id;
+            }
+
+            if (qeIndex === null) qbState.questions.push(newQ);
+            else qbState.questions[qeIndex] = newQ;
+
+            closeQuestionEditor();
+            renderQbQuestions();
+        }
+
+        // ===========================================
+        //  GUARDAR QUIZ COMPLETO
+        // ===========================================
+        async function saveQuiz() {
+            if (qbState.questions.length === 0) {
+                if (!confirm('No has agregado preguntas. ¿Guardar el quiz vacío?')) return;
+            }
+
+            const payload = {
+                course_id: courseId,
+                lesson_id: qbState.lessonId,
+                title: qbState.lessonId ? 'Quiz de lección' : 'Examen Final del Curso',
+                pass_threshold: parseInt(document.getElementById('qb-pass').value),
+                cooldown_hours: parseInt(document.getElementById('qb-cooldown').value),
+                questions_per_attempt: parseInt(document.getElementById('qb-perattempt').value) || null,
+                shuffle_options: document.getElementById('qb-shuffle').checked,
+                is_active: true
+            };
+
+            try {
+                let quizId = qbState.quiz?.id;
+                if (quizId) {
+                    payload.updated_at = new Date().toISOString();
+                    const { error } = await supabaseClient.from('quizzes').update(payload).eq('id', quizId);
+                    if (error) throw error;
+                } else {
+                    const { data: created, error } = await supabaseClient
+                        .from('quizzes').insert(payload).select('id').single();
+                    if (error) throw error;
+                    quizId = created.id;
+                }
+
+                // Diff de preguntas: borrar las que ya no están
+                const { data: existing } = await supabaseClient
+                    .from('quiz_questions').select('id').eq('quiz_id', quizId);
+                const currentIds = new Set(qbState.questions.filter(q => q.id).map(q => q.id));
+                const toDelete = (existing || []).filter(e => !currentIds.has(e.id)).map(e => e.id);
+
+                if (toDelete.length > 0) {
+                    await supabaseClient.from('quiz_questions').delete().in('id', toDelete);
+                }
+
+                // Upsert preguntas
+                for (const q of qbState.questions) {
+                    const row = {
+                        quiz_id: quizId,
+                        question_text: q.question_text,
+                        options: q.options,
+                        explanation: q.explanation,
+                        order_index: q.order_index
+                    };
+                    if (q.id) {
+                        await supabaseClient.from('quiz_questions').update(row).eq('id', q.id);
+                    } else {
+                        await supabaseClient.from('quiz_questions').insert(row);
+                    }
+                }
+
+                showToast('Examen guardado correctamente.', 'success');
+                closeQuizBuilder();
+                loadLessons();
+            } catch (err) {
+                console.error(err);
+                showToast('Error al guardar: ' + err.message, 'error');
+            }
+        }
+
+        // Re-render warning al cambiar el input de preguntas/intento
+        document.addEventListener('DOMContentLoaded', () => {
+            const inp = document.getElementById('qb-perattempt');
+            if (inp) inp.addEventListener('input', renderQbQuestions);
+        });
     </script>
 </body>
 

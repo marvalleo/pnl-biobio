@@ -150,7 +150,12 @@
         </div>
 
         <div id="certificate-container" class="px-6 py-4 bg-amber-500/5 border-b border-white/5 hidden">
-            <button onclick="generateCertificate()"
+            <button id="btn-final-exam" onclick="openFinalExam()"
+                class="hidden certificate-btn w-full py-3 rounded-xl flex items-center justify-center gap-3 text-[#0f172a] font-900 text-[10px] uppercase tracking-widest transition-all hover:scale-[1.02] active:scale-95 mb-3">
+                <span class="material-symbols-outlined text-sm">quiz</span>
+                Tomar Examen Final
+            </button>
+            <button id="btn-diploma" onclick="generateCertificate()"
                 class="certificate-btn w-full py-3 rounded-xl flex items-center justify-center gap-3 text-[#0f172a] font-900 text-[10px] uppercase tracking-widest transition-all hover:scale-[1.02] active:scale-95">
                 <span class="material-symbols-outlined text-sm">military_tech</span>
                 Descargar Diploma
@@ -273,6 +278,11 @@
                     <p id="lesson-desc-footer" class="text-xs text-gray-500 font-medium mt-2 max-w-xl">--</p>
                 </div>
                 <div class="flex gap-4 w-full md:w-auto">
+                    <button onclick="openQuizModal()" id="btn-take-exam"
+                        class="hidden flex-1 md:flex-none bg-[#fba931] text-[#0f172a] px-8 py-4 rounded-2xl font-900 text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-3 active:scale-95 hover:brightness-110 shadow-lg">
+                        <span class="material-symbols-outlined text-xl">quiz</span>
+                        <span>Tomar Examen</span>
+                    </button>
                     <button onclick="toggleCompletion()" id="btn-complete"
                         class="flex-1 md:flex-none px-8 py-4 rounded-2xl font-900 text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-3 active:scale-95">
                         <span class="material-symbols-outlined text-xl">check_circle</span>
@@ -351,7 +361,11 @@
             }
             profileId = profile.id;
 
-            await Promise.all([loadCourse(), loadLessons(), loadRegistrations()]);
+            await Promise.all([loadCourse(), loadLessons(), loadRegistrations(), loadQuizMetadata()]);
+            // updateProgress() depende de quizState.finalQuizId (set por loadQuizMetadata).
+            // Re-llamamos explícitamente porque loadLessons puede haber corrido antes
+            // de que loadQuizMetadata terminara.
+            await updateProgress();
             loadYoutubeAPI();
         });
 
@@ -401,7 +415,7 @@
                 }
 
                 renderLessons();
-                updateProgress();
+                await updateProgress();
 
                 // Auto-seleccionar primera lección si hay disponibles y ninguna activa
                 if (currentLessons.length > 0 && currentLessonIndex === -1) {
@@ -455,20 +469,51 @@
             }).join('');
         }
 
-        function updateProgress() {
+        async function updateProgress() {
             const percent = Math.round((completedLessonIds.size / currentLessons.length) * 100) || 0;
             const bar = document.getElementById('progress-bar');
             if (bar) bar.style.width = `${percent}%`;
             const text = document.getElementById('course-progress-text');
             if (text) text.textContent = `${percent}% Completado`;
 
-            // Mostrar botón de certificado si está al 100%
             const certBox = document.getElementById('certificate-container');
-            if (percent >= 100) {
-                certBox.classList.remove('hidden');
-            } else {
+            const examBtn = document.getElementById('btn-final-exam');
+            const diplomaBtn = document.getElementById('btn-diploma');
+
+            if (percent < 100) {
                 certBox.classList.add('hidden');
+                return;
             }
+            certBox.classList.remove('hidden');
+
+            // Si hay examen final configurado, requerir aprobarlo antes del diploma
+            if (quizState.finalQuizId) {
+                // ¿Ya aprobó el examen final?
+                const { data: passed } = await supabaseClient
+                    .from('quiz_attempts')
+                    .select('id')
+                    .eq('quiz_id', quizState.finalQuizId)
+                    .eq('profile_id', profileId)
+                    .eq('passed', true)
+                    .limit(1)
+                    .maybeSingle();
+
+                if (passed) {
+                    examBtn.classList.add('hidden');
+                    diplomaBtn.classList.remove('hidden');
+                } else {
+                    examBtn.classList.remove('hidden');
+                    diplomaBtn.classList.add('hidden');
+                }
+            } else {
+                // Sin examen final: comportamiento legacy (diploma directo)
+                examBtn.classList.add('hidden');
+                diplomaBtn.classList.remove('hidden');
+            }
+        }
+
+        function openFinalExam() {
+            if (quizState.finalQuizId) openQuizModal(quizState.finalQuizId);
         }
 
         async function selectLesson(index) {
@@ -541,6 +586,7 @@
 
                 updateButtonUI(isCompleted);
                 renderLessons();
+                updateExamButton();
             } catch (err) {
                 console.error("❌ PNL Biobio: Error fatal en selectLesson:", err);
             }
@@ -647,6 +693,13 @@
                                 } else if (event.data === YT.PlayerState.PAUSED || event.data === YT.PlayerState.ENDED) {
                                     stopVideoProgressSync();
                                     saveVideoSeconds();
+                                    if (event.data === YT.PlayerState.ENDED) {
+                                        const lesson = currentLessons[currentLessonIndex];
+                                        if (lesson && quizState.lessonsWithQuiz.has(lesson.id)) {
+                                            // Auto-abrir el examen tras 1.5s para no interrumpir bruscamente
+                                            setTimeout(() => openQuizModal(), 1500);
+                                        }
+                                    }
                                 }
                             },
                             'onError': (e) => console.error("❌ PNL Biobio: Error de API en el iframe:", e.data)
@@ -724,7 +777,7 @@
                     completedLessonIds.add(lesson.id);
                 }
                 updateButtonUI(!isCompleted);
-                updateProgress();
+                await updateProgress();
                 renderLessons();
             } catch (err) { console.error(err); }
         }
@@ -807,7 +860,340 @@
                 certDiv.remove();
             }
         }
+
+        // ===========================================
+        //  QUIZ — Estado y carga
+        // ===========================================
+        let quizState = {
+            lessonsWithQuiz: new Map(),  // lesson_id → quiz_id
+            finalQuizId: null,
+            currentQuiz: null,
+            currentQuestions: [],
+            currentIndex: 0,
+            answers: {},                 // question_id → selected_option_id
+            cooldownTimer: null
+        };
+
+        async function loadQuizMetadata() {
+            const { data } = await supabaseClient
+                .from('quizzes')
+                .select('id, lesson_id, course_id')
+                .eq('course_id', currentCourseId)
+                .eq('is_active', true);
+
+            quizState.lessonsWithQuiz = new Map();
+            quizState.finalQuizId = null;
+            (data || []).forEach(q => {
+                if (q.lesson_id) quizState.lessonsWithQuiz.set(q.lesson_id, q.id);
+                else quizState.finalQuizId = q.id;
+            });
+            updateExamButton();
+        }
+
+        function updateExamButton() {
+            const btn = document.getElementById('btn-take-exam');
+            if (currentLessonIndex === -1) { btn.classList.add('hidden'); return; }
+            const lesson = currentLessons[currentLessonIndex];
+            if (lesson && quizState.lessonsWithQuiz.has(lesson.id)) {
+                btn.classList.remove('hidden');
+            } else {
+                btn.classList.add('hidden');
+            }
+        }
+
+        async function openQuizModal(quizIdOverride) {
+            const lesson = currentLessons[currentLessonIndex];
+            const quizId = quizIdOverride || quizState.lessonsWithQuiz.get(lesson?.id);
+            if (!quizId) {
+                showToast('Esta lección no tiene examen.', 'info');
+                return;
+            }
+
+            // Reset y mostrar loading
+            document.querySelectorAll('#quiz-modal > div > div').forEach(v => v.classList.add('hidden'));
+            document.getElementById('quiz-view-loading').classList.remove('hidden');
+            document.getElementById('quiz-modal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            const res = await fetch(`/.netlify/functions/quiz-get?quiz_id=${encodeURIComponent(quizId)}`, {
+                headers: { 'Authorization': `Bearer ${session.access_token}` }
+            });
+            const result = await res.json();
+            document.getElementById('quiz-view-loading').classList.add('hidden');
+
+            if (!result.ok) {
+                if (result.code === 'cooldown') {
+                    showCooldownView(result.cooldown_until);
+                    return;
+                }
+                showToast(result.message || 'Error cargando examen', 'error');
+                closeQuizModal();
+                return;
+            }
+
+            quizState.currentQuiz = result.quiz;
+            quizState.currentQuestions = result.questions;
+            quizState.currentIndex = 0;
+            quizState.answers = {};
+            renderQuizQuestion();
+        }
+
+        function showCooldownView(untilIso) {
+            document.querySelectorAll('#quiz-modal > div > div').forEach(v => v.classList.add('hidden'));
+            document.getElementById('quiz-view-cooldown').classList.remove('hidden');
+
+            // Limpiar timer previo si quedó activo (evita doble interval).
+            if (quizState.cooldownTimer) clearInterval(quizState.cooldownTimer);
+            quizState.cooldownTimer = null;
+
+            const display = document.getElementById('quiz-cooldown-display');
+            const update = () => {
+                const ms = new Date(untilIso) - new Date();
+                if (ms <= 0) { display.textContent = 'Ya disponible'; clearInterval(quizState.cooldownTimer); return; }
+                const h = Math.floor(ms / 3600000);
+                const m = Math.floor((ms % 3600000) / 60000);
+                const s = Math.floor((ms % 60000) / 1000);
+                display.textContent = `${h}h ${String(m).padStart(2,'0')}m ${String(s).padStart(2,'0')}s`;
+            };
+            update();
+            quizState.cooldownTimer = setInterval(update, 1000);
+        }
+
+        function renderQuizQuestion() {
+            document.querySelectorAll('#quiz-modal > div > div').forEach(v => v.classList.add('hidden'));
+            document.getElementById('quiz-view-questions').classList.remove('hidden');
+
+            const q = quizState.currentQuestions[quizState.currentIndex];
+            const total = quizState.currentQuestions.length;
+
+            document.getElementById('quiz-q-title').textContent = quizState.currentQuiz.title;
+            document.getElementById('quiz-q-meta').textContent =
+                `Aprueba con ${quizState.currentQuiz.pass_threshold}% • Pregunta ${quizState.currentIndex + 1} de ${total}`;
+
+            // Progress dots
+            const dots = document.getElementById('quiz-progress-dots');
+            dots.innerHTML = quizState.currentQuestions.map((qq, i) => {
+                const isCurrent = i === quizState.currentIndex;
+                const answered = quizState.answers[qq.id] !== undefined;
+                const cls = isCurrent ? 'bg-[#fba931]' : answered ? 'bg-white/40' : 'bg-white/10';
+                return `<div class="flex-1 h-1 rounded-full ${cls}"></div>`;
+            }).join('');
+
+            document.getElementById('quiz-q-text').textContent = q.question_text;
+
+            const selected = quizState.answers[q.id];
+            document.getElementById('quiz-q-options').innerHTML = q.options.map(opt => `
+                <label class="flex items-center gap-3 p-4 rounded-2xl cursor-pointer transition-all border-2 ${selected === opt.id ? 'bg-[#fba931]/10 border-[#fba931]' : 'bg-white/5 border-transparent hover:bg-white/10'}">
+                    <input type="radio" name="quiz-opt" value="${opt.id}" ${selected === opt.id ? 'checked' : ''}
+                        onchange="selectOption('${q.id}', '${opt.id}')"
+                        class="w-5 h-5 accent-[#fba931]">
+                    <span class="text-sm text-white font-medium">${escapeQuizHtml(opt.text)}</span>
+                </label>
+            `).join('');
+
+            document.getElementById('quiz-prev-btn').disabled = quizState.currentIndex === 0;
+            const nextBtn = document.getElementById('quiz-next-btn');
+            nextBtn.textContent = quizState.currentIndex === total - 1 ? 'Enviar respuestas' : 'Siguiente →';
+        }
+
+        function escapeQuizHtml(s) {
+            return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        }
+
+        function selectOption(qid, optId) {
+            quizState.answers[qid] = optId;
+            renderQuizQuestion();
+        }
+
+        function quizPrev() {
+            if (quizState.currentIndex > 0) {
+                quizState.currentIndex--;
+                renderQuizQuestion();
+            }
+        }
+
+        async function quizNext() {
+            const total = quizState.currentQuestions.length;
+            if (quizState.currentIndex < total - 1) {
+                quizState.currentIndex++;
+                renderQuizQuestion();
+                return;
+            }
+            // Última pregunta → enviar
+            await submitQuiz();
+        }
+
+        async function submitQuiz() {
+            const total = quizState.currentQuestions.length;
+            const answers = quizState.currentQuestions.map(q => ({
+                question_id: q.id,
+                selected_option_id: quizState.answers[q.id] || null
+            }));
+
+            const unanswered = answers.filter(a => !a.selected_option_id).length;
+            if (unanswered > 0 && !confirm(`Tienes ${unanswered} pregunta(s) sin responder. ¿Enviar de todos modos?`)) return;
+
+            document.querySelectorAll('#quiz-modal > div > div').forEach(v => v.classList.add('hidden'));
+            document.getElementById('quiz-view-loading').classList.remove('hidden');
+
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            const res = await fetch('/.netlify/functions/quiz-submit', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${session.access_token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ quiz_id: quizState.currentQuiz.id, answers })
+            });
+            const result = await res.json();
+
+            if (!result.ok) {
+                if (result.code === 'cooldown') { showCooldownView(result.cooldown_until); return; }
+                showToast(result.message || 'Error enviando respuestas', 'error');
+                closeQuizModal();
+                return;
+            }
+
+            renderQuizResult(result);
+
+            // Si aprobó: refrescar progreso de lecciones
+            if (result.passed) {
+                await loadLessons();
+                await updateProgress();
+            }
+        }
+
+        function renderQuizResult(result) {
+            document.querySelectorAll('#quiz-modal > div > div').forEach(v => v.classList.add('hidden'));
+            document.getElementById('quiz-view-result').classList.remove('hidden');
+
+            const icon = document.getElementById('quiz-result-icon');
+            const title = document.getElementById('quiz-result-title');
+            const score = document.getElementById('quiz-result-score');
+            const msg = document.getElementById('quiz-result-msg');
+            const wrong = document.getElementById('quiz-result-wrong');
+            const wrongList = document.getElementById('quiz-result-wrong-list');
+            const cooldown = document.getElementById('quiz-result-cooldown');
+
+            if (result.passed) {
+                icon.textContent = 'task_alt';
+                icon.className = 'material-symbols-outlined text-7xl mb-2 text-green-400';
+                title.textContent = '¡Aprobado!';
+                title.className = 'serif text-3xl mt-2 text-green-400';
+                msg.textContent = quizState.currentQuiz.title.toLowerCase().includes('final')
+                    ? 'Has completado el examen final del curso. Ya puedes descargar tu diploma.'
+                    : 'Lección completada. ¡Sigue avanzando!';
+                cooldown.classList.add('hidden');
+            } else {
+                icon.textContent = 'highlight_off';
+                icon.className = 'material-symbols-outlined text-7xl mb-2 text-red-400';
+                title.textContent = 'No aprobado';
+                title.className = 'serif text-3xl mt-2 text-red-400';
+                msg.textContent = `Necesitabas ${quizState.currentQuiz.pass_threshold}%. Repasa el contenido y vuelve a intentarlo.`;
+
+                if (result.cooldown_until) {
+                    const until = new Date(result.cooldown_until);
+                    const ms = until - new Date();
+                    const h = Math.floor(ms / 3600000);
+                    const m = Math.floor((ms % 3600000) / 60000);
+                    cooldown.textContent = `Próximo intento disponible en ~${h}h ${m}m`;
+                    cooldown.classList.remove('hidden');
+                }
+            }
+
+            score.textContent = `${result.score}%`;
+
+            if (result.wrong_questions_preview && result.wrong_questions_preview.length > 0) {
+                wrongList.innerHTML = result.wrong_questions_preview
+                    .map(w => `<li>• ${escapeQuizHtml(w.question_text)}</li>`).join('');
+                wrong.classList.remove('hidden');
+            } else {
+                wrong.classList.add('hidden');
+            }
+        }
+
+        function confirmCloseQuiz() {
+            if (Object.keys(quizState.answers).length > 0) {
+                if (!confirm('Tienes respuestas sin enviar. ¿Cerrar y perder progreso?')) return;
+            }
+            closeQuizModal();
+        }
+
+        function closeQuizModal() {
+            document.getElementById('quiz-modal').classList.add('hidden');
+            document.body.style.overflow = '';
+            if (quizState.cooldownTimer) clearInterval(quizState.cooldownTimer);
+        }
     </script>
+
+    <!-- Modal del Quiz -->
+    <div id="quiz-modal" class="hidden fixed inset-0 z-[300] bg-[#0c1427]/95 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-[#0f172a] rounded-[3rem] border border-white/10 shadow-2xl max-w-2xl w-full p-8 md:p-12 my-auto">
+
+            <!-- Vista 1: Loading -->
+            <div id="quiz-view-loading" class="text-center py-20">
+                <span class="material-symbols-outlined text-6xl text-[#fba931] animate-spin">progress_activity</span>
+                <p class="mt-4 text-gray-400 font-bold uppercase text-xs tracking-widest">Cargando examen...</p>
+            </div>
+
+            <!-- Vista 2: Cooldown -->
+            <div id="quiz-view-cooldown" class="hidden text-center py-10">
+                <span class="material-symbols-outlined text-6xl text-amber-400">schedule</span>
+                <h2 class="serif text-3xl text-[#fba931] mt-4 mb-2">Cooldown activo</h2>
+                <p class="text-gray-400 text-sm mb-6">Tu último intento fue reprobado. Repasa el contenido y vuelve cuando termine el periodo de espera.</p>
+                <p class="text-2xl font-900 text-white" id="quiz-cooldown-display">--</p>
+                <button onclick="closeQuizModal()" class="mt-8 bg-white/10 text-white px-8 py-3 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-white/20">Volver a la lección</button>
+            </div>
+
+            <!-- Vista 3: Preguntas -->
+            <div id="quiz-view-questions" class="hidden">
+                <div class="flex justify-between items-start mb-6">
+                    <div>
+                        <p class="text-[10px] font-black uppercase text-[#fba931] tracking-widest mb-1">Examen</p>
+                        <h2 id="quiz-q-title" class="serif text-2xl text-white">--</h2>
+                        <p id="quiz-q-meta" class="text-[10px] text-gray-400 font-bold uppercase mt-1 tracking-widest">--</p>
+                    </div>
+                    <button onclick="confirmCloseQuiz()" class="text-gray-400 hover:text-white">
+                        <span class="material-symbols-outlined">close</span>
+                    </button>
+                </div>
+
+                <div class="flex gap-1 mb-6" id="quiz-progress-dots"></div>
+
+                <div id="quiz-question-card" class="bg-white/5 rounded-3xl p-6 mb-6">
+                    <p id="quiz-q-text" class="text-base text-white font-bold mb-6 leading-relaxed">--</p>
+                    <div id="quiz-q-options" class="space-y-3"></div>
+                </div>
+
+                <div class="flex justify-between items-center">
+                    <button id="quiz-prev-btn" onclick="quizPrev()" class="bg-white/5 text-white px-6 py-3 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed">
+                        ← Anterior
+                    </button>
+                    <button id="quiz-next-btn" onclick="quizNext()" class="bg-[#fba931] text-[#0f172a] px-6 py-3 rounded-xl font-black text-xs uppercase tracking-widest hover:brightness-110">
+                        Siguiente →
+                    </button>
+                </div>
+            </div>
+
+            <!-- Vista 4: Resultado -->
+            <div id="quiz-view-result" class="hidden text-center py-6">
+                <span id="quiz-result-icon" class="material-symbols-outlined text-7xl mb-2">--</span>
+                <h2 id="quiz-result-title" class="serif text-3xl mt-2">--</h2>
+                <p id="quiz-result-score" class="text-5xl font-900 text-white mt-4 mb-2">--</p>
+                <p id="quiz-result-msg" class="text-gray-400 text-sm mb-6">--</p>
+
+                <div id="quiz-result-wrong" class="hidden bg-white/5 rounded-2xl p-4 mb-6 text-left">
+                    <p class="text-[10px] font-black uppercase text-[#fba931] tracking-widest mb-2">Erraste estas preguntas:</p>
+                    <ul id="quiz-result-wrong-list" class="space-y-1 text-xs text-gray-300"></ul>
+                </div>
+
+                <p id="quiz-result-cooldown" class="hidden text-amber-400 font-bold text-xs uppercase tracking-widest mb-4"></p>
+
+                <button onclick="closeQuizModal()" class="bg-[#fba931] text-[#0f172a] px-8 py-4 rounded-xl font-900 text-xs uppercase tracking-widest hover:brightness-110">Volver a la lección</button>
+            </div>
+        </div>
+    </div>
 </body>
 
 </html>

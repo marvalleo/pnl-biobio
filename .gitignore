@@ -33,3 +33,6 @@ package-lock.json
 .atl/
 admin-backup-scripts/
 *.csv
+
+# Local Netlify folder
+.netlify

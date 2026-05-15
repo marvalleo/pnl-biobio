@@ -64,19 +64,40 @@
             font-size: 14px !important;
         }
         .ql-editor {
-            min-height: 50px !important;
-            padding: 8px 12px !important;
+            min-height: 40px !important;
+            max-height: 120px !important;
+            overflow-y: auto !important;
+            padding: 8px 14px !important;
         }
-        .ql-toolbar.ql-snow {
+        /* Toolbar custom: vive en la fila del label, no dentro del editor-wrapper */
+        #reply-toolbar {
             border: none !important;
-            border-bottom: 1px solid #f1f5f9 !important;
-            padding: 8px 16px !important;
+            padding: 0 !important;
+            background: transparent !important;
         }
+        #reply-toolbar .ql-formats {
+            margin-right: 0 !important;
+            display: flex;
+            gap: 2px;
+        }
+        #reply-toolbar .ql-formats button {
+            width: 24px !important;
+            height: 24px !important;
+            padding: 2px !important;
+            color: #94a3b8 !important;
+        }
+        #reply-toolbar .ql-formats button:hover,
+        #reply-toolbar .ql-formats button.ql-active {
+            color: #fba931 !important;
+        }
+        #reply-toolbar .ql-formats button svg .ql-stroke { stroke: currentColor !important; }
+        #reply-toolbar .ql-formats button svg .ql-fill { fill: currentColor !important; }
         #editor-wrapper {
             background: #f8fafc;
-            border-radius: 1rem;
+            border-radius: 14px;
             overflow: hidden;
-            border: 1px solid #f1f5f9;
+            border: 1.5px solid #e2e8f0;
+            flex: 1;
         }
 
         /* Voting Styles */
@@ -133,24 +154,37 @@
             <!-- Respuestas dinámicas -->
         </section>
 
-        <section class="premium-card p-4 md:p-6 sticky bottom-6 shadow-2xl border-t-4 border-[#fba931]">
-            <div class="flex justify-between items-center mb-2">
-                <h3 id="reply-title" class="text-[10px] font-black uppercase text-[#0f172a] tracking-widest">Tu Aporte al Debate</h3>
-                <button id="cancel-reply-btn" onclick="cancelReplyTo()" class="hidden text-[10px] font-bold text-red-500 uppercase flex items-center gap-1">
-                    <span class="material-symbols-outlined text-sm">close</span> Cancelar
-                </button>
-            </div>
-            <form id="reply-form" class="flex flex-col gap-2">
-                <div id="editor-wrapper">
-                    <div id="reply-editor" style="height: 50px;"></div>
-                </div>
-                <input type="hidden" id="reply-parent-id">
-                <div class="flex justify-end">
-                    <button type="submit"
-                        class="bg-[#0f172a] text-white px-6 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-widest shadow-xl hover:scale-105 transition-all flex items-center gap-2">
-                        <span class="material-symbols-outlined text-base">send</span> Enviar
+        <section class="premium-card px-4 pt-2.5 pb-3 sticky bottom-6 shadow-2xl border-t-[3px] border-[#fba931]">
+            <!-- Fila 1: label + toolbar + cancelar -->
+            <div class="flex items-center justify-between mb-2">
+                <div class="flex items-center gap-3">
+                    <h3 id="reply-title" class="text-[9px] font-black uppercase text-[#94a3b8] tracking-widest">Tu Aporte al Debate</h3>
+                    <button id="cancel-reply-btn" onclick="cancelReplyTo()" class="hidden text-[9px] font-bold text-red-400 uppercase flex items-center gap-1">
+                        <span class="material-symbols-outlined text-xs">close</span> Cancelar
                     </button>
                 </div>
+                <!-- Toolbar Quill custom -->
+                <div id="reply-toolbar">
+                    <span class="ql-formats">
+                        <button class="ql-bold"></button>
+                        <button class="ql-italic"></button>
+                        <button class="ql-underline"></button>
+                        <button class="ql-list" value="ordered"></button>
+                        <button class="ql-list" value="bullet"></button>
+                        <button class="ql-clean"></button>
+                    </span>
+                </div>
+            </div>
+            <!-- Fila 2: editor + botón enviar -->
+            <form id="reply-form" class="flex items-end gap-2">
+                <div id="editor-wrapper">
+                    <div id="reply-editor"></div>
+                </div>
+                <input type="hidden" id="reply-parent-id">
+                <button type="submit"
+                    class="bg-[#fba931] text-[#0f172a] w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center shadow-lg hover:scale-110 transition-all">
+                    <span class="material-symbols-outlined text-base font-black">send</span>
+                </button>
             </form>
         </section>
     </main>
@@ -405,11 +439,7 @@
                 theme: 'snow',
                 placeholder: 'Escribe tu respuesta con argumentos libertarios...',
                 modules: {
-                    toolbar: [
-                        ['bold', 'italic', 'underline'],
-                        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-                        ['clean']
-                    ]
+                    toolbar: '#reply-toolbar'
                 }
             });
         }
@@ -540,18 +570,43 @@
 
             window.setButtonLoading(btn, true);
 
-            const { error } = await supabaseClient.from('forum_posts').insert([
-                { topic_id: topicId, profile_id: userProfile.id, content: window.sanitizeHTML(content), parent_id: parentId }
-            ]);
+            try {
+                const { data: { session } } = await supabaseClient.auth.getSession();
+                const res = await fetch('/.netlify/functions/forum-submit', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${session.access_token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        target_type: 'post',
+                        topic_id: topicId,
+                        parent_id: parentId,
+                        content: content
+                    })
+                });
+                const result = await res.json();
 
-            window.setButtonLoading(btn, false);
-            if (error) {
-                showToast(error.message, 'error');
-            } else {
-                showToast("Respuesta enviada correctamente.", 'success');
-                quill.setContents([]);
-                cancelReplyTo();
-                window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+                if (result.ok) {
+                    const msg = result.verdict === 'pending_review'
+                        ? 'Enviado, en revisión por moderador.'
+                        : 'Respuesta enviada correctamente.';
+                    showToast(msg, 'success');
+                    quill.setContents([]);
+                    cancelReplyTo();
+                    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+                } else if (result.verdict === 'warning' || result.verdict === 'block') {
+                    openModerationModal(result.verdict, result.reason, result.rules_violated);
+                } else if (result.code === 'rules_not_accepted') {
+                    openRulesModal();
+                } else {
+                    showToast(result.message || 'Error inesperado al enviar.', 'error');
+                }
+            } catch (err) {
+                console.error('forum-submit fetch error:', err);
+                showToast('Error de red al enviar el mensaje.', 'error');
+            } finally {
+                window.setButtonLoading(btn, false);
             }
         };
     </script>
@@ -615,6 +670,74 @@
             </div>
         </div>
     </div>
+
+    <!-- Modal de Moderación IA -->
+    <div id="moderation-modal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-md z-[300] flex items-center justify-center p-6">
+        <div id="moderation-modal-card" class="bg-white rounded-[2.5rem] w-full max-w-md p-10 relative shadow-2xl border-t-8 border-amber-500">
+            <div class="text-center">
+                <span id="moderation-icon" class="material-symbols-outlined text-6xl mb-3 text-amber-500">warning</span>
+                <h2 id="moderation-title" class="serif text-2xl text-[#0f172a] uppercase italic mb-2">Tu mensaje no puede enviarse</h2>
+            </div>
+
+            <p id="moderation-reason" class="text-sm text-slate-600 leading-relaxed mt-4 text-center font-medium">--</p>
+
+            <div id="moderation-rules" class="mt-4 bg-slate-50 rounded-2xl p-4 hidden">
+                <p class="text-[9px] font-black uppercase text-gray-400 tracking-widest mb-2">Reglas afectadas:</p>
+                <ul id="moderation-rules-list" class="space-y-1 text-xs font-bold text-[#0f172a]"></ul>
+            </div>
+
+            <button onclick="closeModerationModal()"
+                class="mt-8 w-full bg-[#0f172a] text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-800 transition-all flex items-center justify-center gap-2">
+                <span class="material-symbols-outlined text-base">edit</span> Editar mi mensaje
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Mapa local de etiquetas legibles (debe coincidir con _lib/rules-prompt.js)
+        const RULE_LABELS_FRONT = {
+            ad_hominem: 'Ataque al argumento, no al militante',
+            hate_speech: 'Civilidad y Respeto',
+            trolling: 'Debate de Buena Fe',
+            off_topic: 'Temática Pertinente',
+            other: 'Otra norma del reglamento'
+        };
+
+        function openModerationModal(verdict, reason, rules) {
+            const card = document.getElementById('moderation-modal-card');
+            const icon = document.getElementById('moderation-icon');
+            const title = document.getElementById('moderation-title');
+            const rulesBox = document.getElementById('moderation-rules');
+            const rulesList = document.getElementById('moderation-rules-list');
+
+            if (verdict === 'block') {
+                card.className = 'bg-white rounded-[2.5rem] w-full max-w-md p-10 relative shadow-2xl border-t-8 border-red-500';
+                icon.textContent = 'block';
+                icon.className = 'material-symbols-outlined text-6xl mb-3 text-red-500';
+                title.textContent = 'Mensaje bloqueado';
+            } else {
+                card.className = 'bg-white rounded-[2.5rem] w-full max-w-md p-10 relative shadow-2xl border-t-8 border-amber-500';
+                icon.textContent = 'warning';
+                icon.className = 'material-symbols-outlined text-6xl mb-3 text-amber-500';
+                title.textContent = 'Tu mensaje no puede enviarse';
+            }
+
+            document.getElementById('moderation-reason').textContent = reason || 'Tu mensaje no cumple con las normas del foro.';
+
+            if (rules && rules.length > 0) {
+                rulesList.innerHTML = rules.map(r => `<li>• ${RULE_LABELS_FRONT[r] || r}</li>`).join('');
+                rulesBox.classList.remove('hidden');
+            } else {
+                rulesBox.classList.add('hidden');
+            }
+
+            document.getElementById('moderation-modal').classList.remove('hidden');
+        }
+
+        function closeModerationModal() {
+            document.getElementById('moderation-modal').classList.add('hidden');
+        }
+    </script>
     <script src="/assets/components/navbar.js"></script>
 </body>
 
