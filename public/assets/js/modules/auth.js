@@ -143,7 +143,7 @@ export async function initNavbar() {
                         <span class="material-symbols-outlined text-lg">bug_report</span> Ver Logs (Debug)
                     </button>
 
-                    <button onclick="logout()" class="w-full text-left px-5 py-3 text-[10px] font-black uppercase text-red-500 hover:bg-red-50 flex items-center gap-3 transition-colors">
+                    <button id="nav-logout-btn" class="w-full text-left px-5 py-3 text-[10px] font-black uppercase text-red-500 hover:bg-red-50 flex items-center gap-3 transition-colors">
                         <span class="material-symbols-outlined text-lg">logout</span> Cerrar Sesión
                     </button>
                 </div>
@@ -210,6 +210,9 @@ export async function initNavbar() {
                 console.error("Error updating unread count:", err);
             }
         };
+
+        // Logout button (sin onclick inline para que no sea eliminado por DOMPurify)
+        document.getElementById('nav-logout-btn')?.addEventListener('click', logout);
 
         // Event listener directo en el botón del avatar
         const avatarBtn = document.getElementById('user-avatar-btn');

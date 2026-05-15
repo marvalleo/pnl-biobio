@@ -16,9 +16,8 @@ exports.handler = async (event) => {
     // Inicializar web-push con VAPID DENTRO del handler (evita crash en módulo global)
     webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
 
-    // 2 clientes Supabase con responsabilidades separadas:
-    // - supabaseAnon: valida el JWT del usuario (getUser funciona correctamente con clave anón)
-    // - supabaseAdmin: operaciones privilegiadas (leer suscripciones, profiles, escribir logs)
+    // supabaseAnon: verifica el JWT (getUser valida la firma criptográficamente)
+    // supabaseAdmin: operaciones privilegiadas (leer suscripciones, profiles, escribir logs)
     const supabaseAnon = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
@@ -34,28 +33,21 @@ exports.handler = async (event) => {
     }
 
     try {
-        const token = authHeader.replace('Bearer ', '');
+        const token = authHeader.replace(/^Bearer\s+/i, '');
 
-        // Decodificar el JWT directamente para obtener el user UUID (campo "sub")
-        // El campo "sub" del JWT de Supabase ES el auth.uid() = auth_id en la BD
+        // Verificar JWT criptográficamente via Supabase Auth (valida firma y expiración)
         let userId;
         try {
-            const payloadBase64 = token.split('.')[1];
-            const payload = JSON.parse(Buffer.from(payloadBase64, 'base64').toString('utf8'));
-            userId = payload.sub;
-            if (payload.exp && payload.exp < Math.floor(Date.now() / 1000)) {
-                return { statusCode: 401, body: JSON.stringify({ error: 'Token expirado. Cierra sesión e inicia nuevamente.' }) };
+            const { data: { user }, error: verifyErr } = await supabaseAnon.auth.getUser(token);
+            if (verifyErr || !user) {
+                return { statusCode: 401, body: JSON.stringify({ error: 'Token inválido o expirado.' }) };
             }
+            userId = user.id;
         } catch (jwtErr) {
             return { statusCode: 401, body: JSON.stringify({ error: 'Token malformado o inválido.' }) };
         }
 
-        if (!userId) {
-            return { statusCode: 401, body: JSON.stringify({ error: 'No se pudo extraer la identidad del token.' }) };
-        }
-
-        // Verificar si el usuario tiene rol administrativo usando el userId del JWT
-        // Intentamos primero por auth_id, luego por id (primary key, también = auth.uid())
+        // Verificar si el usuario tiene rol administrativo
         let profile = null;
         let roleError = null;
 
@@ -78,18 +70,11 @@ exports.handler = async (event) => {
             roleError = byId.error;
         }
 
-        // DEBUG temporal - visible en Netlify → Functions → Logs
-        console.log('userId del JWT (sub):', userId);
-        console.log('profile encontrado:', JSON.stringify(profile));
-        console.log('roleError:', roleError?.message);
-        console.log('resultado byAuthId:', JSON.stringify(byAuthId.data), 'error:', byAuthId.error?.message);
-
         const allowedRoles = ['super_admin', 'admin', 'admin_usuarios'];
         if (roleError || !profile || !allowedRoles.includes(profile.role)) {
             return {
                 statusCode: 403, body: JSON.stringify({
-                    error: 'Prohibido: Se requiere rol administrativo',
-                    detail: `rol encontrado: "${profile?.role}", userId: ${userId}`
+                    error: 'Prohibido: Se requiere rol administrativo'
                 })
             };
         }
