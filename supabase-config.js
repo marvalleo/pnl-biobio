@@ -23,33 +23,15 @@ function isOriginAllowed() {
 }
 
 function getCleanConfig() {
-    // 1. Prioridad: Window (Inyectado por script manual si el build falla)
-    // 2. Cache: LocalStorage (Configurado por el botón de error)
-    // 3. Fallback: Variables de entorno (Vite)
-    let url = window.SUPABASE_URL || localStorage.getItem('SUPABASE_URL');
-    let key = window.SUPABASE_ANON_KEY || localStorage.getItem('SUPABASE_ANON_KEY');
+    // Fuente única: variables de entorno inyectadas en build-time por Vite.
+    // No se permite override desde window ni localStorage para evitar
+    // que un XSS pueda redirigir las credenciales a un servidor atacante.
+    const url = FALLBACK_URL;
+    const key = FALLBACK_KEY;
 
-    const isValidUrl = (u) => u && typeof u === 'string' && u.trim().startsWith('http') && u.length > 15;
-    const isValidKey = (k) => k && typeof k === 'string' && k.trim().length > 50;
-
-    // Limpiar basura del cache
-    if (url && !isValidUrl(url)) {
-        console.warn("[Supabase] URL en cache no es válida.");
-        localStorage.removeItem('SUPABASE_URL');
-        url = null;
-    }
-    if (key && !isValidKey(key)) {
-        console.warn("[Supabase] Key en cache no es válida.");
-        localStorage.removeItem('SUPABASE_ANON_KEY');
-        key = null;
-    }
-
-    url = url || FALLBACK_URL;
-    key = key || FALLBACK_KEY;
-
-    return { 
-        url: url ? url.trim() : "", 
-        key: key ? key.trim() : "" 
+    return {
+        url: url ? url.trim() : "",
+        key: key ? key.trim() : ""
     };
 }
 

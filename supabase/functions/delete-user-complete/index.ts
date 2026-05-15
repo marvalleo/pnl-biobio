@@ -1,12 +1,28 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+const ALLOWED_ORIGINS = [
+  'https://nacionallibertariobiobio.cl',
+  'https://www.nacionallibertariobiobio.cl',
+  'https://pnl-biobio.netlify.app',
+]
+
+function getCorsHeaders(req: Request): Record<string, string> {
+  const origin = req.headers.get('origin') ?? ''
+  const isAllowed = ALLOWED_ORIGINS.includes(origin) ||
+    /^https:\/\/[a-z0-9-]+-pnl-biobio\.netlify\.app$/.test(origin) ||
+    /^http:\/\/localhost(:\d+)?$/.test(origin)
+  return {
+    'Access-Control-Allow-Origin': isAllowed ? origin : ALLOWED_ORIGINS[0],
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  }
 }
 
+const ADMIN_ROLES = ['super_admin', 'admin', 'admin_usuarios']
+
 serve(async (req: Request) => {
+  const corsHeaders = getCorsHeaders(req)
+
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
@@ -17,6 +33,38 @@ serve(async (req: Request) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
+    // Verificar que el llamador es administrador
+    const authHeader = req.headers.get('authorization')
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: 'No autorizado: falta token' }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 401
+      })
+    }
+
+    const token = authHeader.replace(/^Bearer\s+/i, '')
+    const { data: { user: callerUser }, error: authError } = await supabaseAdmin.auth.getUser(token)
+
+    if (authError || !callerUser) {
+      return new Response(JSON.stringify({ error: 'Token inválido o expirado' }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 401
+      })
+    }
+
+    const { data: callerProfile } = await supabaseAdmin
+      .from('profiles')
+      .select('role')
+      .eq('auth_id', callerUser.id)
+      .maybeSingle()
+
+    if (!callerProfile || !ADMIN_ROLES.includes(callerProfile.role)) {
+      return new Response(JSON.stringify({ error: 'Acceso denegado: se requiere rol administrativo' }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 403
+      })
+    }
+
     const { userId } = await req.json()
 
     if (!userId) {
@@ -25,17 +73,13 @@ serve(async (req: Request) => {
 
     console.log(`Iniciando eliminación completa para usuario: ${userId}`)
 
-    // 1. Eliminar de Auth (esto debería borrar Profiles por cascada si está configurado, 
-    // pero lo haremos explícito para asegurar limpieza)
-    const { error: authError } = await supabaseAdmin.auth.admin.deleteUser(userId)
-    
-    if (authError) {
-      console.error('Error borrando de Auth:', authError)
-      throw authError
+    const { error: authDeleteError } = await supabaseAdmin.auth.admin.deleteUser(userId)
+
+    if (authDeleteError) {
+      console.error('Error borrando de Auth:', authDeleteError)
+      throw authDeleteError
     }
 
-    // 2. Intentar borrar de Profiles explícitamente (por si acaso no hay cascada)
-    // Nota: Si ya se borró por cascada, esto podría no afectar filas, lo cual está bien.
     const { error: profileError } = await supabaseAdmin
       .from('profiles')
       .delete()
@@ -43,16 +87,15 @@ serve(async (req: Request) => {
 
     if (profileError) {
       console.error('Error borrando de Profiles:', profileError)
-      // No lanzamos error aquí porque lo principal (Auth) ya se borró
     }
 
     console.log(`Usuario ${userId} eliminado exitosamente de Auth y Profiles`)
 
     return new Response(
       JSON.stringify({ success: true, message: 'Usuario eliminado completamente' }),
-      { 
+      {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200 
+        status: 200
       }
     )
 
@@ -60,9 +103,9 @@ serve(async (req: Request) => {
     console.error('Error en delete-user-complete:', error)
     return new Response(
       JSON.stringify({ error: error.message }),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 400 
+      {
+        headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' },
+        status: 400
       }
     )
   }

@@ -214,12 +214,30 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
     <script type="module" src="supabase-config.js"></script>
     <script type="module" src="/shared.js"></script>
     <script>
         let topicId = null;
         let userProfile = null;
         let quill = null;
+
+        function escapeHtml(text) {
+            if (text == null) return '';
+            const d = document.createElement('div');
+            d.textContent = String(text);
+            return d.innerHTML;
+        }
+
+        function sanitizeForumHtml(html) {
+            if (typeof DOMPurify !== 'undefined') {
+                return DOMPurify.sanitize(html || '', {
+                    ALLOWED_TAGS: ['b', 'i', 'em', 'strong', 'a', 'ul', 'ol', 'li', 'br', 'p', 'span'],
+                    ALLOWED_ATTR: ['href', 'rel', 'target', 'class'],
+                });
+            }
+            return (html || '').replace(/<[^>]+>/g, '');
+        }
 
         window.addEventListener('DOMContentLoaded', async () => {
             const urlParams = new URLSearchParams(window.location.search);
@@ -301,20 +319,20 @@
                     <div class="flex items-center gap-3 mb-6">
                         <div class="w-10 h-10 rounded-full bg-[#fba931] flex items-center justify-center text-xs font-black text-[#0f172a] border-2 border-white shadow-sm">${initials}</div>
                         <div>
-                            <p class="text-[10px] font-black uppercase text-slate-800 leading-none">${topic.profiles?.full_name || 'Desconocido'}</p>
+                            <p class="text-[10px] font-black uppercase text-slate-800 leading-none">${escapeHtml(topic.profiles?.full_name || 'Desconocido')}</p>
                             <p class="text-[8px] font-bold text-gray-400 uppercase tracking-widest mt-1">${new Date(topic.created_at).toLocaleString('es-CL')}</p>
                         </div>
                         <div class="flex gap-2 ml-auto">
                             ${isDirectiva ? '<span class="bg-[#0f172a] text-[#fba931] text-[8px] font-black px-3 py-1 rounded-full uppercase tracking-tighter">Directiva Sede</span>' : ''}
                             <span class="${rankStyles[userRank]} text-[8px] font-black px-3 py-1 rounded-full uppercase tracking-tighter flex items-center gap-1">
-                                <span class="material-symbols-outlined text-[10px]">workspace_premium</span> ${userRank}
+                                <span class="material-symbols-outlined text-[10px]">workspace_premium</span> ${escapeHtml(userRank)}
                             </span>
                         </div>
                     </div>
-                    <span class="text-[9px] font-black uppercase text-[#fba931] tracking-[0.3em] mb-2 block">${topic.forum_categories?.title}</span>
-                    <h1 class="serif text-4xl text-[#0f172a] leading-tight mb-6">${topic.title}</h1>
+                    <span class="text-[9px] font-black uppercase text-[#fba931] tracking-[0.3em] mb-2 block">${escapeHtml(topic.forum_categories?.title || '')}</span>
+                    <h1 class="serif text-4xl text-[#0f172a] leading-tight mb-6">${escapeHtml(topic.title)}</h1>
                     <div class="prose prose-slate max-w-none text-slate-600 leading-relaxed font-medium">
-                        ${topic.content.replace(/\n/g, '<br>')}
+                        ${sanitizeForumHtml(topic.content)}
                     </div>
                 </div>
             `;
@@ -347,6 +365,11 @@
             const replies = posts.filter(p => p.parent_id);
 
             container.innerHTML = rootPosts.map(post => renderPost(post, replies)).join('');
+
+            // Bind reply buttons via delegation (avoids onclick with user-controlled data)
+            container.querySelectorAll('[data-action="reply"]').forEach(btn => {
+                btn.addEventListener('click', () => replyTo(btn.dataset.postId, btn.dataset.author));
+            });
         }
 
         function renderPost(post, allReplies = []) {
@@ -387,23 +410,23 @@
                     <div class="flex items-center gap-3 mb-2">
                         <div class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-black text-slate-500">${initials}</div>
                         <div class="flex flex-col">
-                            <span class="text-[10px] font-black uppercase text-slate-800">${post.profiles?.full_name || 'Desconocido'}</span>
+                            <span class="text-[10px] font-black uppercase text-slate-800">${escapeHtml(post.profiles?.full_name || 'Desconocido')}</span>
                             <span class="text-[8px] font-bold text-gray-400 uppercase tracking-widest">${new Date(post.created_at).toLocaleString('es-CL')}</span>
                         </div>
                         <div class="flex gap-2 ml-auto lg:mr-6">
                             ${isDirectiva ? '<span class="bg-amber-50 text-amber-600 text-[7px] font-black px-2 py-0.5 rounded uppercase tracking-tighter border border-amber-100">Directiva</span>' : ''}
                             <span class="bg-slate-50 text-slate-400 text-[7px] font-black px-2 py-0.5 rounded uppercase tracking-tighter flex items-center gap-1 border border-slate-100">
-                                <span class="material-symbols-outlined text-[9px]">workspace_premium</span> ${userRank}
+                                <span class="material-symbols-outlined text-[9px]">workspace_premium</span> ${escapeHtml(userRank)}
                             </span>
                         </div>
                     </div>
 
                     <div class="text-sm text-slate-700 leading-relaxed pl-11 mb-3 ql-editor !p-0">
-                        ${post.content}
+                        ${sanitizeForumHtml(post.content)}
                     </div>
 
                     <div class="pl-11 flex items-center gap-6">
-                        <button onclick="replyTo('${post.id}', '${post.profiles?.full_name || 'Afiliado'}')" class="flex items-center gap-1.5 text-[10px] font-black uppercase text-[#fba931] hover:brightness-90 transition-all">
+                        <button data-action="reply" data-post-id="${escapeHtml(post.id)}" data-author="${escapeHtml(post.profiles?.full_name || 'Afiliado')}" class="flex items-center gap-1.5 text-[10px] font-black uppercase text-[#fba931] hover:brightness-90 transition-all">
                             <span class="material-symbols-outlined text-lg">reply</span> Responder
                         </button>
 
@@ -413,7 +436,7 @@
                                     <span class="material-symbols-outlined text-lg ${myVote === 1 ? 'fill-current' : ''}">thumb_up</span>
                                     <span class="text-[10px] font-black">${upvotesCount}</span>
                                 </button>
-                                ${upvotesCount > 0 ? `<div class="voters-list">👍 por: ${upvoters}</div>` : ''}
+                                ${upvotesCount > 0 ? `<div class="voters-list">👍 por: ${escapeHtml(upvoters)}</div>` : ''}
                             </div>
 
                             <div class="vote-container relative flex items-center gap-1">
@@ -421,7 +444,7 @@
                                     <span class="material-symbols-outlined text-lg ${myVote === -1 ? 'fill-current' : ''}">thumb_down</span>
                                     <span class="text-[10px] font-black">${downvotesCount}</span>
                                 </button>
-                                ${downvotesCount > 0 ? `<div class="voters-list">👎 por: ${downvoters}</div>` : ''}
+                                ${downvotesCount > 0 ? `<div class="voters-list">👎 por: ${escapeHtml(downvoters)}</div>` : ''}
                             </div>
                         </div>
                     </div>
@@ -450,7 +473,13 @@
                 return;
             }
             document.getElementById('reply-parent-id').value = postId;
-            document.getElementById('reply-title').innerHTML = `Respondiendo a <span class="text-[#fba931]">${name}</span>`;
+            const titleEl = document.getElementById('reply-title');
+            titleEl.textContent = '';
+            titleEl.appendChild(document.createTextNode('Respondiendo a '));
+            const span = document.createElement('span');
+            span.className = 'text-[#fba931]';
+            span.textContent = name;
+            titleEl.appendChild(span);
             document.getElementById('cancel-reply-btn').classList.remove('hidden');
             document.getElementById('reply-form').scrollIntoView({ behavior: 'smooth', block: 'center' });
             quill.focus();

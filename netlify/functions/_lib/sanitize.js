@@ -5,12 +5,15 @@ const ALLOWED_ATTR = {
     'a': ['href', 'target', 'rel', 'class'],
     '*': ['class']
 };
+const ALLOWED_SCHEMES = ['http', 'https', 'mailto', 'tel'];
 
 function sanitizeHtml(dirty) {
     if (!dirty || typeof dirty !== 'string') return '';
     return sanitizeHtmlLib(dirty, {
         allowedTags: ALLOWED_TAGS,
         allowedAttributes: ALLOWED_ATTR,
+        allowedSchemes: ALLOWED_SCHEMES,
+        allowedSchemesByTag: { 'a': ALLOWED_SCHEMES },
         // Forzar rel="noopener noreferrer" en links con target="_blank" (previene tabnabbing)
         transformTags: {
             'a': (tagName, attribs) => {

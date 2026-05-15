@@ -1,6 +1,8 @@
 const { createClient } = require('@supabase/supabase-js');
 
 let _supabaseAdmin = null;
+let _supabaseVerifier = null;
+
 function getSupabaseAdmin() {
     if (!_supabaseAdmin) {
         const { SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY } = process.env;
@@ -12,17 +14,15 @@ function getSupabaseAdmin() {
     return _supabaseAdmin;
 }
 
-function decodeJwtSub(token) {
-    const payloadBase64 = token.split('.')[1];
-    if (!payloadBase64) throw new Error('Token malformado');
-    // JWTs use base64url (no padding, '-' instead of '+', '_' instead of '/').
-    // Node 16+ supports 'base64url' as encoding.
-    const payload = JSON.parse(Buffer.from(payloadBase64, 'base64url').toString('utf8'));
-    if (payload.exp && payload.exp < Math.floor(Date.now() / 1000)) {
-        throw new Error('Token expirado');
+function getSupabaseVerifier() {
+    if (!_supabaseVerifier) {
+        const { SUPABASE_URL, SUPABASE_ANON_KEY } = process.env;
+        if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+            throw new Error('Faltan SUPABASE_URL o SUPABASE_ANON_KEY para verificación JWT');
+        }
+        _supabaseVerifier = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     }
-    if (!payload.sub) throw new Error('Token sin campo sub');
-    return payload.sub;
+    return _supabaseVerifier;
 }
 
 /**
@@ -30,19 +30,14 @@ function decodeJwtSub(token) {
  * Resuelve a { profile, supabase, authUserId } o lanza error con statusCode embebido.
  *
  * IMPORTANTE - Trust model:
- *   - El JWT NO se verifica criptográficamente (no validamos la firma). Confiamos
- *     en que cualquier `sub` que aparezca en el token corresponde a un perfil real
- *     en la tabla profiles. Si alguien fabrica un token con un sub arbitrario,
- *     no encontraremos perfil y devolveremos 403.
+ *   - El JWT se verifica criptográficamente via supabase.auth.getUser(token),
+ *     que valida la firma contra el servidor de Supabase Auth.
  *   - El cliente `supabase` retornado usa SERVICE_ROLE_KEY y bypasea RLS.
- *     Úsalo solo para operaciones que genuinamente lo requieran (insertar en
- *     tablas con RLS deny, leer información cross-user para procesamiento).
- *     NO uses este cliente como sustituto de las queries normales del usuario.
+ *     Úsalo solo para operaciones que genuinamente lo requieran.
  *
- * Uso típico desde un handler de Netlify:
+ * Uso típico:
  *   try {
  *       const { profile, supabase } = await authenticate(event);
- *       // ... lógica con profile.id
  *   } catch (err) {
  *       return { statusCode: err.statusCode || 500,
  *                body: JSON.stringify({ ok: false, message: err.message }) };
@@ -56,13 +51,21 @@ async function authenticate(event) {
         throw e;
     }
 
+    const token = authHeader.replace(/^Bearer\s+/i, '');
+
     let userId;
     try {
-        const token = authHeader.replace(/^Bearer\s+/i, '');
-        userId = decodeJwtSub(token);
+        const verifier = getSupabaseVerifier();
+        const { data: { user }, error } = await verifier.auth.getUser(token);
+        if (error || !user) {
+            const e = new Error('Token inválido o expirado');
+            e.statusCode = 401;
+            throw e;
+        }
+        userId = user.id;
     } catch (jwtErr) {
-        // No exponemos jwtErr.message al cliente; podría contener fragmentos del payload.
-        console.error('[auth] JWT decode error:', jwtErr.message);
+        if (jwtErr.statusCode) throw jwtErr;
+        console.error('[auth] JWT verify error');
         const e = new Error('Token inválido o expirado');
         e.statusCode = 401;
         throw e;
