@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git checkout *)",
+      "Bash(git -C \"C:\\\\Users\\\\MIPC\\\\Desktop\\\\Proyectos\\\\PNL\\\\webpnl\" check-ignore -v docs/sql_quizzes_y_moderation.sql)",
+      "Bash(git -C \"C:\\\\Users\\\\MIPC\\\\Desktop\\\\Proyectos\\\\PNL\\\\webpnl\" branch --show-current)",
+      "Bash(Get-ChildItem \"C:\\\\Users\\\\MIPC\\\\Desktop\\\\Proyectos\\\\PNL\\\\webpnl\\\\docs\" -Recurse)",
+      "Bash(Select-Object FullName)",
+      "PowerShell(node -e \"const m = require\\('./netlify/functions/_lib/auth.js'\\); console.log\\(Object.keys\\(m\\)\\);\")",
+      "PowerShell(node -e \"const { sanitizeHtml, htmlToPlainText } = require\\('./netlify/functions/_lib/sanitize.js'\\); const dirty = '<p>Hola <strong>mundo</strong></p><script>alert\\(1\\)</script><p>Otro parrafo</p>'; console.log\\('SANITIZED:', sanitizeHtml\\(dirty\\)\\); console.log\\('PLAIN:', JSON.stringify\\(htmlToPlainText\\(dirty\\)\\)\\);\")"
+    ]
+  }
+}
