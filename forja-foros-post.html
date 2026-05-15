@@ -540,18 +540,43 @@
 
             window.setButtonLoading(btn, true);
 
-            const { error } = await supabaseClient.from('forum_posts').insert([
-                { topic_id: topicId, profile_id: userProfile.id, content: window.sanitizeHTML(content), parent_id: parentId }
-            ]);
+            try {
+                const { data: { session } } = await supabaseClient.auth.getSession();
+                const res = await fetch('/.netlify/functions/forum-submit', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${session.access_token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        target_type: 'post',
+                        topic_id: topicId,
+                        parent_id: parentId,
+                        content: content
+                    })
+                });
+                const result = await res.json();
 
-            window.setButtonLoading(btn, false);
-            if (error) {
-                showToast(error.message, 'error');
-            } else {
-                showToast("Respuesta enviada correctamente.", 'success');
-                quill.setContents([]);
-                cancelReplyTo();
-                window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+                if (result.ok) {
+                    const msg = result.verdict === 'pending_review'
+                        ? 'Enviado, en revisión por moderador.'
+                        : 'Respuesta enviada correctamente.';
+                    showToast(msg, 'success');
+                    quill.setContents([]);
+                    cancelReplyTo();
+                    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+                } else if (result.verdict === 'warning' || result.verdict === 'block') {
+                    openModerationModal(result.verdict, result.reason, result.rules_violated);
+                } else if (result.code === 'rules_not_accepted') {
+                    openRulesModal();
+                } else {
+                    showToast(result.message || 'Error inesperado al enviar.', 'error');
+                }
+            } catch (err) {
+                console.error('forum-submit fetch error:', err);
+                showToast('Error de red al enviar el mensaje.', 'error');
+            } finally {
+                window.setButtonLoading(btn, false);
             }
         };
     </script>
@@ -615,6 +640,74 @@
             </div>
         </div>
     </div>
+
+    <!-- Modal de Moderación IA -->
+    <div id="moderation-modal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-md z-[300] flex items-center justify-center p-6">
+        <div id="moderation-modal-card" class="bg-white rounded-[2.5rem] w-full max-w-md p-10 relative shadow-2xl border-t-8 border-amber-500">
+            <div class="text-center">
+                <span id="moderation-icon" class="material-symbols-outlined text-6xl mb-3 text-amber-500">warning</span>
+                <h2 id="moderation-title" class="serif text-2xl text-[#0f172a] uppercase italic mb-2">Tu mensaje no puede enviarse</h2>
+            </div>
+
+            <p id="moderation-reason" class="text-sm text-slate-600 leading-relaxed mt-4 text-center font-medium">--</p>
+
+            <div id="moderation-rules" class="mt-4 bg-slate-50 rounded-2xl p-4 hidden">
+                <p class="text-[9px] font-black uppercase text-gray-400 tracking-widest mb-2">Reglas afectadas:</p>
+                <ul id="moderation-rules-list" class="space-y-1 text-xs font-bold text-[#0f172a]"></ul>
+            </div>
+
+            <button onclick="closeModerationModal()"
+                class="mt-8 w-full bg-[#0f172a] text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-800 transition-all flex items-center justify-center gap-2">
+                <span class="material-symbols-outlined text-base">edit</span> Editar mi mensaje
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Mapa local de etiquetas legibles (debe coincidir con _lib/rules-prompt.js)
+        const RULE_LABELS_FRONT = {
+            ad_hominem: 'Ataque al argumento, no al militante',
+            hate_speech: 'Civilidad y Respeto',
+            trolling: 'Debate de Buena Fe',
+            off_topic: 'Temática Pertinente',
+            other: 'Otra norma del reglamento'
+        };
+
+        function openModerationModal(verdict, reason, rules) {
+            const card = document.getElementById('moderation-modal-card');
+            const icon = document.getElementById('moderation-icon');
+            const title = document.getElementById('moderation-title');
+            const rulesBox = document.getElementById('moderation-rules');
+            const rulesList = document.getElementById('moderation-rules-list');
+
+            if (verdict === 'block') {
+                card.className = 'bg-white rounded-[2.5rem] w-full max-w-md p-10 relative shadow-2xl border-t-8 border-red-500';
+                icon.textContent = 'block';
+                icon.className = 'material-symbols-outlined text-6xl mb-3 text-red-500';
+                title.textContent = 'Mensaje bloqueado';
+            } else {
+                card.className = 'bg-white rounded-[2.5rem] w-full max-w-md p-10 relative shadow-2xl border-t-8 border-amber-500';
+                icon.textContent = 'warning';
+                icon.className = 'material-symbols-outlined text-6xl mb-3 text-amber-500';
+                title.textContent = 'Tu mensaje no puede enviarse';
+            }
+
+            document.getElementById('moderation-reason').textContent = reason || 'Tu mensaje no cumple con las normas del foro.';
+
+            if (rules && rules.length > 0) {
+                rulesList.innerHTML = rules.map(r => `<li>• ${RULE_LABELS_FRONT[r] || r}</li>`).join('');
+                rulesBox.classList.remove('hidden');
+            } else {
+                rulesBox.classList.add('hidden');
+            }
+
+            document.getElementById('moderation-modal').classList.remove('hidden');
+        }
+
+        function closeModerationModal() {
+            document.getElementById('moderation-modal').classList.add('hidden');
+        }
+    </script>
     <script src="/assets/components/navbar.js"></script>
 </body>
 
