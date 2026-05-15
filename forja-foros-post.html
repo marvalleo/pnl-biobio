@@ -64,10 +64,10 @@
             font-size: 14px !important;
         }
         .ql-editor {
-            min-height: 40px !important;
-            max-height: 120px !important;
+            min-height: 52px !important;
+            max-height: 140px !important;
             overflow-y: auto !important;
-            padding: 8px 14px !important;
+            padding: 10px 14px !important;
         }
         /* Toolbar custom: vive en la fila del label, no dentro del editor-wrapper */
         #reply-toolbar {
@@ -154,7 +154,7 @@
             <!-- Respuestas dinámicas -->
         </section>
 
-        <section class="premium-card px-4 pt-2.5 pb-3 sticky bottom-6 shadow-2xl border-t-[3px] border-[#fba931]">
+        <section class="premium-card px-4 pt-3 pb-4 sticky bottom-6 shadow-2xl border-t-[3px] border-[#fba931]">
             <!-- Fila 1: label + toolbar + cancelar -->
             <div class="flex items-center justify-between mb-2">
                 <div class="flex items-center gap-3">
@@ -377,14 +377,14 @@
             }
 
             const postHtml = `
-                <article id="post-${post.id}" class="reply-card p-6 mb-4 ${isMe ? 'bg-slate-50/30' : ''} ${post.parent_id ? 'nested' : ''} group relative">
+                <article id="post-${post.id}" class="reply-card p-4 mb-3 ${isMe ? 'bg-slate-50/30' : ''} ${post.parent_id ? 'nested' : ''} group relative">
                     ${!isMe ? `
-                    <button onclick="openReportModal('${post.id}')" class="absolute top-6 right-6 text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all" title="Reportar">
+                    <button onclick="openReportModal('${post.id}')" class="absolute top-4 right-4 text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all" title="Reportar">
                         <span class="material-symbols-outlined text-lg">flag</span>
                     </button>
                     ` : ''}
-                    
-                    <div class="flex items-center gap-3 mb-4">
+
+                    <div class="flex items-center gap-3 mb-2">
                         <div class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-black text-slate-500">${initials}</div>
                         <div class="flex flex-col">
                             <span class="text-[10px] font-black uppercase text-slate-800">${post.profiles?.full_name || 'Desconocido'}</span>
@@ -398,7 +398,7 @@
                         </div>
                     </div>
 
-                    <div class="text-sm text-slate-700 leading-relaxed pl-11 mb-4 ql-editor !p-0">
+                    <div class="text-sm text-slate-700 leading-relaxed pl-11 mb-3 ql-editor !p-0">
                         ${post.content}
                     </div>
 
