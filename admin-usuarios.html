@@ -396,34 +396,24 @@
         });
 
         async function loadUsers() {
-            let allFetched = [];
-            let page = 0;
-            const pageSize = 1000;
-            let finished = false;
-
             console.log("🚀 Cargando padrón completo...");
 
-            while (!finished) {
-                const { data, error } = await supabaseClient
-                    .from('profiles')
-                    .select('*')
-                    .range(page * pageSize, (page + 1) * pageSize - 1);
+            // S-02: el padrón con PII se obtiene vía RPC SECURITY DEFINER gated a
+            // super_admin/admin_usuarios (el acceso directo a columnas sensibles
+            // de profiles está restringido para el rol authenticated).
+            const { data, error } = await supabaseClient.rpc('admin_list_profiles');
 
-                if (error || !data || data.length === 0) {
-                    finished = true;
-                    break;
-                }
-
-                allFetched = allFetched.concat(data);
-
-                if (data.length < pageSize) {
-                    finished = true;
-                } else {
-                    page++;
-                }
+            if (error) {
+                console.error("Error cargando padrón:", error);
+                if (window.showToast) showToast('No se pudo cargar el padrón: ' + error.message, 'error');
+                allUsers = [];
+                filteredUsers = [];
+                updateStats();
+                applySortingAndRendering();
+                return;
             }
 
-            allUsers = allFetched;
+            allUsers = data || [];
             filteredUsers = [...allUsers];
             updateStats();
             applySortingAndRendering();

@@ -194,12 +194,10 @@
                     return;
                 }
 
-                // Obtener perfil desde Supabase (garantizado con la nueva función Security Definer)
-                const { data: profile } = await supabaseClient
-                    .from('profiles')
-                    .select('full_name, avatar_url, phone_number')
-                    .eq('auth_id', user.id)
-                    .single();
+                // Obtener perfil propio (incluye datos sensibles) vía RPC SECURITY DEFINER.
+                // S-02: el acceso directo a columnas sensibles de profiles está restringido.
+                const { data: myRows } = await supabaseClient.rpc('get_my_profile');
+                const profile = Array.isArray(myRows) ? myRows[0] : null;
 
                 const fullName = profile?.full_name || user.user_metadata?.full_name || 'Afiliado';
                 const initials = fullName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
@@ -232,7 +230,9 @@
                 const { data: { user } } = await supabaseClient.auth.getUser();
                 if (!user) return;
 
-                const { data: profile } = await supabaseClient.from('profiles').select('*').eq('auth_id', user.id).single();
+                // S-02: perfil propio completo vía RPC (incluye datos sensibles del titular)
+                const { data: myRows } = await supabaseClient.rpc('get_my_profile');
+                const profile = Array.isArray(myRows) ? myRows[0] : null;
 
                 // Formatear JSON para descarga
                 const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({

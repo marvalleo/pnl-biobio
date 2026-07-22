@@ -547,10 +547,9 @@
             document.getElementById('reg-modal').classList.remove('hidden');
 
             try {
+                // S-02: inscritos + datos de contacto vía RPC gated a admin Forja
                 const { data, error } = await supabaseClient
-                    .from('lesson_registrations')
-                    .select('*, profiles(*)')
-                    .eq('lesson_id', lessonId);
+                    .rpc('admin_lesson_registrations', { p_lesson_id: lessonId });
 
                 if (error) throw error;
 

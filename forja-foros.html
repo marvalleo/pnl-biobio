@@ -387,7 +387,7 @@
             const { data: { user } } = await supabaseClient.auth.getUser();
             if (!user) { window.location.href = 'forja-login.html'; return; }
 
-            const { data: profile } = await supabaseClient.from('profiles').select('*').eq('auth_id', user.id).single();
+            const { data: profile } = await supabaseClient.from('profiles').select('id, auth_id, full_name, role, rank, reputation_score, accepted_forum_rules').eq('auth_id', user.id).single();
             userProfile = profile;
 
             if (typeof initNavbar === 'function') initNavbar();

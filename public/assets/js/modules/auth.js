@@ -43,7 +43,7 @@ export async function initNavbar() {
         // Obtener perfil (sessionStorage como caché)
         let profile = JSON.parse(sessionStorage.getItem('pnl_profile'));
         if (!profile || !profile.hasOwnProperty('full_name')) {
-            const { data } = await window.supabaseClient.from('profiles').select('*').eq('auth_id', user.id).single();
+            const { data } = await window.supabaseClient.from('profiles').select('id, auth_id, full_name, role, rank, reputation_score, must_change_password, accepted_forum_rules').eq('auth_id', user.id).single();
             profile = data;
             if (profile) sessionStorage.setItem('pnl_profile', JSON.stringify(profile));
         }

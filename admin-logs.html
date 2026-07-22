@@ -212,7 +212,7 @@
 
             let query = supabaseClient
                 .from('system_logs')
-                .select('*, profiles(*)')
+                .select('*, profiles(full_name, role)')
                 .order('created_at', { ascending: false })
                 .limit(100);
 
@@ -235,7 +235,7 @@
 
             tbody.innerHTML = data.map(log => {
                 const date = new Date(log.created_at);
-                const userLabel = log.profiles ? `${log.profiles.full_name}<br><span class="text-[9px] text-gray-400 font-medium">${log.profiles.email}</span>` : '<span class="text-gray-400 text-[10px]">Anónimo / Sistema</span>';
+                const userLabel = log.profiles ? `${log.profiles.full_name}<br><span class="text-[9px] text-gray-400 font-medium uppercase">${log.profiles.role || ''}</span>` : '<span class="text-gray-400 text-[10px]">Anónimo / Sistema</span>';
                 
                 const levelClasses = {
                     info: 'bg-blue-100 text-blue-700',
@@ -284,7 +284,7 @@
             document.getElementById('modal-title').innerText = `Log: ${log.event_type.toUpperCase()}`;
             document.getElementById('modal-timestamp').innerText = `${date.toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' })} @ ${date.toLocaleTimeString('es-ES')}`;
             document.getElementById('modal-message').innerText = log.message;
-            document.getElementById('modal-user').innerText = log.profiles ? `${log.profiles.full_name} (${log.profiles.email})` : 'Anónimo / Sistema';
+            document.getElementById('modal-user').innerText = log.profiles ? `${log.profiles.full_name} (${log.profiles.role || 'sin rol'})` : 'Anónimo / Sistema';
             document.getElementById('modal-url').innerText = log.page_url || 'N/A';
             document.getElementById('modal-agent').innerText = log.user_agent || 'User Agent desconocido';
             
