@@ -125,8 +125,12 @@
                         </div>
 
                         <div class="space-y-6">
-                            <div class="flex justify-between items-center mb-1">
-                                <label class="block text-[10px] font-black uppercase text-gray-400 tracking-widest">Contenido del Comunicado</label>
+                            <div class="flex justify-between items-center mb-1 flex-wrap gap-2">
+                                <div class="flex items-center gap-3">
+                                    <label class="block text-[10px] font-black uppercase text-gray-400 tracking-widest">Contenido del Comunicado</label>
+                                    <span id="draft-status" class="text-[9px] font-bold text-emerald-500"></span>
+                                    <button type="button" onclick="restoreTemplate()" class="text-[9px] font-black uppercase text-gray-300 hover:text-[#fba931] transition-colors underline" title="Volver a la plantilla por defecto">Restaurar plantilla</button>
+                                </div>
                                 <div class="flex gap-1.5">
                                     <button type="button" onclick="insertTag('<b>', '</b>')" class="w-7 h-7 rounded-lg bg-gray-50 text-[10px] font-black hover:bg-[#fba931] transition-all" title="Negrita">B</button>
                                     <button type="button" onclick="insertTag('<i>', '</i>')" class="w-7 h-7 rounded-lg bg-gray-50 text-[10px] font-serif italic hover:bg-[#fba931] transition-all" title="Itálica">I</button>
@@ -291,7 +295,12 @@
                 <span class="material-symbols-outlined text-4xl font-bold">priority_high</span>
             </div>
             <h3 class="text-2xl font-900 uppercase tracking-tighter mb-4">Acción de Alto Impacto</h3>
-            <p class="text-gray-400 text-sm font-medium mb-8">Estás a punto de enviar un email a toda la comunidad. Esta acción no se puede deshacer.</p>
+            <p class="text-gray-500 text-sm font-medium mb-4">Vas a enviar este correo a</p>
+            <div class="bg-gray-50 rounded-2xl py-4 mb-6 border border-gray-100">
+                <span id="recipient-count" class="text-3xl font-900 text-[#0f172a]">…</span>
+                <span class="block text-[10px] font-black uppercase tracking-widest text-gray-400 mt-1" id="recipient-label">destinatarios</span>
+            </div>
+            <p class="text-gray-400 text-xs font-medium mb-8">Esta acción no se puede deshacer.</p>
             <div class="space-y-3">
                 <button onclick="executeMassSend()" id="confirm-execute-btn" style="background-color: #ef4444 !important; color: white !important; display: block; width: 100%;" class="py-5 rounded-2xl font-900 text-xs uppercase tracking-widest shadow-lg shadow-red-500/20">Sí, ejecutar envío masivo</button>
                 <button onclick="closeConfirmModal()" class="w-full py-4 font-900 text-[10px] uppercase text-gray-400">Cancelar y Revisar</button>
@@ -299,11 +308,61 @@
         </div>
     </div>
 
+    <input type="file" id="email-img-file" accept="image/*" class="hidden">
+
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="/assets/js/image-uploader.js"></script>
     <script type="module" src="supabase-config.js"></script>
     <script type="module" src="/shared.js"></script>
     <script>
         let currentAudience = 'all';
+
+        function setDraftStatus(msg) {
+            const el = document.getElementById('draft-status');
+            if (!el) return;
+            el.textContent = msg;
+            setTimeout(() => { if (el.textContent === msg) el.textContent = ''; }, 4000);
+        }
+
+        function restoreTemplate() {
+            const subjEl = document.getElementById('subject');
+            const bodyEl = document.getElementById('body-html');
+            if (window.__DEFAULT_SUBJECT !== undefined) subjEl.value = window.__DEFAULT_SUBJECT;
+            if (window.__DEFAULT_BODY !== undefined) bodyEl.value = window.__DEFAULT_BODY;
+            localStorage.removeItem('pnl_email_draft');
+            updatePreview();
+            setDraftStatus('Plantilla restaurada');
+        }
+
+        function showLogModal(subject, logText) {
+            const existing = document.getElementById('log-modal');
+            if (existing) existing.remove();
+            const modal = document.createElement('div');
+            modal.id = 'log-modal';
+            modal.className = 'fixed inset-0 bg-black/70 backdrop-blur-sm z-[120] flex items-center justify-center p-6';
+            const safe = (s) => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            modal.innerHTML = `
+                <div class="bg-white w-full max-w-lg rounded-3xl overflow-hidden shadow-2xl">
+                    <div class="bg-red-500 text-white px-6 py-4 flex items-center justify-between">
+                        <h3 class="font-900 uppercase text-xs tracking-widest">Detalle del Fallo</h3>
+                        <button id="log-modal-close" class="material-symbols-outlined hover:opacity-70">close</button>
+                    </div>
+                    <div class="p-6">
+                        <p class="text-[10px] font-black uppercase text-gray-400 mb-1">Asunto</p>
+                        <p class="text-sm font-bold text-[#0f172a] mb-4">${safe(subject)}</p>
+                        <p class="text-[10px] font-black uppercase text-gray-400 mb-1">Errores</p>
+                        <pre class="text-[11px] bg-slate-900 text-red-300 p-4 rounded-xl max-h-60 overflow-auto whitespace-pre-wrap font-mono">${safe(logText)}</pre>
+                    </div>
+                    <div class="px-6 pb-6">
+                        <button id="log-modal-ok" class="w-full py-3 rounded-xl font-900 text-[10px] uppercase bg-gray-100 text-gray-500 hover:bg-gray-200">Cerrar</button>
+                    </div>
+                </div>`;
+            document.body.appendChild(modal);
+            const close = () => modal.remove();
+            document.getElementById('log-modal-close').addEventListener('click', close);
+            document.getElementById('log-modal-ok').addEventListener('click', close);
+            modal.addEventListener('click', (e) => { if (e.target === modal) close(); });
+        }
 
         window.addEventListener('DOMContentLoaded', async () => {
             // 🔐 S-01: verificación de rol contra la BASE DE DATOS (no localStorage)
@@ -316,6 +375,52 @@
             initNavbar();
             loadCampaigns();
             updatePreview();
+
+            // 💾 Borradores automáticos (no se pierde el trabajo al cerrar)
+            const subjEl = document.getElementById('subject');
+            const bodyEl = document.getElementById('body-html');
+            window.__DEFAULT_SUBJECT = subjEl.value;
+            window.__DEFAULT_BODY = bodyEl.value;
+
+            try {
+                const draft = JSON.parse(localStorage.getItem('pnl_email_draft') || 'null');
+                if (draft && (draft.subject || draft.body)) {
+                    if (draft.subject) subjEl.value = draft.subject;
+                    if (draft.body) bodyEl.value = draft.body;
+                    updatePreview();
+                    setDraftStatus('Borrador restaurado');
+                }
+            } catch (_) { }
+
+            let draftTimer;
+            const saveDraft = () => {
+                clearTimeout(draftTimer);
+                draftTimer = setTimeout(() => {
+                    localStorage.setItem('pnl_email_draft', JSON.stringify({ subject: subjEl.value, body: bodyEl.value, at: Date.now() }));
+                    setDraftStatus('Borrador guardado ✓');
+                }, 800);
+            };
+            subjEl.addEventListener('input', saveDraft);
+            bodyEl.addEventListener('input', saveDraft);
+
+            // 📤 Subida de imágenes del correo desde el computador
+            const emailImgInput = document.getElementById('email-img-file');
+            if (emailImgInput && window.PNLUploader) {
+                emailImgInput.addEventListener('change', async () => {
+                    const file = emailImgInput.files && emailImgInput.files[0];
+                    if (!file) return;
+                    if (window.showToast) showToast('Subiendo imagen…', 'info');
+                    try {
+                        const url = await window.PNLUploader.upload(file, 'emails');
+                        insertImageUrl(url);
+                        if (window.showToast) showToast('Imagen insertada en el correo', 'success');
+                    } catch (err) {
+                        if (window.showToast) showToast(err.message || 'Error al subir la imagen', 'error');
+                    } finally {
+                        emailImgInput.value = '';
+                    }
+                });
+            }
         });
 
         async function setAudience(type, btn) {
@@ -378,11 +483,14 @@
         }
 
         function insertImage() {
-            const url = prompt("Pega la URL de la imagen (ej: https://tusitio.com/imagen.jpg):", "https://");
-            if (url && url !== "https://") {
-                const imgTag = `<img src="${url}" style="width: 100%; border-radius: 12px; margin: 20px 0;" alt="Imagen">`;
-                insertTag(imgTag, "");
-            }
+            // Abre el selector de archivos del computador (subida al bucket `multimedia`)
+            const fileInput = document.getElementById('email-img-file');
+            if (fileInput) fileInput.click();
+        }
+
+        function insertImageUrl(url) {
+            const imgTag = `<img src="${url}" style="width: 100%; max-width: 510px; border-radius: 12px; margin: 20px auto; display: block;" alt="Imagen">`;
+            insertTag(imgTag, "");
         }
 
         function updatePreview() {
@@ -525,19 +633,40 @@
                 
                 if (error) throw error;
 
-                const logText = data.error_log && data.error_log.length > 0 
-                    ? data.error_log.join('\n') 
+                const logText = data.error_log && data.error_log.length > 0
+                    ? data.error_log.join('\n')
                     : "No hay detalles adicionales del error.";
 
-                alert(`ASUNTO: ${data.subject}\n\nDETALLES DEL FALLO:\n${logText}`);
+                showLogModal(data.subject, logText);
             } catch (err) {
-                alert("Error al recuperar los logs.");
+                showToast('Error al recuperar los logs.', 'error');
             }
         }
 
-        document.getElementById('email-form').onsubmit = (e) => {
+        document.getElementById('email-form').onsubmit = async (e) => {
             e.preventDefault();
+
+            // Validar que haya contenido antes de confirmar
+            const body = document.getElementById('body-html').value.trim();
+            if (!body) { showToast('El contenido del correo está vacío.', 'warning'); return; }
+
+            const audience = document.getElementById('target_audience').value;
+            const countEl = document.getElementById('recipient-count');
+            const labelEl = document.getElementById('recipient-label');
+            if (countEl) countEl.textContent = '…';
+            if (labelEl) labelEl.textContent = audience === 'admins' ? 'administradores' : 'militantes';
+
             document.getElementById('confirm-modal').classList.remove('hidden');
+
+            // Conteo real de destinatarios (RPC seguro)
+            try {
+                const { data, error } = await supabaseClient.rpc('admin_email_recipient_count', { p_audience: audience });
+                if (error) throw error;
+                if (countEl) countEl.textContent = Number(data).toLocaleString('es-CL');
+            } catch (err) {
+                console.warn('No se pudo obtener el conteo:', err);
+                if (countEl) countEl.textContent = '—';
+            }
         };
 
         function closeConfirmModal() {
@@ -619,6 +748,7 @@
 
                 const data = await response.json();
 
+                localStorage.removeItem('pnl_email_draft'); // Envío exitoso: descartar borrador
                 showToast(`🚀 ¡Vuelo iniciado! Enviado a ${data.sent} militantes.`, 'success');
                 setTimeout(() => location.reload(), 2000);
 

@@ -32,6 +32,11 @@
             border-color: #fba931;
             box-shadow: 0 20px 40px rgba(15, 23, 42, 0.05);
         }
+
+        .pnl-drag-active {
+            border-color: #fba931 !important;
+            background: #fff7ed !important;
+        }
     </style>
 </head>
 
@@ -91,13 +96,18 @@
                         class="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-xs font-bold h-32"
                         placeholder="Describe la convocatoria o noticia..."></textarea>
                 </div>
-                <div class="grid grid-cols-1 gap-4">
-                    <div>
-                        <label class="text-[9px] font-black uppercase text-gray-400 block mb-1">URL de Imagen</label>
-                        <input type="text" id="image_url" oninput="updatePreview()"
-                            class="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-xs font-bold"
-                            placeholder="https://...">
+                <div>
+                    <label class="text-[9px] font-black uppercase text-gray-400 block mb-1">Imagen del Anuncio</label>
+                    <div id="img-dropzone" class="cursor-pointer border-2 border-dashed border-gray-200 rounded-xl px-4 py-6 text-center hover:border-[#fba931] transition-colors bg-gray-50">
+                        <span class="material-symbols-outlined text-3xl text-gray-300">cloud_upload</span>
+                        <p class="text-[10px] font-bold text-gray-400 mt-1">Arrastra una foto aquí o <span class="text-[#fba931]">haz clic para subir desde tu computador</span></p>
+                        <p class="text-[9px] text-gray-300 mt-0.5">JPG, PNG, WEBP o GIF · máximo 3 MB</p>
+                        <input type="file" id="img-file" accept="image/*" class="hidden">
                     </div>
+                    <p id="img-status" class="text-[9px] font-bold mt-1"></p>
+                    <input type="text" id="image_url" oninput="updatePreview()"
+                        class="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-2 text-[10px] font-bold mt-2"
+                        placeholder="…o pega una URL de imagen (https://...)">
                 </div>
                 <div id="image-preview-container" class="hidden">
                     <label class="text-[9px] font-black uppercase text-gray-400 block mb-1">Vista Previa</label>
@@ -168,6 +178,7 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="/assets/js/image-uploader.js"></script>
     <script type="module" src="supabase-config.js"></script>
     <script type="module" src="/shared.js"></script>
     <script>
@@ -188,6 +199,20 @@
 
             initNavbar();
             loadAnnouncements();
+
+            // 📤 Subida de imágenes desde el computador al bucket `multimedia`
+            if (window.PNLUploader) {
+                window.PNLUploader.attachDropzone({
+                    zone: 'img-dropzone',
+                    input: 'img-file',
+                    status: 'img-status',
+                    folder: 'announcements',
+                    onUrl: function (url) {
+                        document.getElementById('image_url').value = url;
+                        updatePreview();
+                    }
+                });
+            }
         });
 
         async function loadAnnouncements() {
@@ -263,6 +288,15 @@
             if (url) {
                 container.classList.remove('hidden');
                 img.src = url;
+                img.onerror = function () {
+                    const st = document.getElementById('img-status');
+                    if (st) { st.textContent = '✗ No se pudo cargar la imagen desde esa URL.'; st.style.color = '#ef4444'; }
+                    container.classList.add('hidden');
+                };
+                img.onload = function () {
+                    const st = document.getElementById('img-status');
+                    if (st && st.textContent.indexOf('subida') === -1) { st.textContent = ''; }
+                };
             } else {
                 container.classList.add('hidden');
             }
