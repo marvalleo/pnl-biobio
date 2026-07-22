@@ -1,0 +1,21 @@
+-- Cierra el aviso de Supabase "Public Bucket Allows Listing" en el bucket `multimedia`.
+-- Fecha: 2026-07-22. Estado: APLICADA a producción (pnl-BD).
+--
+-- Problema: la política SELECT amplia sobre storage.objects permitía a CUALQUIERA
+-- (anon o authenticated) LISTAR/enumerar todos los archivos del bucket.
+--
+-- El bucket es público: cada imagen se sirve por su URL pública directa
+-- (/storage/v1/object/public/multimedia/...), que NO pasa por RLS. Por eso quitar
+-- esta política NO afecta la visualización de imágenes en anuncios ni correos.
+-- Nada en la app usa .list(); solo sube (INSERT) y usa getPublicUrl.
+--
+-- Se conservan las políticas de INSERT y DELETE (solo super_admin).
+--
+-- Verificación: un usuario normal ahora ve 0 archivos al consultar storage.objects
+-- del bucket; el acceso público a cada imagen por URL sigue intacto.
+--
+-- ROLLBACK (si se necesitara volver a permitir listar):
+--   CREATE POLICY "Acceso público multimedia" ON storage.objects
+--     FOR SELECT USING (bucket_id = 'multimedia');
+
+DROP POLICY IF EXISTS "Acceso público multimedia" ON storage.objects;
