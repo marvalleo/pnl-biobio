@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+
+# Áreas privadas (requieren inicio de sesión): no indexar
+Disallow: /admin-
+Disallow: /forja-
+
+Sitemap: https://nacionallibertariobiobio.cl/sitemap.xml

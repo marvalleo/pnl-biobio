@@ -86,6 +86,15 @@
     <!-- NAVEGACIÓN -->
     <pnl-navbar type="forja"></pnl-navbar>
 
+    <!-- DASHBOARD DE BIENVENIDA -->
+    <section class="max-w-7xl mx-auto px-6 pt-10 w-full">
+        <div id="member-dashboard" class="bg-[#0f172a] rounded-[2.5rem] p-8 md:p-10 text-white shadow-xl min-h-[180px]">
+            <div class="animate-pulse flex gap-4">
+                <div class="h-6 w-48 bg-white/10 rounded"></div>
+            </div>
+        </div>
+    </section>
+
     <!-- CONTENT -->
     <main class="max-w-7xl mx-auto px-6 py-12 flex-1 w-full grid grid-cols-1 lg:grid-cols-3 gap-12">
         <!-- Listado de Eventos -->
@@ -188,8 +197,74 @@
             await Promise.all([loadEvents(), loadRegistrations()]);
             renderEvents();
             renderCalendar();
+            renderDashboard(user.id);
             initNavbar();
         });
+
+        async function renderDashboard(authId) {
+            const el = document.getElementById('member-dashboard');
+            if (!el) return;
+            const esc = (s) => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+            // Datos del perfil (columnas no sensibles)
+            let p = null;
+            try {
+                const { data } = await supabaseClient.from('profiles')
+                    .select('full_name, rank, reputation_score').eq('auth_id', authId).maybeSingle();
+                p = data;
+            } catch (_) { }
+
+            const firstName = esc((p?.full_name || 'Militante').split(' ')[0]);
+            const rank = esc(p?.rank || 'Iniciado');
+            const rep = p?.reputation_score || 0;
+
+            // Próximo evento (futuro más cercano)
+            const now = Date.now();
+            const upcoming = events
+                .filter(e => e.event_date && new Date(e.event_date).getTime() >= now)
+                .sort((a, b) => new Date(a.event_date) - new Date(b.event_date));
+            const next = upcoming[0];
+            const nextText = next
+                ? `${esc(next.title)} · ${new Date(next.event_date).toLocaleDateString('es-CL', { day: '2-digit', month: 'short' })}`
+                : 'Sin eventos próximos';
+
+            const myCount = registrations.size;
+
+            const link = (href, icon, label) => `
+                <a href="${href}" class="flex items-center gap-2 bg-white/5 hover:bg-white/10 px-5 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all">
+                    <span class="material-symbols-outlined text-base text-[#fba931]">${icon}</span> ${label}
+                </a>`;
+
+            el.innerHTML = `
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-8">
+                    <div>
+                        <p class="text-[10px] font-black uppercase tracking-[0.3em] text-[#fba931] mb-2">Tu Espacio Libertario</p>
+                        <h2 class="serif text-4xl mb-3">Hola, ${firstName}</h2>
+                        <div class="flex items-center gap-3 flex-wrap">
+                            <span class="px-3 py-1 rounded-full bg-[#fba931] text-[#0f172a] text-[10px] font-black uppercase tracking-widest">${rank}</span>
+                            <span class="text-xs font-bold text-white/60">${rep} pts de reputación</span>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4 shrink-0">
+                        <div class="bg-white/5 rounded-2xl p-5 border border-white/10 min-w-[150px]">
+                            <span class="material-symbols-outlined text-[#fba931]">event_upcoming</span>
+                            <p class="text-[9px] font-black uppercase tracking-widest text-white/50 mt-2 mb-1">Próximo evento</p>
+                            <p class="text-xs font-bold leading-tight">${nextText}</p>
+                        </div>
+                        <div class="bg-white/5 rounded-2xl p-5 border border-white/10 min-w-[120px]">
+                            <span class="material-symbols-outlined text-[#fba931]">how_to_reg</span>
+                            <p class="text-[9px] font-black uppercase tracking-widest text-white/50 mt-2 mb-1">Mis inscripciones</p>
+                            <p class="text-3xl font-900">${myCount}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex flex-wrap gap-3 mt-8 pt-6 border-t border-white/10">
+                    ${link('forja-foros.html', 'forum', 'Foros')}
+                    ${link('forja-votaciones.html', 'how_to_vote', 'Votaciones')}
+                    ${link('forja-academia.html', 'school', 'Forja Academia')}
+                    ${link('perfil.html', 'account_circle', 'Mi Perfil')}
+                </div>`;
+        }
 
         async function loadEvents() {
             const { data, error } = await supabaseClient
