@@ -1,7 +1,8 @@
 -- ============================================================================
 -- S-02 — FASE 2 (final): Protección a NIVEL DE COLUMNA sobre `profiles`
 -- Fecha: 2026-07-22
--- Estado: VALIDADA en transacción revertida. PENDIENTE de aplicar en prod.
+-- Estado: APLICADA a producción (pnl-BD) el 2026-07-22, tras desplegar el
+--         frontend (commit 7470995). Fuga de PII verificada como cerrada.
 --
 -- ⚠️  ORDEN DE DESPLIEGUE OBLIGATORIO:
 --     Aplicar este archivo SOLO DESPUÉS de que el frontend que usa los RPCs
