@@ -290,13 +290,16 @@
                 return;
             }
 
-            const { data: { session } } = await supabaseClient.auth.getSession();
-            const role = localStorage.getItem('pnl_user_role');
+            // 🔐 S-01: verificación de rol contra la BASE DE DATOS (no localStorage)
+            const { ok, role } = await window.verifyAdminAccess(['super_admin', 'admin_forja', 'admin_votos', 'admin_foros', 'admin_usuarios']);
 
-            if (!session || !['super_admin', 'admin_forja', 'admin_votos', 'admin_foros', 'admin_usuarios'].includes(role)) {
+            if (!ok) {
                 window.location.href = 'forja-login.html';
                 return;
             }
+
+            // Guardar el rol verificado contra la BD para reveals de UI posteriores
+            window.__pnlVerifiedRole = role;
 
             // Aplicar segregación de predios (Bloqueo visual)
             const modules = {
@@ -370,31 +373,39 @@
 
         async function loadDashboardStats() {
             try {
-                // Total Militantes
-                const { count: userCount, error: userErr } = await supabaseClient
-                    .from('profiles')
-                    .select('*', { count: 'exact', head: true });
+                // 🔐 S-02: obtener los conteos vía RPC SECURITY DEFINER en vez de
+                // escanear `profiles` desde el cliente (evita exponer el padrón/PII).
+                // Fallback a los conteos directos si el RPC aún no está instalado en
+                // Supabase, para no romper el dashboard durante el despliegue gradual.
+                let userCount, courseCount, ballotCount;
 
-                // Total Cursos
-                const { count: courseCount, error: courseErr } = await supabaseClient
-                    .from('courses')
-                    .select('*', { count: 'exact', head: true });
+                const { data: stats, error: statsErr } = await supabaseClient.rpc('get_dashboard_stats');
 
-                // Total Votaciones
-                const { count: ballotCount, error: ballotErr } = await supabaseClient
-                    .from('ballots')
-                    .select('*', { count: 'exact', head: true });
-
-                if (userErr) console.error("Error militantes:", userErr);
-                if (courseErr) console.error("Error cursos:", courseErr);
-                if (ballotErr) console.error("Error votaciones:", ballotErr);
+                if (!statsErr && stats) {
+                    userCount = stats.users;
+                    courseCount = stats.courses;
+                    ballotCount = stats.ballots;
+                } else {
+                    console.warn("⚠️ RPC get_dashboard_stats no disponible, usando conteo directo (aplica la migración supabase/migrations/20260722_profiles_pii_hardening.sql).");
+                    const [uRes, cRes, bRes] = await Promise.all([
+                        supabaseClient.from('profiles').select('*', { count: 'exact', head: true }),
+                        supabaseClient.from('courses').select('*', { count: 'exact', head: true }),
+                        supabaseClient.from('ballots').select('*', { count: 'exact', head: true })
+                    ]);
+                    if (uRes.error) console.error("Error militantes:", uRes.error);
+                    if (cRes.error) console.error("Error cursos:", cRes.error);
+                    if (bRes.error) console.error("Error votaciones:", bRes.error);
+                    userCount = uRes.count;
+                    courseCount = cRes.count;
+                    ballotCount = bRes.count;
+                }
 
                 document.getElementById('stat-users').innerText = userCount ?? 0;
                 document.getElementById('stat-courses').innerText = courseCount ?? 0;
                 document.getElementById('stat-ballots').innerText = ballotCount ?? 0;
 
                 // Habilitar panel de notificaciones solo para super_admin o admins autorizados
-                const role = localStorage.getItem('pnl_user_role');
+                const role = window.__pnlVerifiedRole || localStorage.getItem('pnl_user_role');
                 if (role === 'super_admin') {
                     document.getElementById('push-notification-panel').classList.remove('hidden');
                 }

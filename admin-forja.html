@@ -594,8 +594,9 @@
                 return;
             }
 
-            const role = localStorage.getItem('pnl_user_role');
-            if (role !== 'super_admin' && role !== 'admin_forja') {
+            // 🔐 S-01: verificación de rol contra la BASE DE DATOS (no localStorage)
+            const { ok } = await window.verifyAdminAccess(['super_admin', 'admin_forja']);
+            if (!ok) {
                 showToast('Acceso no autorizado', 'error');
                 window.location.href = 'forja-login.html';
                 return;

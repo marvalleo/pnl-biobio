@@ -306,12 +306,9 @@
         let currentAudience = 'all';
 
         window.addEventListener('DOMContentLoaded', async () => {
-            if (!window.isSupabaseInit) return;
-            
-            const role = localStorage.getItem('pnl_user_role');
-            const { data: { session } } = await supabaseClient.auth.getSession();
-            
-            if (!session || role !== 'super_admin') {
+            // 🔐 S-01: verificación de rol contra la BASE DE DATOS (no localStorage)
+            const { ok } = await window.verifyAdminAccess(['super_admin']);
+            if (!ok) {
                 window.location.href = 'admin-dashboard.html';
                 return;
             }

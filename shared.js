@@ -36,6 +36,65 @@ export function sanitizeHTML(dirty) {
 }
 window.sanitizeHTML = sanitizeHTML;
 
+/**
+ * 🔐 Verifica el rol del usuario contra la BASE DE DATOS (no localStorage).
+ *
+ * SEGURIDAD (S-01): `localStorage.pnl_user_role` es manipulable por el cliente
+ * (cualquiera puede hacer `localStorage.setItem('pnl_user_role','super_admin')`
+ * en la consola). Por eso NUNCA debe usarse para autorizar el acceso a paneles
+ * de administración. Esta función:
+ *   1. Valida el token de sesión con getUser() (verifica firma contra el servidor).
+ *   2. Consulta el rol real en la tabla `profiles`.
+ *   3. Devuelve { ok, role, user } y sincroniza el caché local solo como
+ *      conveniencia de UI (nunca como autoridad).
+ *
+ * La barrera FINAL sigue siendo el RLS de la base de datos; esto es defensa
+ * en profundidad del lado del cliente para no mostrar paneles a quien no debe.
+ *
+ * @param {string[]} allowedRoles Roles autorizados (vacío = cualquier rol válido).
+ * @returns {Promise<{ok: boolean, role: string|null, user: object|null}>}
+ */
+export async function verifyAdminAccess(allowedRoles = []) {
+    // Esperar a que Supabase se inicialice (máx. ~5s)
+    let attempts = 0;
+    while (!window.isSupabaseInit && attempts < 20) {
+        await new Promise(r => setTimeout(r, 250));
+        attempts++;
+    }
+
+    if (!window.supabaseClient || !window.supabaseClient.auth) {
+        return { ok: false, role: null, user: null };
+    }
+
+    try {
+        const { data: { user }, error: userErr } = await window.supabaseClient.auth.getUser();
+        if (userErr || !user) return { ok: false, role: null, user: null };
+
+        const { data: profile, error: profErr } = await window.supabaseClient
+            .from('profiles')
+            .select('role')
+            .eq('auth_id', user.id)
+            .maybeSingle();
+
+        if (profErr) {
+            console.error('[verifyAdminAccess] Error consultando rol:', profErr.message);
+            return { ok: false, role: null, user };
+        }
+
+        const role = profile?.role || null;
+
+        // Sincronizar caché local (solo conveniencia de UI, NUNCA autoridad)
+        if (role) localStorage.setItem('pnl_user_role', role);
+
+        const ok = !!role && (allowedRoles.length === 0 || allowedRoles.includes(role));
+        return { ok, role, user };
+    } catch (err) {
+        console.error('[verifyAdminAccess] Excepción:', err);
+        return { ok: false, role: null, user: null };
+    }
+}
+window.verifyAdminAccess = verifyAdminAccess;
+
 // Función para reiniciar el Wizard voluntariamente
 window.restartWizard = () => {
     localStorage.removeItem('pnl_wizard_done');

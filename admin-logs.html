@@ -192,10 +192,9 @@
                 attempts++;
             }
 
-            const { data: { session } } = await supabaseClient.auth.getSession();
-            const role = localStorage.getItem('pnl_user_role');
-
-            if (!session || role !== 'super_admin') {
+            // 🔐 S-01: verificación de rol contra la BASE DE DATOS (no localStorage)
+            const { ok } = await window.verifyAdminAccess(['super_admin']);
+            if (!ok) {
                 window.location.href = 'forja-login.html';
                 return;
             }
