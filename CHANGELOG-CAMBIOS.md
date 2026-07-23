@@ -112,10 +112,14 @@ Proyecto Supabase: `pnl-BD` (`kjcwozzfzbizxurppxlf`). Sitio Netlify: `pnl-biobio
 - **Archivos:** `shared.js` (2 bloques al final).
 - **⚠️ Nota:** este wizard había sido desactivado antes "a pedido del usuario". Si se desea volver a quitar, **comentar de nuevo** las líneas `const wizard = new PNLWizard(); wizard.start();` en los dos bloques del final de `shared.js`.
 
-### Accesibilidad — foco de teclado visible
-- **Commit:** (esta tanda). `shared.js` inyecta un estilo global `:focus-visible` (anillo dorado, solo con teclado) en todas las páginas que cargan `shared.js`.
-- **Rollback:** quitar el bloque `injectFocusStyles()` de `shared.js`.
-- **Pendiente:** `aria-label` en botones que son solo íconos (queda para una siguiente iteración de accesibilidad).
+### Accesibilidad — foco de teclado + etiquetas de botones-ícono
+- **Commits:** (dos tandas). En `shared.js`:
+  - `injectFocusStyles()`: estilo global `:focus-visible` (anillo dorado, solo con teclado).
+  - `enhanceIconButtonsA11y()`: pone `aria-label` automáticamente a botones/enlaces que son
+    SOLO un ícono (Material Symbols) y no tenían nombre accesible (usa el `title` o un
+    diccionario ícono→texto). Corre al cargar y tras el render async del navbar.
+- **Rollback:** quitar los bloques `injectFocusStyles()` y `enhanceIconButtonsA11y()` de `shared.js`.
+- **Pendiente:** auditoría completa de contraste y tamaños de fuente (WCAG AA).
 
 ---
 

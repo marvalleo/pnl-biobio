@@ -40,14 +40,12 @@ Estado vivo del trabajo de seguridad, UX/UI y engagement.
 - [x] **Portada** — zoom rehabilitado (accesibilidad), login "fantasma" eliminado, `<title>` único, `canonical`/OG al dominio real, `robots.txt` + `sitemap.xml`.
 - [x] **Rendimiento** — `loading="lazy"` en imágenes (carga diferida).
 - [x] **Wizard de bienvenida reactivado** (botón de ayuda flotante + guía opcional).
-- [x] **Accesibilidad — foco de teclado visible** (anillo dorado global con `:focus-visible`).
+- [x] **Accesibilidad** — foco de teclado visible (`:focus-visible`) + `aria-label` automático en botones-ícono.
 
 ### Pendiente
 - [ ] **Unificar el sistema de diseño** — llevar el look del index/nacional a todo el sitio (Roboto + azul `#182d56` + títulos serif). *Decisión abierta:* fuente de títulos Sentient (fiel, requiere el archivo) vs Playfair (ya disponible).
-- [ ] **Contraste y tamaños de fuente** — auditoría de accesibilidad WCAG AA (hay texto de 8–10px y gris claro).
-- [ ] **Rendimiento** — imágenes a WebP, carga diferida (`loading="lazy"`), optimizar carga de fuentes.
-- [ ] **Accesibilidad semántica** — `aria-label` en botones-ícono, foco visible, labels asociados.
-- [ ] **Rendimiento (imágenes a WebP)** — pendiente convertir formatos (el `lazy` ya está hecho).
+- [ ] **Contraste y tamaños de fuente** — auditoría WCAG AA (hay texto de 8–10px y gris claro).
+- [ ] **Rendimiento (imágenes a WebP)** — convertir formatos + optimizar fuentes (el `lazy` ya está hecho).
 - [ ] **Modo oscuro**.
 
 ---

@@ -247,24 +247,53 @@ async function setupPushNotifications() {
     // Para el estado 'default' el usuario usa el toggle del menú
 }
 
-// --- INICIALIZACIÓN AUTOMÁTICA ---
-if (document.readyState === 'loading') {
-    window.addEventListener('DOMContentLoaded', () => {
-        initNavbar();
-        checkAndShowAnnouncements();
-        setupPushNotifications();
+// ♿ Accesibilidad: pone aria-label a botones/enlaces que son SOLO un ícono
+// (Material Symbols) y no tienen texto ni etiqueta accesible. No cambia el diseño.
+const PNL_ICON_LABELS = {
+    close: 'Cerrar', arrow_back: 'Volver', arrow_forward: 'Siguiente', menu: 'Menú',
+    add: 'Agregar', add_circle: 'Agregar', edit: 'Editar', delete: 'Eliminar',
+    search: 'Buscar', visibility: 'Mostrar', visibility_off: 'Ocultar', refresh: 'Recargar',
+    notifications: 'Notificaciones', logout: 'Cerrar sesión', history: 'Historial',
+    chevron_left: 'Anterior', chevron_right: 'Siguiente', content_copy: 'Copiar',
+    bug_report: 'Ver diagnóstico', help: 'Ayuda', dashboard: 'Panel', send: 'Enviar',
+    image: 'Insertar imagen', link: 'Insertar enlace', share: 'Compartir', download: 'Descargar',
+    settings: 'Configuración', account_circle: 'Mi perfil', forum: 'Foros', how_to_vote: 'Votaciones',
+    school: 'Academia', more_vert: 'Más opciones', expand_more: 'Expandir', check: 'Aceptar'
+};
+export function enhanceIconButtonsA11y(root = document) {
+    try {
+        root.querySelectorAll('button, a').forEach(el => {
+            if (el.getAttribute('aria-label')) return;
+            const icon = el.querySelector('.material-symbols-outlined');
+            if (!icon) return;
+            const iconName = (icon.textContent || '').trim();
+            // Es "solo ícono" si el texto visible del control es únicamente el nombre del ícono.
+            if ((el.textContent || '').trim() !== iconName) return;
+            const label = el.getAttribute('title') || PNL_ICON_LABELS[iconName] || 'Acción';
+            el.setAttribute('aria-label', label);
+        });
+    } catch (_) { /* no bloquear la página por accesibilidad */ }
+}
+window.enhanceIconButtonsA11y = enhanceIconButtonsA11y;
 
-        // Wizard: botón de ayuda flotante + guía opcional (reactivado).
-        // Para desactivarlo, comenta estas dos líneas en AMBOS bloques.
-        const wizard = new PNLWizard();
-        wizard.start();
-    });
-} else {
+// --- INICIALIZACIÓN AUTOMÁTICA ---
+function pnlInit() {
     initNavbar();
     checkAndShowAnnouncements();
     setupPushNotifications();
 
     // Wizard: botón de ayuda flotante + guía opcional (reactivado).
+    // Para desactivarlo, comenta las dos líneas del wizard.
     const wizard = new PNLWizard();
     wizard.start();
+
+    // Accesibilidad: etiquetar botones-ícono (ahora y otra vez tras render async del navbar).
+    enhanceIconButtonsA11y();
+    setTimeout(() => enhanceIconButtonsA11y(), 1500);
+}
+
+if (document.readyState === 'loading') {
+    window.addEventListener('DOMContentLoaded', pnlInit);
+} else {
+    pnlInit();
 }
