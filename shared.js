@@ -37,6 +37,27 @@ export function sanitizeHTML(dirty) {
 window.sanitizeHTML = sanitizeHTML;
 
 /**
+ * 📧 Sanitiza HTML de correos (S-06) antes de enviarlo.
+ * Allowlist amplia (tablas, estilos inline, imágenes) apta para plantillas de
+ * email, pero DOMPurify elimina <script>, manejadores on*, y URLs javascript:.
+ * Defensa en profundidad: aunque los clientes de correo ya no ejecutan JS,
+ * evita inyecciones y HTML peligroso en el contenido enviado/almacenado.
+ */
+export function sanitizeEmailHTML(dirty) {
+    if (!dirty || typeof dirty !== 'string') return '';
+    return DOMPurify.sanitize(dirty, {
+        ALLOWED_TAGS: ['a', 'b', 'i', 'em', 'strong', 'u', 's', 'p', 'div', 'span', 'br', 'hr',
+            'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'ul', 'ol', 'li', 'img', 'table', 'thead',
+            'tbody', 'tfoot', 'tr', 'td', 'th', 'style', 'center', 'font', 'blockquote'],
+        ALLOWED_ATTR: ['href', 'src', 'alt', 'title', 'width', 'height', 'style', 'align',
+            'valign', 'bgcolor', 'background', 'border', 'cellpadding', 'cellspacing',
+            'colspan', 'rowspan', 'target', 'rel', 'class', 'dir', 'color', 'face', 'size'],
+        ALLOW_DATA_ATTR: false
+    });
+}
+window.sanitizeEmailHTML = sanitizeEmailHTML;
+
+/**
  * 🔐 Verifica el rol del usuario contra la BASE DE DATOS (no localStorage).
  *
  * SEGURIDAD (S-01): `localStorage.pnl_user_role` es manipulable por el cliente

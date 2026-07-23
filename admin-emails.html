@@ -310,7 +310,7 @@
 
     <input type="file" id="email-img-file" accept="image/*" class="hidden">
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="/assets/vendor/supabase-js.js"></script>
     <script src="/assets/js/image-uploader.js"></script>
     <script type="module" src="supabase-config.js"></script>
     <script type="module" src="/shared.js"></script>
@@ -724,6 +724,9 @@
                 const audience = document.querySelector('button[onclick*="all"]').classList.contains('bg-[#0f172a]') ? 'all' : 'admins';
                 const offset = parseInt(document.getElementById('send-offset').value) || 0;
 
+                // S-06: sanitizar el HTML del correo antes de enviarlo (defensa en profundidad)
+                const safeHtml = window.sanitizeEmailHTML ? window.sanitizeEmailHTML(finalHtml) : finalHtml;
+
                 // Invocando según la recomendación del dashboard de Supabase para esta función
                 const functionUrl = `${supabaseClient.supabaseUrl}/functions/v1/send-mass-email`;
                 const response = await fetch(functionUrl, {
@@ -733,9 +736,9 @@
                         'Authorization': `Bearer ${session.access_token}`, // Volvemos al token de usuario
                         'apikey': supabaseClient.supabaseKey
                     },
-                    body: JSON.stringify({ 
-                        subject, 
-                        bodyHtml: finalHtml, 
+                    body: JSON.stringify({
+                        subject,
+                        bodyHtml: safeHtml,
                         target_audience: audience,
                         offset: offset
                     })

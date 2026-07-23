@@ -141,7 +141,7 @@
     </div>
 
     <!-- Supabase SDK -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="/assets/vendor/supabase-js.js"></script>
     <script src="/assets/js/password-policy.js"></script>
     <script type="module" src="supabase-config.js"></script>
     <script type="module" src="/shared.js"></script>
@@ -198,7 +198,9 @@
                 if (profileError) throw profileError;
 
                 if (!profile) {
-                    throw new Error("PGRST116: Tu cuenta de Auth existe pero no tienes un perfil vinculado. Por favor, contacta al administrador.");
+                    const e = new Error('profile_not_linked');
+                    e.code = 'profile_not_linked';
+                    throw e;
                 }
 
                 // 3. Verificar si debe cambiar contraseña
@@ -227,18 +229,29 @@
                 window.location.href = redirectPath;
 
             } catch (err) {
-                // Registrar el error en el sistema de logs (si es posible)
+                // S-05: el detalle técnico solo va a los logs, nunca a la interfaz.
+                console.error('Login error:', err);
                 if (typeof window.logError === 'function') {
-                    window.logError(`Fallo en inicio de sesión para: ${email}`, { error: err.message });
+                    window.logError(`Fallo en inicio de sesión para: ${email}`, { code: err.code || err.status || null });
                 }
 
-                // Mostrar alerta de error con Toast
+                // Mensaje genérico: no revela si el correo existe (evita enumeración).
+                const m = (err && err.message ? String(err.message) : '').toLowerCase();
+                let userMsg = 'No se pudo iniciar sesión. Verifica tus datos o contacta a Soporte Regional.';
+                if (m.includes('invalid login') || m.includes('credentials') || m.includes('password')) {
+                    userMsg = 'Correo o contraseña incorrectos.';
+                } else if (m.includes('email not confirmed')) {
+                    userMsg = 'Tu cuenta aún no está confirmada. Revisa tu correo electrónico.';
+                } else if (m.includes('rate') || m.includes('too many')) {
+                    userMsg = 'Demasiados intentos. Espera unos minutos e inténtalo de nuevo.';
+                }
+
                 if (typeof window.showToast === 'function') {
-                    window.showToast(`Error: ${err.message || 'Error desconocido'}`, 'error');
+                    window.showToast(userMsg, 'error');
                 } else if (typeof showToast !== 'undefined') {
-                    showToast(`Error: ${err.message || 'Error desconocido'}`, 'error');
+                    showToast(userMsg, 'error');
                 } else {
-                    alert(`Error: ${err.message || 'Error desconocido'}`);
+                    alert(userMsg);
                 }
 
                 loginContainer.classList.add('error-shake');
