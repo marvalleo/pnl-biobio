@@ -29,7 +29,7 @@
         class="bg-white shadow-md border-b-4 border-[#fba931] px-6 py-1 flex justify-between items-center sticky top-0 z-50">
         <div class="flex items-center gap-6">
             <a href="admin-dashboard.html" class="flex items-center gap-3 hover:opacity-80 transition-all group">
-                <img src="/assets/images/logos/pnl-del-biobio01.png" alt="Logo PNL" style="max-height: 70px;">
+                <img loading="lazy" src="/assets/images/logos/pnl-del-biobio01.png" alt="Logo PNL" style="max-height: 70px;">
                 <div class="flex flex-col">
                     <span class="text-[9px] font-black uppercase text-[#fba931] leading-none mb-1">Gestión
                         Regional</span>
@@ -317,7 +317,7 @@
                     return `
                     <tr class="hover:bg-gray-50/50 transition-colors group">
                         <td class="p-6"><div class="w-12 h-12 rounded-xl overflow-hidden bg-gray-100 border border-gray-100 shadow-sm relative">
-                            <img src="${course.image_url || 'https://images.unsplash.com/photo-1526628953301-3e589a6a8b74?auto=format&fit=crop&q=80&w=200'}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
+                            <img loading="lazy" src="${course.image_url || 'https://images.unsplash.com/photo-1526628953301-3e589a6a8b74?auto=format&fit=crop&q=80&w=200'}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
                         </div></td>
                         <td class="p-6 text-center"><span class="px-3 py-1 rounded-full text-[8px] font-black uppercase ${badgeClass} tracking-widest border shadow-sm">${badgeLabel}</span></td>
                         <td class="p-6">

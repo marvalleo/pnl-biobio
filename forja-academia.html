@@ -188,7 +188,7 @@
                     <div onclick="goToCourse('${course.id}')" 
                          title="${course.description || 'Sin descripción disponible'}"
                          class="group relative h-[450px] rounded-[2.5rem] overflow-hidden border border-white gold-glow transition-all hover:scale-[1.02] cursor-pointer shadow-xl">
-                        <img src="${course.image_url || 'https://images.unsplash.com/photo-1526628953301-3e589a6a8b74?auto=format&fit=crop&q=80&w=800'}" 
+                        <img loading="lazy" src="${course.image_url || 'https://images.unsplash.com/photo-1526628953301-3e589a6a8b74?auto=format&fit=crop&q=80&w=800'}" 
                              class="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000 opacity-60">
                         
                         <div class="absolute inset-0 card-gradient"></div>

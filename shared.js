@@ -240,17 +240,18 @@ if (document.readyState === 'loading') {
         initNavbar();
         checkAndShowAnnouncements();
         setupPushNotifications();
-        
-        // Inicializar el Wizard (Deshabilitado temporalmente a pedido del usuario)
-        // const wizard = new PNLWizard();
-        // wizard.start();
+
+        // Wizard: botón de ayuda flotante + guía opcional (reactivado).
+        // Para desactivarlo, comenta estas dos líneas en AMBOS bloques.
+        const wizard = new PNLWizard();
+        wizard.start();
     });
 } else {
     initNavbar();
     checkAndShowAnnouncements();
     setupPushNotifications();
-    
-    // Inicializar el Wizard (Deshabilitado temporalmente a pedido del usuario)
-    // const wizard = new PNLWizard();
-    // wizard.start();
+
+    // Wizard: botón de ayuda flotante + guía opcional (reactivado).
+    const wizard = new PNLWizard();
+    wizard.start();
 }
