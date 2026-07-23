@@ -70,6 +70,15 @@ Proyecto Supabase: `pnl-BD` (`kjcwozzfzbizxurppxlf`). Sitio Netlify: `pnl-biobio
 - **Qué:** Se eliminó la política SELECT que permitía a cualquiera **listar** todos los archivos. Se conservan subir/borrar (super_admin) y el acceso público por URL a cada imagen.
 - **Rollback (reabrir listado):** `CREATE POLICY "Acceso público multimedia" ON storage.objects FOR SELECT USING (bucket_id = 'multimedia');`
 
+### Contraseñas temporales con generador criptográfico
+- **Edge Function:** `create-user-temp` (versión 20). Antes generaba la contraseña temporal con `Math.random()` (no criptográficamente seguro); ahora usa `crypto.getRandomValues` (16 caracteres, alfabeto sin ambiguos O/0/I/l/1).
+- **Archivos:** `supabase/functions/create-user-temp/index.ts`.
+- **Rollback:** re-desplegar la versión 19 desde el Dashboard → Edge Functions → create-user-temp → Versions.
+
+### `check_email_exists` — riesgo aceptado (documentado, sin cambio)
+- **Decisión:** la función RPC es ejecutable por `anon` **a propósito**, porque el flujo de **activación de cuenta** (`forja-activar.html`) la usa cuando el usuario aún NO ha iniciado sesión. Revocar el acceso anónimo rompería la activación.
+- **Riesgo:** permite verificar si un correo está registrado (enumeración). Severidad baja para este contexto. Mitigación futura posible: rate-limit sobre la función o rediseñar la activación para no exponer existencia.
+
 ---
 
 ## 🎨 UX / UI
@@ -102,6 +111,11 @@ Proyecto Supabase: `pnl-BD` (`kjcwozzfzbizxurppxlf`). Sitio Netlify: `pnl-biobio
 - **Qué:** Se reactivó el botón de ayuda flotante + guía opcional (estaba comentado en `shared.js`). Muestra un FAB abajo a la derecha en todas las páginas.
 - **Archivos:** `shared.js` (2 bloques al final).
 - **⚠️ Nota:** este wizard había sido desactivado antes "a pedido del usuario". Si se desea volver a quitar, **comentar de nuevo** las líneas `const wizard = new PNLWizard(); wizard.start();` en los dos bloques del final de `shared.js`.
+
+### Accesibilidad — foco de teclado visible
+- **Commit:** (esta tanda). `shared.js` inyecta un estilo global `:focus-visible` (anillo dorado, solo con teclado) en todas las páginas que cargan `shared.js`.
+- **Rollback:** quitar el bloque `injectFocusStyles()` de `shared.js`.
+- **Pendiente:** `aria-label` en botones que son solo íconos (queda para una siguiente iteración de accesibilidad).
 
 ---
 

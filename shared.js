@@ -24,6 +24,19 @@ window.copyToClipboard = copyToClipboard;
 window.logSystemEvent = logSystemEvent;
 window.logError = logError;
 
+// ♿ Accesibilidad: anillo de foco visible para navegación por teclado (global).
+// Solo se muestra con teclado (:focus-visible), no al hacer clic con el mouse.
+(function injectFocusStyles() {
+    if (typeof document === 'undefined' || document.getElementById('pnl-a11y-focus')) return;
+    const style = document.createElement('style');
+    style.id = 'pnl-a11y-focus';
+    style.textContent = `
+        :focus-visible { outline: 3px solid #fba931 !important; outline-offset: 2px !important; border-radius: 4px; }
+        :focus:not(:focus-visible) { outline: none; }
+    `;
+    (document.head || document.documentElement).appendChild(style);
+})();
+
 /**
  * 🛡️ Sanitiza HTML para prevenir XSS manteniendo estilos de Tailwind.
  */

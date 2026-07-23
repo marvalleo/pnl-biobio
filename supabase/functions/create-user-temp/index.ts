@@ -69,9 +69,14 @@ serve(async (req: Request) => {
 
     if (!email || !full_name) throw new Error("Email y Nombre son obligatorios")
 
-    // Generar contraseña aleatoria
-    const randomChars = Math.random().toString(36).slice(-4) + Math.random().toString(36).toUpperCase().slice(-4)
-    const tempPassword = `PNL-${randomChars}`
+    // Generar contraseña temporal con generador CRIPTOGRÁFICO (reemplaza Math.random).
+    // Alfabeto sin caracteres ambiguos (O/0/I/l/1) para que el admin pueda dictarla.
+    const _alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789'
+    const _bytes = new Uint8Array(16)
+    crypto.getRandomValues(_bytes)
+    let _pw = ''
+    for (const b of _bytes) _pw += _alphabet[b % _alphabet.length]
+    const tempPassword = `PNL-${_pw}`
 
     let userId: string
     let isNew = false

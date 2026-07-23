@@ -19,12 +19,12 @@ Estado vivo del trabajo de seguridad, UX/UI y engagement.
 - [x] **Extras advisors** — `search_path` fijado en funciones + `EXECUTE` revocado en funciones de trigger expuestas.
 - [x] **Bucket `multimedia`** — cerrado el listado público de archivos (se conserva subir/borrar de super_admin y el acceso por URL).
 - [x] **Dependencias pineadas** — versiones exactas en `package.json` (evita actualizaciones sorpresa).
+- [x] **Contraseñas temporales criptográficas** — `create-user-temp` usa `crypto.getRandomValues` (antes `Math.random`).
 
 ### Pendiente
 - [ ] **S-07** — Quitar `unsafe-inline` / `unsafe-eval` de la CSP. *(Refactor grande — ver explicación abajo.)*
 - [ ] **MFA / 2FA** para cuentas administrativas.
-- [ ] **`check_email_exists`** ejecutable por anónimos (permite enumeración de correos) — revocar o proteger.
-- [ ] **Contraseñas temporales** generadas con `Math.random()` — cambiar a `crypto.getRandomValues`.
+- [~] **`check_email_exists`** — *riesgo aceptado y documentado*: es necesaria para la activación de cuenta (usuarios anónimos). Mitigación futura opcional (rate-limit).
 - [ ] **Protección de contraseñas filtradas** en Supabase Auth (HaveIBeenPwned) — requiere plan Pro.
 - [ ] **S-09** — Rate-limit de la edge function usa memoria (no compartida entre instancias) — usar store distribuido.
 - [ ] **S-10** — Tokens de sesión en `localStorage` — evaluar cookies `httpOnly` (depende de S-07).
@@ -40,6 +40,7 @@ Estado vivo del trabajo de seguridad, UX/UI y engagement.
 - [x] **Portada** — zoom rehabilitado (accesibilidad), login "fantasma" eliminado, `<title>` único, `canonical`/OG al dominio real, `robots.txt` + `sitemap.xml`.
 - [x] **Rendimiento** — `loading="lazy"` en imágenes (carga diferida).
 - [x] **Wizard de bienvenida reactivado** (botón de ayuda flotante + guía opcional).
+- [x] **Accesibilidad — foco de teclado visible** (anillo dorado global con `:focus-visible`).
 
 ### Pendiente
 - [ ] **Unificar el sistema de diseño** — llevar el look del index/nacional a todo el sitio (Roboto + azul `#182d56` + títulos serif). *Decisión abierta:* fuente de títulos Sentient (fiel, requiere el archivo) vs Playfair (ya disponible).
