@@ -256,7 +256,10 @@
                         <span class="text-[8px] font-black uppercase tracking-widest px-3 py-1 rounded-full ${isActive ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-600'}">
                             ${isActive ? 'Activo' : 'Desactivado'}
                         </span>
-                        <div class="flex gap-4">
+                        <div class="flex gap-4 items-center">
+                            <button onclick="notifyAboutAnnouncement('${a.title.replace(/'/g,"\\'")}','${(a.content||'').substring(0,120).replace(/'/g,"\\'")}');" title="Notificar a militantes" class="text-gray-500 hover:text-blue-600 transition-colors">
+                                <span class="material-symbols-outlined text-lg">notifications</span>
+                            </button>
                             <button onclick="editAnnouncement('${a.id}')" class="text-gray-500 hover:text-[#fba931] transition-colors">${editIcon}</button>
                             <button onclick="deleteAnnouncement('${a.id}')" class="text-gray-500 hover:text-red-500 transition-colors">${deleteIcon}</button>
                         </div>
@@ -368,6 +371,41 @@
             closeModal();
             loadAnnouncements();
         });
+
+        // ── Push Notifications ──────────────────────────────────────────────
+        async function notifyAboutAnnouncement(title, content) {
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            if (!session) { showToast('Sin sesión activa', 'error'); return; }
+
+            const btn = event.currentTarget;
+            btn.disabled = true;
+            const orig = btn.innerHTML;
+            btn.innerHTML = '<span class="material-symbols-outlined animate-spin text-sm">refresh</span>';
+
+            try {
+                const resp = await fetch(`${window.supabaseClient.supabaseUrl}/functions/v1/send-push`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${session.access_token}`,
+                    },
+                    body: JSON.stringify({
+                        title: `📢 ${title}`,
+                        message: content.substring(0, 120) + (content.length > 120 ? '…' : ''),
+                        url: '/publicaciones-oficiales.html',
+                        topic: 'anuncio',
+                    }),
+                });
+                const data = await resp.json();
+                if (!resp.ok) throw new Error(data.error || 'Error desconocido');
+                showToast(`✅ Notificación enviada a ${data.sent} militante${data.sent !== 1 ? 's' : ''}`, 'success');
+            } catch (err) {
+                showToast(`Error: ${err.message}`, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = orig;
+            }
+        }
 
     </script>
 </body>

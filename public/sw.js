@@ -4,7 +4,7 @@ const ASSETS = [
     '/index.html',
     '/shared.js',
     '/supabase-config.js',
-    '/assets/images/logos/pnl-del-biobio01.png'
+    '/assets/images/logos/pnl-del-biobio01.webp'
 ];
 
 // --- INSTALACIÓN ---
@@ -40,7 +40,7 @@ self.addEventListener('push', (event) => {
     let data = {
         title: 'PNL Biobío',
         body: 'Tienes una nueva notificación',
-        icon: '/assets/images/logos/pnl-del-biobio01.png',
+        icon: '/assets/images/logos/pnl-del-biobio01.webp',
         badge: '/assets/images/logos/favicon-100x100.jpg',
         url: '/index.html'
     };

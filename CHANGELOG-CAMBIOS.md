@@ -83,6 +83,43 @@ Proyecto Supabase: `pnl-BD` (`kjcwozzfzbizxurppxlf`). Sitio Netlify: `pnl-biobio
 
 ## 🎨 UX / UI
 
+### Sistema de diseño unificado
+- **Commit:** (esta tanda — ver `git log`)
+- **Qué:**
+  - `tailwind.config.js` reescrito: `darkMode: 'media'`, fuentes `pnl-serif` (Playfair Display) y `pnl-sans` (Roboto), colores `pnl-navy`/`pnl-gold`/`pnl-dark`.
+  - `input.css` reescrito completamente: importa Playfair Display + Roboto desde Google Fonts, define variables CSS (`--pnl-navy`, `--pnl-gold`, `--pnl-dark`, `--pnl-bg`, `--pnl-surface`, `--pnl-border`, `--pnl-text`, `--pnl-text-muted`, `--pnl-input-bg`), aplica `h1/h2/h3 { font-family: Playfair Display }` vía `@layer base`.
+  - `index.html` + `recursos.html`: la referencia `'Sentient-Regular', serif` (fuente que no tenía archivo cargado) reemplazada por `'Playfair Display', Georgia, serif`.
+  - Se elimina el `<link>` redundante a Roboto de `index.html` (ya lo carga `input.css`).
+- **Archivos:** `tailwind.config.js`, `input.css`, `index.html`, `recursos.html`.
+- **Rollback:** `git revert <commit>` (restaura el `tailwind.config.js` y `input.css` anteriores; los títulos vuelven a caer en serif genérico).
+
+### Modo oscuro
+- **Commit:** (esta tanda)
+- **Qué:** Bloque `@media (prefers-color-scheme: dark)` completo en `input.css`. Cubre: `body`, `.bg-white` → `#1e293b`, `.bg-gray-50` / `.bg-gray-100` → colores oscuros, textos, bordes, inputs, sombras, nav, modals, tablas, editor Quill. Respeta la preferencia del sistema operativo sin botón manual.
+- **Archivos:** `input.css` (mismo commit que la unificación de diseño).
+- **Rollback:** quitar el bloque `@media (prefers-color-scheme: dark)` de `input.css` y reconstruir.
+
+### Rendimiento — imágenes a WebP
+- **Commit:** (esta tanda)
+- **Qué:** 19 imágenes convertidas de PNG/JPG a WebP con calidad 85 (RGB) / 90 (RGBA). Ahorros entre -14 % y -96 %. Se excluyen iconos PWA y favicon (requieren PNG/JPG por spec). Referencias actualizadas en 17 archivos HTML + `public/sw.js` (lista de caché y URL del ícono push).
+- **Imágenes:** `directiva/` (5 ficheros), `logos/` (4), `backgrounds/` (6), `announcements/` (4).
+- **Archivos HTML actualizados:** `index.html`, `recursos.html`, `forja.html`, `forja-eventos.html`, `forja-academia.html`, `forja-login.html`, `forja-activar.html`, `forja-player.html`, `forja-votaciones.html`, `forja-foros.html`, `forja-foros-post.html`, `admin-dashboard.html`, `admin-anuncios.html`, `admin-usuarios.html`, `admin-forja.html`, `admin-lecciones.html`, `perfil.html`.
+- **Rollback:** restaurar referencias PNG/JPG en los HTML; los archivos WebP pueden coexistir sin problema.
+
+### Notificaciones push — Eventos y Votaciones
+- **Commit:** (esta tanda)
+- **Qué:**
+  1. **Edge Function `send-push`** (`supabase/functions/send-push/index.ts`): envía notificaciones push a todos los suscriptores activos. Implementada con Web Crypto API nativa de Deno (sin npm:web-push): ECDSA ES256 para el JWT VAPID y ECDH P-256 + HKDF + AES-GCM para el cifrado del payload. Solo admins pueden invocarla. Limpia automáticamente endpoints expirados (HTTP 410/404). Registra cada envío en `push_notifications_log`.
+  2. **Migración `20260724_push_notifications_log.sql`**: tabla `push_notifications_log` con RLS (admins ALL, militantes SELECT para el badge). **Ya aplicada** a la base de datos.
+  3. **`admin-anuncios.html`**: botón de campana junto a cada anuncio → llama a `notifyAboutAnnouncement()` que POST a `send-push` con título/extracto y URL de destino `/publicaciones-oficiales.html`.
+  4. **`admin-votos.html`**: botón "Notificar Militantes" en votaciones abiertas → llama a `notifyAboutVote()` que POST a `send-push` con mensaje y URL `/forja-votaciones.html`.
+- **Secrets VAPID requeridos (paso manual):** en el Dashboard de Supabase → Settings → Edge Functions → Secrets, deben existir:
+  - `VAPID_PUBLIC_KEY` = `BG5gsJgsZ0t3Tu1GfWFYuHtDNAlkJXrMq0m_-3vPobewZaTzdqoHC8jC0elHKSyyhZ9_1Ov4VZacPUgwxEXcLuw`
+  - `VAPID_PRIVATE_KEY` = (la clave privada correspondiente)
+  - `VAPID_EMAIL` = correo de contacto del administrador VAPID
+- **Archivos:** `supabase/functions/send-push/index.ts` (nuevo), `supabase/migrations/20260724_push_notifications_log.sql` (nuevo), `admin-anuncios.html`, `admin-votos.html`.
+- **Rollback:** deshabilitar la Edge Function en el Dashboard, y `DROP TABLE IF EXISTS public.push_notifications_log;`. Los botones en los admin quedan sin efecto si la función está caída.
+
 ### Subida de fotos desde el computador (Anuncios + Correos)
 - **Commit:** `c0f933b`
 - **Qué:** Nuevo componente `public/assets/js/image-uploader.js` que sube al bucket `multimedia` (validación de tipo/tamaño <3MB). En Anuncios: zona de arrastrar/soltar. En Correos: el botón de imagen sube desde el PC.
@@ -152,7 +189,9 @@ Proyecto Supabase: `pnl-BD` (`kjcwozzfzbizxurppxlf`). Sitio Netlify: `pnl-biobio
 `admin_event_registrations`, `admin_lesson_registrations`, `admin_email_recipient_count`,
 `is_staff` (todas `SECURITY DEFINER`, con control de rol).
 
-**Tabla:** `contact_rate_limit`.
+**Tablas:** `contact_rate_limit`, `push_notifications_log`.
+
+**Edge Functions:** `contact-email` (v5, rate-limit), `send-push` (v1, VAPID WebPush).
 
 **Cambios de permisos:** protección de columnas en `profiles`; `EXECUTE` revocado en
 funciones de trigger; política de listado del bucket `multimedia` eliminada.

@@ -2,7 +2,7 @@
 
 Estado vivo del trabajo de seguridad, UX/UI y engagement.
 `[x]` = hecho y desplegado en producción · `[ ]` = pendiente.
-Última actualización: 2026-07-23.
+Última actualización: 2026-07-24.
 
 ---
 
@@ -42,11 +42,10 @@ Estado vivo del trabajo de seguridad, UX/UI y engagement.
 - [x] **Wizard de bienvenida reactivado** (botón de ayuda flotante + guía opcional).
 - [x] **Accesibilidad** — foco de teclado visible (`:focus-visible`) + `aria-label` automático en botones-ícono.
 
-### Pendiente
-- [ ] **Unificar el sistema de diseño** — llevar el look del index/nacional a todo el sitio (Roboto + azul `#182d56` + títulos serif). *Decisión abierta:* fuente de títulos Sentient (fiel, requiere el archivo) vs Playfair (ya disponible).
 - [x] **Contraste y tamaños de fuente** — auditoría WCAG AA completada: `text-gray-400` → `text-gray-600` (308 casos, de 2.85:1 a 5.74:1), `text-[9/10px]` → `text-[11px]` (391 casos). Hover/focus sin tocar.
-- [ ] **Rendimiento (imágenes a WebP)** — convertir formatos + optimizar fuentes (el `lazy` ya está hecho).
-- [ ] **Modo oscuro**.
+- [x] **Unificar el sistema de diseño** — `tailwind.config.js` reescrito con fuentes y colores PNL; `input.css` con CSS vars + Playfair Display (Google Fonts) + Roboto; reemplazado `Sentient-Regular` por `Playfair Display` en `index.html` y `recursos.html`.
+- [x] **Rendimiento (imágenes a WebP)** — 19 imágenes convertidas (ahorro 14 %–96 %), refs actualizadas en 17 HTML + `sw.js`.
+- [x] **Modo oscuro** — `@media (prefers-color-scheme: dark)` completo en `input.css`: body, tarjetas, inputs, nav, tablas, modals, editor Quill.
 
 ---
 
@@ -58,7 +57,7 @@ Estado vivo del trabajo de seguridad, UX/UI y engagement.
 
 ### Pendiente
 - [ ] **Gamificar la Forja** — barra de progreso de nivel, insignias/logros, rachas, certificados descargables.
-- [ ] **Notificaciones push** de nuevos eventos y votaciones (la infraestructura ya existe).
+- [x] **Notificaciones push de eventos y votaciones** — Edge Function `send-push` desplegada (VAPID nativo Deno, cifrado AES-GCM, limpieza automática de endpoints expirados). Botón de notificación en `admin-anuncios.html` y `admin-votos.html`. Tabla `push_notifications_log` creada y con RLS. **⚠️ Requiere paso manual:** configurar `VAPID_PRIVATE_KEY` y `VAPID_EMAIL` en Supabase Dashboard → Settings → Edge Functions → Secrets.
 - [ ] **Resumen semanal por correo** ("lo más comentado", "vota antes del viernes").
 - [ ] **Prueba social en la portada** — contador de militantes, testimonios.
 
