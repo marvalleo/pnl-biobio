@@ -112,6 +112,15 @@ Proyecto Supabase: `pnl-BD` (`kjcwozzfzbizxurppxlf`). Sitio Netlify: `pnl-biobio
 - **Archivos:** `shared.js` (2 bloques al final).
 - **⚠️ Nota:** este wizard había sido desactivado antes "a pedido del usuario". Si se desea volver a quitar, **comentar de nuevo** las líneas `const wizard = new PNLWizard(); wizard.start();` en los dos bloques del final de `shared.js`.
 
+### Contraste y tamaños de fuente — WCAG AA
+- **Commit:** `0a48650`
+- **Qué:** Auditoría sistémica en los 28 archivos HTML fuente:
+  - `text-gray-400` → `text-gray-600` (308 casos): contraste pasa de **2.85:1 a 5.74:1** sobre fondo blanco (WCAG AA requiere 4.5:1 para texto normal).
+  - `text-gray-300` → `text-gray-500` (38 casos), `text-slate-400` → `text-slate-600` (5 casos).
+  - `text-[9px]` → `text-[11px]` (96 casos) y `text-[10px]` → `text-[11px]` (295 casos): tamaño mínimo legible sin cambiar la estética de etiquetas en CAPS.
+  - Los estados `hover:`, `focus:`, `group-hover:`, `md:` etc. **NO fueron tocados** (lookbehind negativo en la regex).
+- **Rollback:** `git revert 0a48650` (un solo commit, reversible).
+
 ### Accesibilidad — foco de teclado + etiquetas de botones-ícono
 - **Commits:** (dos tandas). En `shared.js`:
   - `injectFocusStyles()`: estilo global `:focus-visible` (anillo dorado, solo con teclado).

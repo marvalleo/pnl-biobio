@@ -44,7 +44,7 @@ Estado vivo del trabajo de seguridad, UX/UI y engagement.
 
 ### Pendiente
 - [ ] **Unificar el sistema de diseño** — llevar el look del index/nacional a todo el sitio (Roboto + azul `#182d56` + títulos serif). *Decisión abierta:* fuente de títulos Sentient (fiel, requiere el archivo) vs Playfair (ya disponible).
-- [ ] **Contraste y tamaños de fuente** — auditoría WCAG AA (hay texto de 8–10px y gris claro).
+- [x] **Contraste y tamaños de fuente** — auditoría WCAG AA completada: `text-gray-400` → `text-gray-600` (308 casos, de 2.85:1 a 5.74:1), `text-[9/10px]` → `text-[11px]` (391 casos). Hover/focus sin tocar.
 - [ ] **Rendimiento (imágenes a WebP)** — convertir formatos + optimizar fuentes (el `lazy` ya está hecho).
 - [ ] **Modo oscuro**.
 
