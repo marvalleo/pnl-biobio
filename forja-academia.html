@@ -80,10 +80,10 @@
             </div>
         </div>
         <div class="max-w-7xl mx-auto relative z-10">
-            <p class="text-[#fba931] font-black uppercase text-[10px] tracking-[0.4em] mb-4">Plataforma de Formación
+            <p class="text-[#fba931] font-black uppercase text-[11px] tracking-[0.4em] mb-4">Plataforma de Formación
                 Política</p>
             <h1 class="serif text-5xl md:text-7xl text-white mb-6">Malla Curricular</h1>
-            <p class="text-gray-400 font-bold text-sm max-w-xl leading-relaxed">Bienvenido a la academia de la Forja
+            <p class="text-gray-600 font-bold text-sm max-w-xl leading-relaxed">Bienvenido a la academia de la Forja
                 Libertaria. Completa los niveles para avanzar en tu formación doctrinal y técnica.</p>
         </div>
     </header>
@@ -112,7 +112,7 @@
                     <div class="w-1/2 h-4 bg-slate-200 rounded-md"></div>
                 </div>
             </div>
-                <p class="text-xs font-black uppercase text-gray-400 mt-4 tracking-widest">Sincronizando con la nube...
+                <p class="text-xs font-black uppercase text-gray-600 mt-4 tracking-widest">Sincronizando con la nube...
                 </p>
             </div>
         </div>
@@ -174,7 +174,7 @@
                 const progressIds = new Set((progressRes.data || []).map(p => p.lesson_id));
 
                 if (courses.length === 0) {
-                    grid.innerHTML = '<div class="col-span-full py-20 text-center text-gray-400 font-bold uppercase border-2 border-dashed rounded-3xl">No hay cursos publicados aún.</div>';
+                    grid.innerHTML = '<div class="col-span-full py-20 text-center text-gray-600 font-bold uppercase border-2 border-dashed rounded-3xl">No hay cursos publicados aún.</div>';
                     return;
                 }
 
@@ -194,14 +194,14 @@
                         <div class="absolute inset-0 card-gradient"></div>
 
                         <div class="absolute inset-0 p-10 flex flex-col justify-end">
-                            <span class="bg-[#fba931] text-[#0f172a] text-[10px] font-black px-4 py-1.5 rounded-full w-fit mb-4 shadow-lg uppercase tracking-widest">${course.level}</span>
+                            <span class="bg-[#fba931] text-[#0f172a] text-[11px] font-black px-4 py-1.5 rounded-full w-fit mb-4 shadow-lg uppercase tracking-widest">${course.level}</span>
                             <h2 class="serif text-3xl text-white mb-6 group-hover:text-[#fba931] transition-colors leading-tight uppercase">${course.title}</h2>
                             
                             <div class="w-full bg-white/20 h-1.5 rounded-full mb-3 overflow-hidden">
                                 <div class="bg-[#fba931] h-full transition-all duration-1000" style="width: ${percent}%"></div>
                             </div>
                             
-                            <div class="flex justify-between items-center text-[10px] font-black tracking-widest text-gray-300 uppercase">
+                            <div class="flex justify-between items-center text-[11px] font-black tracking-widest text-gray-500 uppercase">
                                 <span>${percent}% Completado</span>
                                 <span class="bg-white/10 p-2 rounded-full material-symbols-outlined text-[14px] group-hover:bg-[#fba931] group-hover:text-[#0f172a] transition-all">arrow_forward</span>
                             </div>

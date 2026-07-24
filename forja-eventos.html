@@ -101,7 +101,7 @@
         <div class="lg:col-span-2">
             <div class="mb-10">
                 <h1 class="serif text-5xl text-[#0f172a] mb-2">Agenda Regional</h1>
-                <p class="text-gray-400 font-bold text-xs uppercase tracking-widest">Próximas Convocatorias y Talleres
+                <p class="text-gray-600 font-bold text-xs uppercase tracking-widest">Próximas Convocatorias y Talleres
                 </p>
             </div>
 
@@ -118,9 +118,9 @@
         <div class="space-y-8">
             <div class="bg-white rounded-[2.5rem] p-8 shadow-xl border border-gray-100 border-t-8 border-[#fba931]">
                 <div class="flex items-center justify-between mb-6">
-                    <h3 class="font-900 uppercase text-xs tracking-widest text-gray-400" id="current-month-name">Febrero
+                    <h3 class="font-900 uppercase text-xs tracking-widest text-gray-600" id="current-month-name">Febrero
                         2026</h3>
-                    <div class="flex gap-2 text-gray-400">
+                    <div class="flex gap-2 text-gray-600">
                         <button class="material-symbols-outlined hover:text-[#fba931]"
                             onclick="changeMonth(-1)">chevron_left</button>
                         <button class="material-symbols-outlined hover:text-[#fba931]"
@@ -129,13 +129,13 @@
                 </div>
 
                 <div class="grid grid-cols-7 gap-1 text-center mb-2">
-                    <span class="text-[8px] font-black uppercase text-gray-300">Lu</span>
-                    <span class="text-[8px] font-black uppercase text-gray-300">Ma</span>
-                    <span class="text-[8px] font-black uppercase text-gray-300">Mi</span>
-                    <span class="text-[8px] font-black uppercase text-gray-300">Ju</span>
-                    <span class="text-[8px] font-black uppercase text-gray-300">Vi</span>
-                    <span class="text-[8px] font-black uppercase text-gray-300">Sa</span>
-                    <span class="text-[8px] font-black uppercase text-gray-300">Do</span>
+                    <span class="text-[8px] font-black uppercase text-gray-500">Lu</span>
+                    <span class="text-[8px] font-black uppercase text-gray-500">Ma</span>
+                    <span class="text-[8px] font-black uppercase text-gray-500">Mi</span>
+                    <span class="text-[8px] font-black uppercase text-gray-500">Ju</span>
+                    <span class="text-[8px] font-black uppercase text-gray-500">Vi</span>
+                    <span class="text-[8px] font-black uppercase text-gray-500">Sa</span>
+                    <span class="text-[8px] font-black uppercase text-gray-500">Do</span>
                 </div>
 
                 <div id="calendar-grid" class="grid grid-cols-7 gap-1">
@@ -148,7 +148,7 @@
                     <span class="material-symbols-outlined text-[#fba931]">help</span>
                     <h4 class="font-900 uppercase text-[11px] tracking-widest">Sobre las inscripciones</h4>
                 </div>
-                <p class="text-[10px] font-bold text-gray-500 leading-relaxed uppercase">Para los eventos presenciales,
+                <p class="text-[11px] font-bold text-gray-500 leading-relaxed uppercase">Para los eventos presenciales,
                     el cupo es limitado para asegurar la calidad de la sesión. Si no puedes asistir, por favor cancela
                     tu inscripción.</p>
             </div>
@@ -231,29 +231,29 @@
             const myCount = registrations.size;
 
             const link = (href, icon, label) => `
-                <a href="${href}" class="flex items-center gap-2 bg-white/5 hover:bg-white/10 px-5 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all">
+                <a href="${href}" class="flex items-center gap-2 bg-white/5 hover:bg-white/10 px-5 py-3 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all">
                     <span class="material-symbols-outlined text-base text-[#fba931]">${icon}</span> ${label}
                 </a>`;
 
             el.innerHTML = `
                 <div class="flex flex-col md:flex-row md:items-center justify-between gap-8">
                     <div>
-                        <p class="text-[10px] font-black uppercase tracking-[0.3em] text-[#fba931] mb-2">Tu Espacio Libertario</p>
+                        <p class="text-[11px] font-black uppercase tracking-[0.3em] text-[#fba931] mb-2">Tu Espacio Libertario</p>
                         <h2 class="serif text-4xl mb-3">Hola, ${firstName}</h2>
                         <div class="flex items-center gap-3 flex-wrap">
-                            <span class="px-3 py-1 rounded-full bg-[#fba931] text-[#0f172a] text-[10px] font-black uppercase tracking-widest">${rank}</span>
+                            <span class="px-3 py-1 rounded-full bg-[#fba931] text-[#0f172a] text-[11px] font-black uppercase tracking-widest">${rank}</span>
                             <span class="text-xs font-bold text-white/60">${rep} pts de reputación</span>
                         </div>
                     </div>
                     <div class="grid grid-cols-2 gap-4 shrink-0">
                         <div class="bg-white/5 rounded-2xl p-5 border border-white/10 min-w-[150px]">
                             <span class="material-symbols-outlined text-[#fba931]">event_upcoming</span>
-                            <p class="text-[9px] font-black uppercase tracking-widest text-white/50 mt-2 mb-1">Próximo evento</p>
+                            <p class="text-[11px] font-black uppercase tracking-widest text-white/50 mt-2 mb-1">Próximo evento</p>
                             <p class="text-xs font-bold leading-tight">${nextText}</p>
                         </div>
                         <div class="bg-white/5 rounded-2xl p-5 border border-white/10 min-w-[120px]">
                             <span class="material-symbols-outlined text-[#fba931]">how_to_reg</span>
-                            <p class="text-[9px] font-black uppercase tracking-widest text-white/50 mt-2 mb-1">Mis inscripciones</p>
+                            <p class="text-[11px] font-black uppercase tracking-widest text-white/50 mt-2 mb-1">Mis inscripciones</p>
                             <p class="text-3xl font-900">${myCount}</p>
                         </div>
                     </div>
@@ -300,8 +300,8 @@
             if (filteredEvents.length === 0) {
                 list.innerHTML = `
                 <div class="py-20 text-center border-2 border-dashed rounded-[3rem] border-gray-200">
-                    <p class="text-[10px] font-black text-gray-300 uppercase tracking-[0.2em]">No hay eventos para esta selección</p>
-                    <button onclick="renderEvents()" class="mt-4 text-[9px] font-black text-[#fba931] uppercase hover:underline">Ver todos los eventos</button>
+                    <p class="text-[11px] font-black text-gray-500 uppercase tracking-[0.2em]">No hay eventos para esta selección</p>
+                    <button onclick="renderEvents()" class="mt-4 text-[11px] font-black text-[#fba931] uppercase hover:underline">Ver todos los eventos</button>
                 </div>`;
                 return;
             }
@@ -329,20 +329,20 @@
                         </div>
                         
                         <h3 class="serif text-2xl text-[#0f172a] mb-2">${event.title}</h3>
-                        <p class="text-xs text-gray-400 font-medium mb-4 line-clamp-2">${event.description || 'Sin descripción detallada.'}</p>
+                        <p class="text-xs text-gray-600 font-medium mb-4 line-clamp-2">${event.description || 'Sin descripción detallada.'}</p>
                         
                         <div class="flex flex-wrap items-center gap-6 mb-6">
-                            <div class="flex items-center gap-2 text-gray-400">
+                            <div class="flex items-center gap-2 text-gray-600">
                                 <span class="material-symbols-outlined text-xs text-[#fba931]">calendar_today</span>
-                                <span class="text-[10px] font-black uppercase tracking-wider">${date.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' })} — ${date.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })} hrs</span>
+                                <span class="text-[11px] font-black uppercase tracking-wider">${date.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' })} — ${date.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })} hrs</span>
                             </div>
-                            <div class="flex items-center gap-2 text-gray-400">
+                            <div class="flex items-center gap-2 text-gray-600">
                                 <span class="material-symbols-outlined text-xs text-[#fba931]">location_on</span>
-                                <span class="text-[10px] font-black uppercase tracking-wider">${event.location || 'Por definir'}</span>
+                                <span class="text-[11px] font-black uppercase tracking-wider">${event.location || 'Por definir'}</span>
                             </div>
-                            <div class="flex items-center gap-2 text-gray-400">
+                            <div class="flex items-center gap-2 text-gray-600">
                                 <span class="material-symbols-outlined text-xs text-[#fba931]">group</span>
-                                <span class="text-[10px] font-black uppercase tracking-wider">
+                                <span class="text-[11px] font-black uppercase tracking-wider">
                                     ${event.max_capacity > 0 ? `Cupos: ${(event.regional_event_registrations?.[0]?.count || 0)} / ${event.max_capacity}` : 'Ilimitado'}
                                 </span>
                             </div>
@@ -350,10 +350,10 @@
 
                         <div class="flex items-center gap-4">
                             <button onclick="${isExternalReg ? `window.openVideoModal('${event.content_url}')` : `handleRegistration('${event.id}', ${isRegistered}, this)`}" 
-                                    class="${isRegistered && !isExternalReg ? 'bg-gray-100 text-gray-400' : isOnline ? 'bg-[#fba931] text-[#0f172a]' : 'bg-[#0f172a] text-white'} px-8 py-3 rounded-xl font-900 text-[10px] uppercase tracking-widest hover:brightness-110 transition-all shadow-lg active:scale-95">
+                                    class="${isRegistered && !isExternalReg ? 'bg-gray-100 text-gray-600' : isOnline ? 'bg-[#fba931] text-[#0f172a]' : 'bg-[#0f172a] text-white'} px-8 py-3 rounded-xl font-900 text-[11px] uppercase tracking-widest hover:brightness-110 transition-all shadow-lg active:scale-95">
                                 ${isExternalReg ? 'Formulario de Inscripción' : isRegistered ? 'Cancelar Inscripción' : 'Inscribirse Ahora'}
                             </button>
-                            ${isRegistered && !isExternalReg && event.content_url ? `<button onclick="window.openVideoModal('${event.content_url}')" class="text-[10px] font-black text-[#fba931] uppercase hover:underline">Ir a la sesión</button>` : ''}
+                            ${isRegistered && !isExternalReg && event.content_url ? `<button onclick="window.openVideoModal('${event.content_url}')" class="text-[11px] font-black text-[#fba931] uppercase hover:underline">Ir a la sesión</button>` : ''}
                         </div>
                     </div>
                 </div>

@@ -145,7 +145,7 @@
         <div class="flex items-center gap-4 mb-8">
             <div class="h-[1px] bg-gray-200 flex-1"></div>
             <span id="replies-count"
-                class="text-[10px] font-black uppercase text-gray-400 tracking-widest">Respuestas</span>
+                class="text-[11px] font-black uppercase text-gray-600 tracking-widest">Respuestas</span>
             <div class="h-[1px] bg-gray-200 flex-1"></div>
         </div>
 
@@ -158,8 +158,8 @@
             <!-- Fila 1: label + toolbar + cancelar -->
             <div class="flex items-center justify-between mb-2">
                 <div class="flex items-center gap-3">
-                    <h3 id="reply-title" class="text-[9px] font-black uppercase text-[#94a3b8] tracking-widest">Tu Aporte al Debate</h3>
-                    <button id="cancel-reply-btn" onclick="cancelReplyTo()" class="hidden text-[9px] font-bold text-red-400 uppercase flex items-center gap-1">
+                    <h3 id="reply-title" class="text-[11px] font-black uppercase text-[#94a3b8] tracking-widest">Tu Aporte al Debate</h3>
+                    <button id="cancel-reply-btn" onclick="cancelReplyTo()" class="hidden text-[11px] font-bold text-red-400 uppercase flex items-center gap-1">
                         <span class="material-symbols-outlined text-xs">close</span> Cancelar
                     </button>
                 </div>
@@ -192,14 +192,14 @@
     <!-- Modal Reporte -->
     <div id="report-modal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-[200] flex items-center justify-center p-6">
         <div class="bg-white rounded-[2.5rem] w-full max-w-md p-10 relative shadow-2xl">
-            <button onclick="closeReportModal()" class="absolute top-8 right-8 text-gray-400 hover:text-red-500 transition-colors">
+            <button onclick="closeReportModal()" class="absolute top-8 right-8 text-gray-600 hover:text-red-500 transition-colors">
                 <span class="material-symbols-outlined text-3xl">close</span>
             </button>
             <h2 class="serif text-2xl text-[#0f172a] uppercase italic mb-6">Reportar <span class="text-red-500">Mensaje</span></h2>
             <form id="report-form" class="space-y-6">
                 <input type="hidden" id="report-post-id">
                 <div>
-                    <label class="text-[10px] font-black uppercase text-gray-400 tracking-widest block mb-2 px-2">Motivo del reporte</label>
+                    <label class="text-[11px] font-black uppercase text-gray-600 tracking-widest block mb-2 px-2">Motivo del reporte</label>
                     <textarea id="report-reason" required rows="4" placeholder="Explica por qué este mensaje viola las normas..."
                         class="w-full bg-slate-50 border-none rounded-2xl px-6 py-4 text-xs font-bold text-[#0f172a] focus:ring-2 focus:ring-red-500/50 outline-none resize-none"></textarea>
                 </div>
@@ -286,7 +286,7 @@
                 btn.className = "w-full max-w-sm mx-auto bg-[#0f172a] text-white py-5 rounded-full font-black text-[11px] uppercase tracking-[0.2em] shadow-xl hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3 cursor-pointer";
             } else {
                 btn.disabled = true;
-                btn.className = "w-full max-w-sm mx-auto bg-gray-200 text-gray-400 py-5 rounded-full font-black text-[11px] uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-3 cursor-not-allowed";
+                btn.className = "w-full max-w-sm mx-auto bg-gray-200 text-gray-600 py-5 rounded-full font-black text-[11px] uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-3 cursor-not-allowed";
             }
         }
 
@@ -307,7 +307,7 @@
                 'Oro': 'bg-amber-100 text-amber-600 border border-amber-200',
                 'Plata': 'bg-slate-100 text-slate-500 border border-slate-200',
                 'Bronce': 'bg-orange-50 text-orange-600 border border-orange-100',
-                'Iniciado': 'bg-gray-50 text-gray-400'
+                'Iniciado': 'bg-gray-50 text-gray-600'
             };
 
             const initials = topic.profiles?.full_name?.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() || '??';
@@ -319,17 +319,17 @@
                     <div class="flex items-center gap-3 mb-6">
                         <div class="w-10 h-10 rounded-full bg-[#fba931] flex items-center justify-center text-xs font-black text-[#0f172a] border-2 border-white shadow-sm">${initials}</div>
                         <div>
-                            <p class="text-[10px] font-black uppercase text-slate-800 leading-none">${escapeHtml(topic.profiles?.full_name || 'Desconocido')}</p>
-                            <p class="text-[8px] font-bold text-gray-400 uppercase tracking-widest mt-1">${new Date(topic.created_at).toLocaleString('es-CL')}</p>
+                            <p class="text-[11px] font-black uppercase text-slate-800 leading-none">${escapeHtml(topic.profiles?.full_name || 'Desconocido')}</p>
+                            <p class="text-[8px] font-bold text-gray-600 uppercase tracking-widest mt-1">${new Date(topic.created_at).toLocaleString('es-CL')}</p>
                         </div>
                         <div class="flex gap-2 ml-auto">
                             ${isDirectiva ? '<span class="bg-[#0f172a] text-[#fba931] text-[8px] font-black px-3 py-1 rounded-full uppercase tracking-tighter">Directiva Sede</span>' : ''}
                             <span class="${rankStyles[userRank]} text-[8px] font-black px-3 py-1 rounded-full uppercase tracking-tighter flex items-center gap-1">
-                                <span class="material-symbols-outlined text-[10px]">workspace_premium</span> ${escapeHtml(userRank)}
+                                <span class="material-symbols-outlined text-[11px]">workspace_premium</span> ${escapeHtml(userRank)}
                             </span>
                         </div>
                     </div>
-                    <span class="text-[9px] font-black uppercase text-[#fba931] tracking-[0.3em] mb-2 block">${escapeHtml(topic.forum_categories?.title || '')}</span>
+                    <span class="text-[11px] font-black uppercase text-[#fba931] tracking-[0.3em] mb-2 block">${escapeHtml(topic.forum_categories?.title || '')}</span>
                     <h1 class="serif text-4xl text-[#0f172a] leading-tight mb-6">${escapeHtml(topic.title)}</h1>
                     <div class="prose prose-slate max-w-none text-slate-600 leading-relaxed font-medium">
                         ${sanitizeForumHtml(topic.content)}
@@ -354,7 +354,7 @@
                 container.innerHTML = `
                     <div class="text-center py-20 opacity-40">
                         <span class="material-symbols-outlined text-5xl mb-4">forum</span>
-                        <p class="text-[10px] font-black uppercase tracking-widest">El debate está abierto. Sé el primero en aportar.</p>
+                        <p class="text-[11px] font-black uppercase tracking-widest">El debate está abierto. Sé el primero en aportar.</p>
                     </div>
                 `;
                 return;
@@ -392,8 +392,8 @@
                 return `
                     <article class="reply-card p-6 bg-slate-50/50 border-l-gray-300 opacity-70 mb-4 ${post.parent_id ? 'nested' : ''}">
                         <div class="flex items-center gap-3">
-                            <span class="material-symbols-outlined text-gray-400">gavel</span>
-                            <span class="text-[10px] font-black uppercase text-gray-500">Mensaje eliminado por moderación</span>
+                            <span class="material-symbols-outlined text-gray-600">gavel</span>
+                            <span class="text-[11px] font-black uppercase text-gray-500">Mensaje eliminado por moderación</span>
                         </div>
                     </article>
                 `;
@@ -402,21 +402,21 @@
             const postHtml = `
                 <article id="post-${post.id}" class="reply-card p-4 mb-3 ${isMe ? 'bg-slate-50/30' : ''} ${post.parent_id ? 'nested' : ''} group relative">
                     ${!isMe ? `
-                    <button onclick="openReportModal('${post.id}')" class="absolute top-4 right-4 text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all" title="Reportar">
+                    <button onclick="openReportModal('${post.id}')" class="absolute top-4 right-4 text-gray-500 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all" title="Reportar">
                         <span class="material-symbols-outlined text-lg">flag</span>
                     </button>
                     ` : ''}
 
                     <div class="flex items-center gap-3 mb-2">
-                        <div class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-black text-slate-500">${initials}</div>
+                        <div class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-[11px] font-black text-slate-500">${initials}</div>
                         <div class="flex flex-col">
-                            <span class="text-[10px] font-black uppercase text-slate-800">${escapeHtml(post.profiles?.full_name || 'Desconocido')}</span>
-                            <span class="text-[8px] font-bold text-gray-400 uppercase tracking-widest">${new Date(post.created_at).toLocaleString('es-CL')}</span>
+                            <span class="text-[11px] font-black uppercase text-slate-800">${escapeHtml(post.profiles?.full_name || 'Desconocido')}</span>
+                            <span class="text-[8px] font-bold text-gray-600 uppercase tracking-widest">${new Date(post.created_at).toLocaleString('es-CL')}</span>
                         </div>
                         <div class="flex gap-2 ml-auto lg:mr-6">
                             ${isDirectiva ? '<span class="bg-amber-50 text-amber-600 text-[7px] font-black px-2 py-0.5 rounded uppercase tracking-tighter border border-amber-100">Directiva</span>' : ''}
-                            <span class="bg-slate-50 text-slate-400 text-[7px] font-black px-2 py-0.5 rounded uppercase tracking-tighter flex items-center gap-1 border border-slate-100">
-                                <span class="material-symbols-outlined text-[9px]">workspace_premium</span> ${escapeHtml(userRank)}
+                            <span class="bg-slate-50 text-slate-600 text-[7px] font-black px-2 py-0.5 rounded uppercase tracking-tighter flex items-center gap-1 border border-slate-100">
+                                <span class="material-symbols-outlined text-[11px]">workspace_premium</span> ${escapeHtml(userRank)}
                             </span>
                         </div>
                     </div>
@@ -426,23 +426,23 @@
                     </div>
 
                     <div class="pl-11 flex items-center gap-6">
-                        <button data-action="reply" data-post-id="${escapeHtml(post.id)}" data-author="${escapeHtml(post.profiles?.full_name || 'Afiliado')}" class="flex items-center gap-1.5 text-[10px] font-black uppercase text-[#fba931] hover:brightness-90 transition-all">
+                        <button data-action="reply" data-post-id="${escapeHtml(post.id)}" data-author="${escapeHtml(post.profiles?.full_name || 'Afiliado')}" class="flex items-center gap-1.5 text-[11px] font-black uppercase text-[#fba931] hover:brightness-90 transition-all">
                             <span class="material-symbols-outlined text-lg">reply</span> Responder
                         </button>
 
                         <div class="flex items-center gap-4">
                             <div class="vote-container relative flex items-center gap-1">
-                                <button onclick="togglePostVote('${post.id}', 1)" class="vote-btn flex items-center gap-1 text-gray-400 hover:text-green-500 transition-all ${myVote === 1 ? 'active-up' : ''}">
+                                <button onclick="togglePostVote('${post.id}', 1)" class="vote-btn flex items-center gap-1 text-gray-600 hover:text-green-500 transition-all ${myVote === 1 ? 'active-up' : ''}">
                                     <span class="material-symbols-outlined text-lg ${myVote === 1 ? 'fill-current' : ''}">thumb_up</span>
-                                    <span class="text-[10px] font-black">${upvotesCount}</span>
+                                    <span class="text-[11px] font-black">${upvotesCount}</span>
                                 </button>
                                 ${upvotesCount > 0 ? `<div class="voters-list">👍 por: ${escapeHtml(upvoters)}</div>` : ''}
                             </div>
 
                             <div class="vote-container relative flex items-center gap-1">
-                                <button onclick="togglePostVote('${post.id}', -1)" class="vote-btn flex items-center gap-1 text-gray-400 hover:text-red-500 transition-all ${myVote === -1 ? 'active-down' : ''}">
+                                <button onclick="togglePostVote('${post.id}', -1)" class="vote-btn flex items-center gap-1 text-gray-600 hover:text-red-500 transition-all ${myVote === -1 ? 'active-down' : ''}">
                                     <span class="material-symbols-outlined text-lg ${myVote === -1 ? 'fill-current' : ''}">thumb_down</span>
-                                    <span class="text-[10px] font-black">${downvotesCount}</span>
+                                    <span class="text-[11px] font-black">${downvotesCount}</span>
                                 </button>
                                 ${downvotesCount > 0 ? `<div class="voters-list">👎 por: ${escapeHtml(downvoters)}</div>` : ''}
                             </div>
@@ -643,7 +643,7 @@
     <div id="rules-modal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-[250] flex items-center justify-center p-6">
         <div class="bg-white rounded-[3rem] w-[90%] md:w-[60%] p-10 md:py-14 md:px-24 lg:px-32 relative shadow-2xl overflow-hidden max-h-[90vh] flex flex-col items-center" style="max-width: 60vw;">
             <button onclick="closeRulesModal()"
-                class="absolute top-10 right-10 text-gray-400 hover:text-red-500 transition-colors active:scale-90">
+                class="absolute top-10 right-10 text-gray-600 hover:text-red-500 transition-colors active:scale-90">
                 <span class="material-symbols-outlined text-4xl">close</span>
             </button>
 
@@ -693,7 +693,7 @@
                 </label>
                 
                 <button onclick="acceptRules()" id="btn-accept-rules" disabled
-                    class="w-full max-w-sm mx-auto bg-gray-200 text-gray-400 py-5 rounded-full font-black text-[11px] uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-3 cursor-not-allowed">
+                    class="w-full max-w-sm mx-auto bg-gray-200 text-gray-600 py-5 rounded-full font-black text-[11px] uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-3 cursor-not-allowed">
                     <span class="material-symbols-outlined">gavel</span> Aceptar y Continuar
                 </button>
             </div>
@@ -711,7 +711,7 @@
             <p id="moderation-reason" class="text-sm text-slate-600 leading-relaxed mt-4 text-center font-medium">--</p>
 
             <div id="moderation-rules" class="mt-4 bg-slate-50 rounded-2xl p-4 hidden">
-                <p class="text-[9px] font-black uppercase text-gray-400 tracking-widest mb-2">Reglas afectadas:</p>
+                <p class="text-[11px] font-black uppercase text-gray-600 tracking-widest mb-2">Reglas afectadas:</p>
                 <ul id="moderation-rules-list" class="space-y-1 text-xs font-bold text-[#0f172a]"></ul>
             </div>
 

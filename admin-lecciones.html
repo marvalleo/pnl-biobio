@@ -31,7 +31,7 @@
             <a href="admin-forja.html" class="flex items-center gap-3 hover:opacity-80 transition-all group">
                 <img loading="lazy" src="/assets/images/logos/pnl-del-biobio01.png" alt="Logo PNL" style="max-height: 70px;">
                 <div class="flex flex-col text-left">
-                    <span class="text-[9px] font-black uppercase text-[#fba931] leading-none mb-1">Volver a Forja</span>
+                    <span class="text-[11px] font-black uppercase text-[#fba931] leading-none mb-1">Volver a Forja</span>
                     <span class="font-black text-lg uppercase leading-none">Gestión Lecciones</span>
                 </div>
             </a>
@@ -40,11 +40,11 @@
 
             <div class="hidden md:flex items-center gap-4">
                 <a href="admin-dashboard.html"
-                    class="flex items-center gap-1.5 text-[10px] font-black uppercase text-gray-400 hover:text-[#0f172a] transition-colors">
+                    class="flex items-center gap-1.5 text-[11px] font-black uppercase text-gray-600 hover:text-[#0f172a] transition-colors">
                     <span class="material-symbols-outlined text-lg">dashboard</span> Panel Central
                 </a>
                 <a href="forja-academia.html" target="_blank"
-                    class="flex items-center gap-1.5 text-[10px] font-black uppercase text-gray-400 hover:text-blue-600 transition-colors">
+                    class="flex items-center gap-1.5 text-[11px] font-black uppercase text-gray-600 hover:text-blue-600 transition-colors">
                     <span class="material-symbols-outlined text-lg">visibility</span> Vista Usuario
                 </a>
             </div>
@@ -58,7 +58,7 @@
     <main class="max-w-7xl mx-auto px-6 py-10">
         <div class="flex justify-between items-center mb-8">
             <div>
-                <p id="section-subtitle" class="text-[10px] font-black uppercase text-[#fba931] tracking-widest">Gestión
+                <p id="section-subtitle" class="text-[11px] font-black uppercase text-[#fba931] tracking-widest">Gestión
                     de Contenido</p>
                 <h1 id="course-name" class="text-3xl font-900 uppercase text-[#0f172a]">Lecciones del Curso</h1>
             </div>
@@ -79,14 +79,14 @@
             <table class="w-full text-left">
                 <thead class="bg-gray-50 border-b border-gray-100">
                     <tr>
-                        <th class="p-6 text-[10px] font-black uppercase text-gray-400 tracking-wider text-center">Orden
+                        <th class="p-6 text-[11px] font-black uppercase text-gray-600 tracking-wider text-center">Orden
                         </th>
-                        <th class="p-6 text-[10px] font-black uppercase text-gray-400 tracking-wider">Título</th>
-                        <th class="p-6 text-[10px] font-black uppercase text-gray-400 tracking-wider">Tipo</th>
-                        <th class="p-6 text-[10px] font-black uppercase text-gray-400 tracking-wider">Programación</th>
-                        <th class="p-6 text-[10px] font-black uppercase text-gray-400 tracking-wider text-center">Cupos
+                        <th class="p-6 text-[11px] font-black uppercase text-gray-600 tracking-wider">Título</th>
+                        <th class="p-6 text-[11px] font-black uppercase text-gray-600 tracking-wider">Tipo</th>
+                        <th class="p-6 text-[11px] font-black uppercase text-gray-600 tracking-wider">Programación</th>
+                        <th class="p-6 text-[11px] font-black uppercase text-gray-600 tracking-wider text-center">Cupos
                         </th>
-                        <th class="p-6 text-[10px] font-black uppercase text-gray-400 tracking-wider text-right">
+                        <th class="p-6 text-[11px] font-black uppercase text-gray-600 tracking-wider text-right">
                             Acciones</th>
                     </tr>
                 </thead>
@@ -114,19 +114,19 @@
                 <input type="hidden" id="lesson-id">
 
                 <div class="md:col-span-2">
-                    <label class="text-[10px] font-black uppercase text-gray-400 ml-1">Título</label>
+                    <label class="text-[11px] font-black uppercase text-gray-600 ml-1">Título</label>
                     <input type="text" id="lesson-title" required
                         class="w-full bg-gray-50 border border-gray-100 p-4 rounded-xl focus:ring-2 focus:ring-[#fba931] outline-none">
                 </div>
 
                 <div class="md:col-span-2">
-                    <label class="text-[10px] font-black uppercase text-gray-400 ml-1">Descripción corta</label>
+                    <label class="text-[11px] font-black uppercase text-gray-600 ml-1">Descripción corta</label>
                     <textarea id="lesson-desc"
                         class="w-full bg-gray-50 border border-gray-100 p-4 rounded-xl focus:ring-2 focus:ring-[#fba931] outline-none h-24"></textarea>
                 </div>
 
                 <div>
-                    <label class="text-[10px] font-black uppercase text-gray-400 ml-1">Tipo de Entrega</label>
+                    <label class="text-[11px] font-black uppercase text-gray-600 ml-1">Tipo de Entrega</label>
                     <select id="lesson-type" required onchange="toggleFields()"
                         class="w-full bg-gray-50 border border-gray-100 p-4 rounded-xl focus:ring-2 focus:ring-[#fba931] outline-none font-bold">
                         <option value="recorded">🎥 Grabado (Video)</option>
@@ -136,38 +136,38 @@
                 </div>
 
                 <div>
-                    <label class="text-[10px] font-black uppercase text-gray-400 ml-1">Orden (N°)</label>
+                    <label class="text-[11px] font-black uppercase text-gray-600 ml-1">Orden (N°)</label>
                     <input type="number" id="lesson-order" value="1"
                         class="w-full bg-gray-50 border border-gray-100 p-4 rounded-xl focus:ring-2 focus:ring-[#fba931] outline-none">
                 </div>
 
                 <div id="field-url" class="md:col-span-2">
-                    <label id="label-url" class="text-[10px] font-black uppercase text-gray-400 ml-1">Link (YouTube /
+                    <label id="label-url" class="text-[11px] font-black uppercase text-gray-600 ml-1">Link (YouTube /
                         Zoom)</label>
                     <input type="text" id="lesson-url" placeholder="https://..."
                         class="w-full bg-gray-50 border border-gray-100 p-4 rounded-xl focus:ring-2 focus:ring-[#fba931] outline-none">
                 </div>
 
                 <div id="field-location" class="md:col-span-2 hidden">
-                    <label class="text-[10px] font-black uppercase text-gray-400 ml-1">Ubicación / Dirección</label>
+                    <label class="text-[11px] font-black uppercase text-gray-600 ml-1">Ubicación / Dirección</label>
                     <input type="text" id="lesson-location" placeholder="Sede PNL Biobío..."
                         class="w-full bg-gray-50 border border-gray-100 p-4 rounded-xl focus:ring-2 focus:ring-[#fba931] outline-none">
                 </div>
 
                 <div id="field-date" class="hidden">
-                    <label class="text-[10px] font-black uppercase text-gray-400 ml-1">Fecha y Hora</label>
+                    <label class="text-[11px] font-black uppercase text-gray-600 ml-1">Fecha y Hora</label>
                     <input type="datetime-local" id="lesson-date"
                         class="w-full bg-gray-50 border border-gray-100 p-4 rounded-xl focus:ring-2 focus:ring-[#fba931] outline-none">
                 </div>
 
                 <div>
-                    <label class="text-[10px] font-black uppercase text-gray-400 ml-1">Duración (Ej: 45 min)</label>
+                    <label class="text-[11px] font-black uppercase text-gray-600 ml-1">Duración (Ej: 45 min)</label>
                     <input type="text" id="lesson-duration"
                         class="w-full bg-gray-50 border border-gray-100 p-4 rounded-xl focus:ring-2 focus:ring-[#fba931] outline-none">
                 </div>
 
                 <div>
-                    <label class="text-[10px] font-black uppercase text-gray-400 ml-1">Capacidad Máxima
+                    <label class="text-[11px] font-black uppercase text-gray-600 ml-1">Capacidad Máxima
                         (0=infinito)</label>
                     <input type="number" id="lesson-capacity" value="0"
                         class="w-full bg-gray-50 border border-gray-100 p-4 rounded-xl focus:ring-2 focus:ring-[#fba931] outline-none">
@@ -210,24 +210,24 @@
 
             <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6 p-4 bg-gray-50 rounded-2xl border border-gray-100">
                 <div>
-                    <label class="text-[9px] font-black uppercase text-gray-400 ml-1">Aprobación %</label>
+                    <label class="text-[11px] font-black uppercase text-gray-600 ml-1">Aprobación %</label>
                     <input type="number" id="qb-pass" min="1" max="100" value="70"
                         class="w-full bg-white border border-gray-200 p-3 rounded-xl text-sm font-bold focus:ring-2 focus:ring-[#fba931] outline-none">
                 </div>
                 <div>
-                    <label class="text-[9px] font-black uppercase text-gray-400 ml-1">Cooldown (h)</label>
+                    <label class="text-[11px] font-black uppercase text-gray-600 ml-1">Cooldown (h)</label>
                     <input type="number" id="qb-cooldown" min="0" value="24"
                         class="w-full bg-white border border-gray-200 p-3 rounded-xl text-sm font-bold focus:ring-2 focus:ring-[#fba931] outline-none">
                 </div>
                 <div>
-                    <label class="text-[9px] font-black uppercase text-gray-400 ml-1">Preguntas/intento</label>
+                    <label class="text-[11px] font-black uppercase text-gray-600 ml-1">Preguntas/intento</label>
                     <input type="number" id="qb-perattempt" min="1" placeholder="todas"
                         class="w-full bg-white border border-gray-200 p-3 rounded-xl text-sm font-bold focus:ring-2 focus:ring-[#fba931] outline-none">
                 </div>
                 <div class="flex items-end pb-1">
                     <label class="flex items-center gap-2 cursor-pointer">
                         <input type="checkbox" id="qb-shuffle" checked class="w-5 h-5 accent-[#fba931]">
-                        <span class="text-[10px] font-black uppercase text-gray-600">Barajar opciones</span>
+                        <span class="text-[11px] font-black uppercase text-gray-600">Barajar opciones</span>
                     </label>
                 </div>
             </div>
@@ -259,15 +259,15 @@
             <h3 class="text-lg font-900 uppercase mb-4 text-[#0f172a]">Editar Pregunta</h3>
             <input type="hidden" id="qe-index">
 
-            <label class="text-[10px] font-black uppercase text-gray-400 ml-1">Pregunta</label>
+            <label class="text-[11px] font-black uppercase text-gray-600 ml-1">Pregunta</label>
             <textarea id="qe-text" rows="3" required
                 class="w-full bg-gray-50 border border-gray-100 p-4 rounded-xl focus:ring-2 focus:ring-[#fba931] outline-none mb-4"></textarea>
 
-            <label class="text-[10px] font-black uppercase text-gray-400 ml-1">Opciones (marca la correcta)</label>
+            <label class="text-[11px] font-black uppercase text-gray-600 ml-1">Opciones (marca la correcta)</label>
             <div id="qe-options" class="space-y-2 mt-2 mb-2"></div>
-            <button type="button" onclick="addOption()" class="text-[10px] font-bold uppercase text-[#fba931] hover:underline mb-4">+ Agregar opción</button>
+            <button type="button" onclick="addOption()" class="text-[11px] font-bold uppercase text-[#fba931] hover:underline mb-4">+ Agregar opción</button>
 
-            <label class="text-[10px] font-black uppercase text-gray-400 ml-1">Explicación opcional (post-aprobación)</label>
+            <label class="text-[11px] font-black uppercase text-gray-600 ml-1">Explicación opcional (post-aprobación)</label>
             <textarea id="qe-explanation" rows="2"
                 class="w-full bg-gray-50 border border-gray-100 p-4 rounded-xl focus:ring-2 focus:ring-[#fba931] outline-none mb-4"></textarea>
 
@@ -404,7 +404,7 @@
                 data.forEach(l => l.has_quiz = lessonsWithQuiz.has(l.id));
 
                 if (data.length === 0) {
-                    tableBody.innerHTML = '<tr><td colspan="6" class="p-10 text-center text-gray-400 italic">No hay lecciones creadas para este curso.</td></tr>';
+                    tableBody.innerHTML = '<tr><td colspan="6" class="p-10 text-center text-gray-600 italic">No hay lecciones creadas para este curso.</td></tr>';
                     return;
                 }
 
@@ -416,16 +416,16 @@
                     if (lesson.max_capacity > 0) {
                         cuposDisplay = `
                             <div class="flex flex-col items-center leading-none">
-                                <span class="text-[8px] font-black text-gray-300 uppercase tracking-widest mb-1">CUPOS</span>
+                                <span class="text-[8px] font-black text-gray-500 uppercase tracking-widest mb-1">CUPOS</span>
                                 <div class="font-black text-sm flex items-center gap-1">
-                                    <span class="text-gray-400" title="Total">${lesson.max_capacity}</span>
+                                    <span class="text-gray-600" title="Total">${lesson.max_capacity}</span>
                                     <span class="text-gray-200">/</span>
                                     <span class="text-green-600" title="Disponibles">${available > 0 ? available : 0}</span>
                                 </div>
                             </div>
                         `;
                     } else {
-                        cuposDisplay = '<span class="text-[9px] font-black text-gray-300 italic uppercase tracking-widest">Ilimitado</span>';
+                        cuposDisplay = '<span class="text-[11px] font-black text-gray-500 italic uppercase tracking-widest">Ilimitado</span>';
                     }
 
                     return `
@@ -433,14 +433,14 @@
                         <td class="p-6 font-black text-[#fba931] text-center">${lesson.order}</td>
                         <td class="p-6">
                             <div class="font-bold text-sm uppercase">${lesson.title}</div>
-                            <div class="text-[9px] text-gray-400 uppercase font-black tracking-tighter">${lesson.duration || 'Sin duración'}</div>
+                            <div class="text-[11px] text-gray-600 uppercase font-black tracking-tighter">${lesson.duration || 'Sin duración'}</div>
                         </td>
                         <td class="p-6 text-center">
-                            <span class="px-2 py-1 rounded-md text-[9px] font-black uppercase bg-gray-100">
+                            <span class="px-2 py-1 rounded-md text-[11px] font-black uppercase bg-gray-100">
                                 ${lesson.delivery_type === 'recorded' ? '🎥 Grabado' : lesson.delivery_type === 'live' ? '📡 En Vivo' : '🏛️ Presencial'}
                             </span>
                         </td>
-                        <td class="p-6 text-[10px] font-bold text-gray-500 text-center">
+                        <td class="p-6 text-[11px] font-bold text-gray-500 text-center">
                             ${lesson.event_date ? new Date(lesson.event_date).toLocaleString('es-CL', { dateStyle: 'short', timeStyle: 'short' }) : '---'}
                         </td>
                         <td class="p-6 text-center">
@@ -449,7 +449,7 @@
                             </button>
                         </td>
                         <td class="p-6 text-right whitespace-nowrap">
-                            <button onclick="openQuizBuilder('${lesson.id}')" class="p-2 rounded-lg transition-colors ${lesson.has_quiz ? 'text-[#fba931] hover:bg-amber-50' : 'text-gray-300 hover:bg-gray-100 hover:text-[#fba931]'}" title="${lesson.has_quiz ? 'Editar examen' : 'Crear examen'}"><span class="material-symbols-outlined">quiz</span></button>
+                            <button onclick="openQuizBuilder('${lesson.id}')" class="p-2 rounded-lg transition-colors ${lesson.has_quiz ? 'text-[#fba931] hover:bg-amber-50' : 'text-gray-500 hover:bg-gray-100 hover:text-[#fba931]'}" title="${lesson.has_quiz ? 'Editar examen' : 'Crear examen'}"><span class="material-symbols-outlined">quiz</span></button>
                             <button onclick='editLesson(${JSON.stringify(lesson)})' class="p-2 text-[#0f172a] hover:bg-gray-100 rounded-lg"><span class="material-symbols-outlined">edit</span></button>
                             <button onclick="deleteLesson('${lesson.id}')" class="p-2 text-red-500 hover:bg-red-50 rounded-lg"><span class="material-symbols-outlined">delete</span></button>
                         </td>
@@ -543,7 +543,7 @@
         async function viewRegistrations(lessonId, lessonTitle) {
             document.getElementById('reg-modal-title').textContent = `Inscritos: ${lessonTitle}`;
             const list = document.getElementById('reg-list');
-            list.innerHTML = '<p class="text-center text-gray-400 py-10 italic">Buscando inscritos...</p>';
+            list.innerHTML = '<p class="text-center text-gray-600 py-10 italic">Buscando inscritos...</p>';
             document.getElementById('reg-modal').classList.remove('hidden');
 
             try {
@@ -556,7 +556,7 @@
                 currentModalData = { id: lessonId, title: lessonTitle, registrations: data || [] };
 
                 if (data.length === 0) {
-                    list.innerHTML = '<p class="text-center text-gray-400 py-10">No hay inscritos todavía.</p>';
+                    list.innerHTML = '<p class="text-center text-gray-600 py-10">No hay inscritos todavía.</p>';
                     return;
                 }
 
@@ -564,11 +564,11 @@
                     <div class="flex justify-between items-center p-4 bg-gray-50 rounded-2xl border border-gray-100">
                         <div>
                             <p class="font-black uppercase text-xs">${reg.profiles.full_name}</p>
-                            <p class="text-[9px] text-gray-400 font-bold tracking-widest uppercase">${reg.profiles.rut || 'SIN RUT'} • ${reg.profiles.email || 'SIN EMAIL'}</p>
+                            <p class="text-[11px] text-gray-600 font-bold tracking-widest uppercase">${reg.profiles.rut || 'SIN RUT'} • ${reg.profiles.email || 'SIN EMAIL'}</p>
                         </div>
                         <div class="flex items-center gap-2">
                             <button onclick="toggleAttendance('${reg.id}', ${!reg.attended}, '${lessonId}', '${lessonTitle}')" 
-                                    class="px-4 py-2 rounded-xl text-[9px] font-black uppercase transition-all
+                                    class="px-4 py-2 rounded-xl text-[11px] font-black uppercase transition-all
                                     ${reg.attended ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-gray-200 text-gray-600 hover:bg-gray-300'}">
                                 ${reg.attended ? 'Asistió' : 'Marcar Asistencia'}
                             </button>
@@ -692,13 +692,13 @@
             }
 
             if (qbState.questions.length === 0) {
-                container.innerHTML = '<p class="text-center text-gray-400 italic py-8 text-xs">Sin preguntas. Agrega la primera abajo.</p>';
+                container.innerHTML = '<p class="text-center text-gray-600 italic py-8 text-xs">Sin preguntas. Agrega la primera abajo.</p>';
                 return;
             }
 
             container.innerHTML = qbState.questions.map((q, i) => `
                 <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-gray-100">
-                    <span class="text-[10px] font-black text-gray-400 w-6 text-center">${i + 1}</span>
+                    <span class="text-[11px] font-black text-gray-600 w-6 text-center">${i + 1}</span>
                     <p class="flex-1 text-xs font-bold text-[#0f172a] truncate">${escapeHtml(q.question_text)}</p>
                     <button type="button" onclick="openQuestionEditor(${i})" class="p-1 text-[#0f172a] hover:bg-white rounded"><span class="material-symbols-outlined text-base">edit</span></button>
                     <button type="button" onclick="deleteQuestion(${i})" class="p-1 text-red-500 hover:bg-red-50 rounded"><span class="material-symbols-outlined text-base">delete</span></button>
@@ -752,7 +752,7 @@
                     <input type="radio" name="qe-correct" ${opt.is_correct ? 'checked' : ''}
                         onchange="markCorrect(${i})"
                         class="w-5 h-5 accent-[#fba931] cursor-pointer">
-                    <span class="text-[10px] font-black text-gray-400 w-4">${opt.id.toUpperCase()}</span>
+                    <span class="text-[11px] font-black text-gray-600 w-4">${opt.id.toUpperCase()}</span>
                     <input type="text" value="${escapeHtml(opt.text)}"
                         oninput="qeOptions[${i}].text = this.value"
                         placeholder="Texto de la opción"

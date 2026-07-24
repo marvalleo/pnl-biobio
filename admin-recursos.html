@@ -52,7 +52,7 @@
         <div class="max-w-7xl mx-auto flex justify-between items-center">
             <div class="flex items-center gap-4">
                 <a href="admin-dashboard.html" class="material-symbols-outlined hover:text-[#fba931]">arrow_back</a>
-                <h1 class="font-900 uppercase text-[10px] tracking-widest text-[#fba931]">Gestión de Biblioteca Multimedia</h1>
+                <h1 class="font-900 uppercase text-[11px] tracking-widest text-[#fba931]">Gestión de Biblioteca Multimedia</h1>
             </div>
             <div id="user-menu-container"></div>
         </div>
@@ -62,10 +62,10 @@
         <div class="flex flex-col md:flex-row justify-between items-end gap-6 mb-12">
             <div>
                 <h2 class="serif text-5xl text-[#0f172a] mb-2 uppercase">Recursos</h2>
-                <p class="text-gray-400 font-bold text-xs uppercase tracking-[0.3em]">Administra la soberanía de información</p>
+                <p class="text-gray-600 font-bold text-xs uppercase tracking-[0.3em]">Administra la soberanía de información</p>
             </div>
             <button onclick="openResourceModal()"
-                class="bg-[#fba931] text-[#0f172a] px-8 py-4 rounded-2xl font-900 text-[10px] uppercase tracking-widest hover:brightness-110 shadow-xl shadow-amber-500/20 flex items-center gap-2 transition-all">
+                class="bg-[#fba931] text-[#0f172a] px-8 py-4 rounded-2xl font-900 text-[11px] uppercase tracking-widest hover:brightness-110 shadow-xl shadow-amber-500/20 flex items-center gap-2 transition-all">
                 <span class="material-symbols-outlined text-sm">add_circle</span> Nuevo Recurso
             </button>
         </div>
@@ -85,7 +85,7 @@
         <div class="bg-white w-full max-w-2xl rounded-[3rem] overflow-hidden shadow-2xl relative max-h-[90vh] flex flex-col">
             <div class="bg-[#0f172a] p-10 text-white flex justify-between items-center">
                 <div>
-                    <span class="text-[#fba931] text-[9px] font-black uppercase tracking-widest mb-1 block">Editor de Contenido</span>
+                    <span class="text-[#fba931] text-[11px] font-black uppercase tracking-widest mb-1 block">Editor de Contenido</span>
                     <h3 class="serif text-3xl" id="modalTitle">Nuevo Recurso</h3>
                 </div>
                 <button onclick="closeModal()" class="material-symbols-outlined hover:text-[#fba931] transition-colors">close</button>
@@ -94,19 +94,19 @@
                 <input type="hidden" id="resourceId">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div class="col-span-full">
-                        <label class="text-[9px] font-black uppercase text-gray-400 block mb-2">Título del Recurso</label>
+                        <label class="text-[11px] font-black uppercase text-gray-600 block mb-2">Título del Recurso</label>
                         <input type="text" id="title" required
                             class="w-full bg-gray-50 border border-gray-100 rounded-2xl px-5 py-4 text-xs font-bold outline-none focus:border-[#fba931] transition-colors"
                             placeholder="Estatutos Provinciales 2024">
                     </div>
                     <div class="col-span-full">
-                        <label class="text-[9px] font-black uppercase text-gray-400 block mb-2">Descripción (Breve)</label>
+                        <label class="text-[11px] font-black uppercase text-gray-600 block mb-2">Descripción (Breve)</label>
                         <textarea id="description"
                             class="w-full bg-gray-50 border border-gray-100 rounded-2xl px-5 py-4 text-xs font-bold h-24 outline-none focus:border-[#fba931] transition-colors"
                             placeholder="Detalle de los principios y reglamentos..."></textarea>
                     </div>
                     <div>
-                        <label class="text-[9px] font-black uppercase text-gray-400 block mb-2">Tipo de Archivo</label>
+                        <label class="text-[11px] font-black uppercase text-gray-600 block mb-2">Tipo de Archivo</label>
                         <select id="type" required
                             class="w-full bg-gray-50 border border-gray-100 rounded-2xl px-5 py-4 text-xs font-bold outline-none focus:border-[#fba931] transition-colors">
                             <option value="pdf">📄 Documento (PDF)</option>
@@ -117,15 +117,15 @@
                         </select>
                     </div>
                     <div>
-                        <label class="text-[9px] font-black uppercase text-gray-400 block mb-2">Etiqueta de Fecha</label>
+                        <label class="text-[11px] font-black uppercase text-gray-600 block mb-2">Etiqueta de Fecha</label>
                         <input type="text" id="date_label"
                             class="w-full bg-gray-50 border border-gray-100 rounded-2xl px-5 py-4 text-xs font-bold outline-none focus:border-[#fba931] transition-colors"
                             placeholder="Marzo 2024">
                     </div>
                     <div class="col-span-full">
                         <div class="flex justify-between items-center mb-2">
-                            <label class="text-[9px] font-black uppercase text-gray-400 block">URL del Contenido (Link)</label>
-                            <label for="fileUpload" class="text-[9px] font-black uppercase text-[#fba931] cursor-pointer hover:underline flex items-center gap-1">
+                            <label class="text-[11px] font-black uppercase text-gray-600 block">URL del Contenido (Link)</label>
+                            <label for="fileUpload" class="text-[11px] font-black uppercase text-[#fba931] cursor-pointer hover:underline flex items-center gap-1">
                                 <span class="material-symbols-outlined text-sm">cloud_upload</span> O sube un archivo aquí
                             </label>
                             <input type="file" id="fileUpload" class="hidden" onchange="handleFileUpload(this)">
@@ -140,13 +140,13 @@
                         </div>
                     </div>
                     <div>
-                        <label class="text-[9px] font-black uppercase text-gray-400 block mb-2">Meta: Tamaño (MB)</label>
+                        <label class="text-[11px] font-black uppercase text-gray-600 block mb-2">Meta: Tamaño (MB)</label>
                         <input type="text" id="file_size"
                             class="w-full bg-gray-50 border border-gray-100 rounded-2xl px-5 py-4 text-xs font-bold outline-none focus:border-[#fba931] transition-colors"
                             placeholder="2.4 MB">
                     </div>
                     <div>
-                        <label class="text-[9px] font-black uppercase text-gray-400 block mb-2">Meta: Duración (min)</label>
+                        <label class="text-[11px] font-black uppercase text-gray-600 block mb-2">Meta: Duración (min)</label>
                         <input type="text" id="duration"
                             class="w-full bg-gray-50 border border-gray-100 rounded-2xl px-5 py-4 text-xs font-bold outline-none focus:border-[#fba931] transition-colors"
                             placeholder="45:20 min">
@@ -155,14 +155,14 @@
 
                 <div class="flex items-center gap-3 bg-amber-500/5 p-4 rounded-2xl border border-amber-500/10">
                     <input type="checkbox" id="is_active" checked class="w-5 h-5 accent-[#fba931]">
-                    <label for="is_active" class="text-[10px] font-black uppercase text-amber-600">Publicar inmediatamente en el portal</label>
+                    <label for="is_active" class="text-[11px] font-black uppercase text-amber-600">Publicar inmediatamente en el portal</label>
                 </div>
 
                 <div class="flex gap-4 pt-6">
                     <button type="button" onclick="closeModal()"
-                        class="flex-1 px-8 py-5 rounded-2xl font-900 text-[10px] uppercase bg-gray-50 text-gray-400 hover:bg-gray-100 transition-colors">Cancelar</button>
+                        class="flex-1 px-8 py-5 rounded-2xl font-900 text-[11px] uppercase bg-gray-50 text-gray-600 hover:bg-gray-100 transition-colors">Cancelar</button>
                     <button type="submit"
-                        class="flex-1 bg-[#0f172a] text-white px-8 py-5 rounded-2xl font-900 text-[10px] uppercase hover:bg-black shadow-2xl transition-all">Guardar Recurso</button>
+                        class="flex-1 bg-[#0f172a] text-white px-8 py-5 rounded-2xl font-900 text-[11px] uppercase hover:bg-black shadow-2xl transition-all">Guardar Recurso</button>
                 </div>
             </form>
         </div>
@@ -217,7 +217,7 @@
         function renderResources() {
             const list = document.getElementById('resourcesList');
             if (resources.length === 0) {
-                list.innerHTML = `<p class="col-span-full text-center py-20 text-gray-400 font-black uppercase text-[10px] tracking-widest">Biblioteca vacía</p>`;
+                list.innerHTML = `<p class="col-span-full text-center py-20 text-gray-600 font-black uppercase text-[11px] tracking-widest">Biblioteca vacía</p>`;
                 return;
             }
 
@@ -235,14 +235,14 @@
                 return `
                 <div class="premium-card p-8 flex flex-col gap-5 relative group">
                     <div class="flex justify-between items-start">
-                        <span class="text-[8px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full ${isActive ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-400'}">
+                        <span class="text-[8px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full ${isActive ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-600'}">
                             ${isActive ? 'Activo' : 'Borrador'}
                         </span>
                         <div class="flex gap-2">
-                            <button onclick="editResource('${r.id}')" class="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 hover:text-[#fba931] hover:bg-amber-50 transition-all">
+                            <button onclick="editResource('${r.id}')" class="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-600 hover:text-[#fba931] hover:bg-amber-50 transition-all">
                                 <span class="material-symbols-outlined text-lg">edit</span>
                             </button>
-                            <button onclick="deleteResource('${r.id}')" class="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-red-50 transition-all">
+                            <button onclick="deleteResource('${r.id}')" class="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-600 hover:text-red-500 hover:bg-red-50 transition-all">
                                 <span class="material-symbols-outlined text-lg">delete</span>
                             </button>
                         </div>
@@ -251,16 +251,16 @@
                         <span class="material-symbols-outlined text-4xl text-gray-100 group-hover:text-[#fba931] transition-colors">${icon}</span>
                         <div>
                             <h4 class="serif text-xl text-[#0f172a] leading-tight mb-1">${r.title}</h4>
-                            <p class="text-[10px] font-black text-[#fba931] uppercase tracking-widest">${r.type}</p>
+                            <p class="text-[11px] font-black text-[#fba931] uppercase tracking-widest">${r.type}</p>
                         </div>
                     </div>
                     <p class="text-xs text-gray-500 line-clamp-2">${r.description || 'Sin descripción.'}</p>
                     <div class="mt-auto pt-6 border-t border-gray-50 flex items-center justify-between">
                          <div class="flex flex-col">
-                            <span class="text-[8px] font-black text-gray-300 uppercase">Subido</span>
-                            <span class="text-[9px] font-bold text-gray-400">${new Date(r.created_at).toLocaleDateString()}</span>
+                            <span class="text-[8px] font-black text-gray-500 uppercase">Subido</span>
+                            <span class="text-[11px] font-bold text-gray-600">${new Date(r.created_at).toLocaleDateString()}</span>
                          </div>
-                         <a href="${r.content_url}" target="_blank" class="text-[#fba931] hover:underline text-[9px] font-black uppercase tracking-widest">Ver archivo</a>
+                         <a href="${r.content_url}" target="_blank" class="text-[#fba931] hover:underline text-[11px] font-black uppercase tracking-widest">Ver archivo</a>
                     </div>
                 </div>
             `;

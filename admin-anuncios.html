@@ -46,7 +46,7 @@
         <div class="max-w-7xl mx-auto flex justify-between items-center">
             <div class="flex items-center gap-4">
                 <a href="admin-dashboard.html" class="material-symbols-outlined hover:text-[#fba931]">arrow_back</a>
-                <h1 class="font-900 uppercase text-[10px] tracking-widest">Gestión de Anuncios Regionales</h1>
+                <h1 class="font-900 uppercase text-[11px] tracking-widest">Gestión de Anuncios Regionales</h1>
             </div>
             <div id="user-menu-container"></div>
         </div>
@@ -56,11 +56,11 @@
         <div class="flex flex-col md:flex-row justify-between items-end gap-6 mb-12">
             <div>
                 <h2 class="serif text-5xl text-[#0f172a] mb-2">Impacto Directo</h2>
-                <p class="text-gray-400 font-bold text-xs uppercase tracking-widest">Configura el anuncio global para la
+                <p class="text-gray-600 font-bold text-xs uppercase tracking-widest">Configura el anuncio global para la
                     sede</p>
             </div>
             <button onclick="openNewAnnouncementModal()"
-                class="bg-[#fba931] text-[#0f172a] px-8 py-3 rounded-xl font-900 text-[10px] uppercase tracking-widest hover:brightness-110 shadow-lg shadow-amber-500/20 flex items-center gap-2">
+                class="bg-[#fba931] text-[#0f172a] px-8 py-3 rounded-xl font-900 text-[11px] uppercase tracking-widest hover:brightness-110 shadow-lg shadow-amber-500/20 flex items-center gap-2">
                 <span class="material-symbols-outlined text-sm">add</span> Nuevo Anuncio
             </button>
         </div>
@@ -85,39 +85,39 @@
             <form id="announcementForm" class="p-8 space-y-4 overflow-y-auto custom-scrollbar flex-1">
                 <input type="hidden" id="announcementId">
                 <div>
-                    <label class="text-[9px] font-black uppercase text-gray-400 block mb-1">Título del Anuncio</label>
+                    <label class="text-[11px] font-black uppercase text-gray-600 block mb-1">Título del Anuncio</label>
                     <input type="text" id="title" required
                         class="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-xs font-bold"
                         placeholder="¡La Región del Biobío te necesita!">
                 </div>
                 <div>
-                    <label class="text-[9px] font-black uppercase text-gray-400 block mb-1">Contenido (Mensaje)</label>
+                    <label class="text-[11px] font-black uppercase text-gray-600 block mb-1">Contenido (Mensaje)</label>
                     <textarea id="content" required
                         class="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-xs font-bold h-32"
                         placeholder="Describe la convocatoria o noticia..."></textarea>
                 </div>
                 <div>
-                    <label class="text-[9px] font-black uppercase text-gray-400 block mb-1">Imagen del Anuncio</label>
+                    <label class="text-[11px] font-black uppercase text-gray-600 block mb-1">Imagen del Anuncio</label>
                     <div id="img-dropzone" class="cursor-pointer border-2 border-dashed border-gray-200 rounded-xl px-4 py-6 text-center hover:border-[#fba931] transition-colors bg-gray-50">
-                        <span class="material-symbols-outlined text-3xl text-gray-300">cloud_upload</span>
-                        <p class="text-[10px] font-bold text-gray-400 mt-1">Arrastra una foto aquí o <span class="text-[#fba931]">haz clic para subir desde tu computador</span></p>
-                        <p class="text-[9px] text-gray-300 mt-0.5">JPG, PNG, WEBP o GIF · máximo 3 MB</p>
+                        <span class="material-symbols-outlined text-3xl text-gray-500">cloud_upload</span>
+                        <p class="text-[11px] font-bold text-gray-600 mt-1">Arrastra una foto aquí o <span class="text-[#fba931]">haz clic para subir desde tu computador</span></p>
+                        <p class="text-[11px] text-gray-500 mt-0.5">JPG, PNG, WEBP o GIF · máximo 3 MB</p>
                         <input type="file" id="img-file" accept="image/*" class="hidden">
                     </div>
-                    <p id="img-status" class="text-[9px] font-bold mt-1"></p>
+                    <p id="img-status" class="text-[11px] font-bold mt-1"></p>
                     <input type="text" id="image_url" oninput="updatePreview()"
-                        class="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-2 text-[10px] font-bold mt-2"
+                        class="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-2 text-[11px] font-bold mt-2"
                         placeholder="…o pega una URL de imagen (https://...)">
                 </div>
                 <div id="image-preview-container" class="hidden">
-                    <label class="text-[9px] font-black uppercase text-gray-400 block mb-1">Vista Previa</label>
+                    <label class="text-[11px] font-black uppercase text-gray-600 block mb-1">Vista Previa</label>
                     <div class="h-32 w-full rounded-2xl overflow-hidden bg-gray-100 border border-gray-100">
                         <img loading="lazy" id="image-preview" src="" class="w-full h-full object-cover">
                     </div>
                 </div>
                 <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <label class="text-[9px] font-black uppercase text-gray-400 block mb-1">Audiencia</label>
+                        <label class="text-[11px] font-black uppercase text-gray-600 block mb-1">Audiencia</label>
                         <select id="target_audience"
                             class="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-xs font-bold">
                             <option value="all">Todo Público</option>
@@ -126,20 +126,20 @@
                     </div>
                     <div class="flex items-center gap-3 pt-4">
                         <input type="checkbox" id="is_active" checked class="w-4 h-4 accent-[#fba931]">
-                        <label for="is_active" class="text-[10px] font-black uppercase">Activar inmediatamente</label>
+                        <label for="is_active" class="text-[11px] font-black uppercase">Activar inmediatamente</label>
                     </div>
                 </div>
 
                 <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <label class="text-[9px] font-black uppercase text-gray-400 block mb-1">Correo de
+                        <label class="text-[11px] font-black uppercase text-gray-600 block mb-1">Correo de
                             Contacto</label>
                         <input type="email" id="contact_email"
                             class="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-xs font-bold"
                             placeholder="contacto@pnl.cl">
                     </div>
                     <div>
-                        <label class="text-[9px] font-black uppercase text-gray-400 block mb-1">WhatsApp de
+                        <label class="text-[11px] font-black uppercase text-gray-600 block mb-1">WhatsApp de
                             Contacto</label>
                         <input type="text" id="contact_whatsapp"
                             class="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-xs font-bold"
@@ -149,7 +149,7 @@
 
                 <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <label class="text-[9px] font-black uppercase text-gray-400 block mb-1">Enlace Principal
+                        <label class="text-[11px] font-black uppercase text-gray-600 block mb-1">Enlace Principal
                             (Opcional)</label>
                         <input type="text" id="cta_url"
                             class="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-xs font-bold"
@@ -158,7 +158,7 @@
 
                     <div class="grid grid-cols-2 gap-4">
                         <div>
-                            <label class="text-[9px] font-black uppercase text-gray-400 block mb-1">Texto del
+                            <label class="text-[11px] font-black uppercase text-gray-600 block mb-1">Texto del
                                 Botón</label>
                             <input type="text" id="cta_text"
                                 class="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-xs font-bold"
@@ -168,9 +168,9 @@
 
                     <div class="flex gap-4 pt-4">
                         <button type="button" onclick="closeModal()"
-                            class="flex-1 px-8 py-3 rounded-xl font-900 text-[10px] uppercase bg-gray-100 text-gray-400">Cancelar</button>
+                            class="flex-1 px-8 py-3 rounded-xl font-900 text-[11px] uppercase bg-gray-100 text-gray-600">Cancelar</button>
                         <button type="submit"
-                            class="flex-1 bg-[#0f172a] text-white px-8 py-3 rounded-xl font-900 text-[10px] uppercase hover:bg-black shadow-xl">Guardar
+                            class="flex-1 bg-[#0f172a] text-white px-8 py-3 rounded-xl font-900 text-[11px] uppercase hover:bg-black shadow-xl">Guardar
                             Anuncio</button>
                     </div>
             </form>
@@ -235,7 +235,7 @@
         function renderAnnouncements() {
             const list = document.getElementById('announcements-list');
             if (announcements.length === 0) {
-                list.innerHTML = `<p class="col-span-full text-center py-12 text-gray-400 font-black uppercase text-[10px]">No hay anuncios configurados.</p>`;
+                list.innerHTML = `<p class="col-span-full text-center py-12 text-gray-600 font-black uppercase text-[11px]">No hay anuncios configurados.</p>`;
                 return;
             }
 
@@ -253,23 +253,23 @@
                 return `
                 <div class="premium-card p-6 flex flex-col gap-4 relative">
                     <div class="flex justify-between items-start">
-                        <span class="text-[8px] font-black uppercase tracking-widest px-3 py-1 rounded-full ${isActive ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-400'}">
+                        <span class="text-[8px] font-black uppercase tracking-widest px-3 py-1 rounded-full ${isActive ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-600'}">
                             ${isActive ? 'Activo' : 'Desactivado'}
                         </span>
                         <div class="flex gap-4">
-                            <button onclick="editAnnouncement('${a.id}')" class="text-gray-300 hover:text-[#fba931] transition-colors">${editIcon}</button>
-                            <button onclick="deleteAnnouncement('${a.id}')" class="text-gray-300 hover:text-red-500 transition-colors">${deleteIcon}</button>
+                            <button onclick="editAnnouncement('${a.id}')" class="text-gray-500 hover:text-[#fba931] transition-colors">${editIcon}</button>
+                            <button onclick="deleteAnnouncement('${a.id}')" class="text-gray-500 hover:text-red-500 transition-colors">${deleteIcon}</button>
                         </div>
                     </div>
                     <div>
                         <div class="flex items-center gap-2 mb-1">
-                            <span class="text-gray-400 opacity-50">${ctaIcon}</span>
+                            <span class="text-gray-600 opacity-50">${ctaIcon}</span>
                             <h4 class="serif text-xl text-[#0f172a]">${a.title}</h4>
                         </div>
-                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">${a.target_audience === 'all' ? 'Todo Público' : 'Solo Militantes'}</p>
+                        <p class="text-[11px] font-bold text-gray-600 uppercase tracking-widest">${a.target_audience === 'all' ? 'Todo Público' : 'Solo Militantes'}</p>
                     </div>
                     <p class="text-xs text-gray-500 line-clamp-3">${a.content}</p>
-                    <div class="mt-auto pt-4 border-t border-gray-50 flex items-center justify-between text-[8px] font-black text-gray-300 uppercase">
+                    <div class="mt-auto pt-4 border-t border-gray-50 flex items-center justify-between text-[8px] font-black text-gray-500 uppercase">
                         <span>Creado: ${new Date(a.created_at).toLocaleDateString()}</span>
                         <span class="text-[#fba931]">${a.cta_text || 'CTA'}</span>
                     </div>

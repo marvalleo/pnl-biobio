@@ -32,7 +32,7 @@
             <a href="admin-dashboard.html" class="flex items-center gap-3 hover:opacity-80 transition-all group">
                 <img loading="lazy" src="/assets/images/logos/pnl-del-biobio01.png" alt="Logo PNL" style="max-height: 70px;">
                 <div class="flex flex-col">
-                    <span class="text-[9px] font-black uppercase text-[#fba931] leading-none mb-1">Escrutinio
+                    <span class="text-[11px] font-black uppercase text-[#fba931] leading-none mb-1">Escrutinio
                         Digital</span>
                     <span class="font-black text-lg uppercase leading-none">Admin Votos</span>
                 </div>
@@ -42,11 +42,11 @@
 
             <div class="hidden md:flex items-center gap-4">
                 <a href="admin-dashboard.html"
-                    class="flex items-center gap-1.5 text-[10px] font-black uppercase text-gray-400 hover:text-[#0f172a] transition-colors">
+                    class="flex items-center gap-1.5 text-[11px] font-black uppercase text-gray-600 hover:text-[#0f172a] transition-colors">
                     <span class="material-symbols-outlined text-lg">dashboard</span> Panel Central
                 </a>
                 <a href="forja-votaciones.html" target="_blank"
-                    class="flex items-center gap-1.5 text-[10px] font-black uppercase text-gray-400 hover:text-blue-600 transition-colors">
+                    class="flex items-center gap-1.5 text-[11px] font-black uppercase text-gray-600 hover:text-blue-600 transition-colors">
                     <span class="material-symbols-outlined text-lg">visibility</span> Vista Usuario
                 </a>
             </div>
@@ -88,19 +88,19 @@
             <h2 class="text-2xl font-900 uppercase mb-6 text-[#0f172a]">Nueva Votación</h2>
             <form id="vote-form" onsubmit="saveVote(event)" class="space-y-4">
                 <div>
-                    <label class="text-[10px] font-black uppercase text-gray-400 ml-1">Título de la Votación</label>
+                    <label class="text-[11px] font-black uppercase text-gray-600 ml-1">Título de la Votación</label>
                     <input type="text" id="vote-title" required
                         class="w-full bg-gray-50 border border-gray-100 p-4 rounded-xl focus:ring-2 focus:ring-[#fba931] outline-none font-bold">
                 </div>
                 <div>
-                    <label class="text-[10px] font-black uppercase text-gray-400 ml-1">Opciones (separadas por
+                    <label class="text-[11px] font-black uppercase text-gray-600 ml-1">Opciones (separadas por
                         coma)</label>
                     <input type="text" id="vote-options" placeholder="Opción A, Opción B, Opción C" required
                         class="w-full bg-gray-50 border border-gray-100 p-4 rounded-xl focus:ring-2 focus:ring-[#fba931] outline-none">
-                    <p class="text-[9px] text-gray-400 mt-1 uppercase font-bold">* Mínimo 2 opciones</p>
+                    <p class="text-[11px] text-gray-600 mt-1 uppercase font-bold">* Mínimo 2 opciones</p>
                 </div>
                 <div>
-                    <label class="text-[10px] font-black uppercase text-gray-400 ml-1">Fecha de Cierre</label>
+                    <label class="text-[11px] font-black uppercase text-gray-600 ml-1">Fecha de Cierre</label>
                     <input type="datetime-local" id="vote-deadline" required
                         class="w-full bg-gray-50 border border-gray-100 p-4 rounded-xl focus:ring-2 focus:ring-[#fba931] outline-none">
                 </div>
@@ -124,7 +124,7 @@
             </div>
 
             <h2 id="results-title" class="text-3xl font-900 uppercase mb-2 text-[#0f172a]">Acta de Escrutinio</h2>
-            <p id="results-meta" class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-8"></p>
+            <p id="results-meta" class="text-[11px] font-bold text-gray-600 uppercase tracking-widest mb-8"></p>
 
             <div id="results-content" class="min-h-[300px] flex items-center justify-center">
                 <canvas id="resultsChart"></canvas>
@@ -132,7 +132,7 @@
 
             <div class="mt-10 pt-6 border-t border-gray-100 flex justify-between items-center">
                 <div>
-                    <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Total Votos Emitidos</p>
+                    <p class="text-[11px] font-black text-gray-600 uppercase tracking-widest">Total Votos Emitidos</p>
                     <p id="total-results-votos" class="text-4xl font-900 text-[#0f172a]">0</p>
                 </div>
                 <button onclick="closeResultsModal()"
@@ -223,7 +223,7 @@
                 if (error) throw error;
 
                 if (votes.length === 0) {
-                    container.innerHTML = '<div class="bg-white p-10 text-center rounded-3xl text-gray-400 border border-dashed border-gray-200 uppercase font-black">No hay votaciones registradas.</div>';
+                    container.innerHTML = '<div class="bg-white p-10 text-center rounded-3xl text-gray-600 border border-dashed border-gray-200 uppercase font-black">No hay votaciones registradas.</div>';
                     return;
                 }
 
@@ -248,31 +248,31 @@
                         <div class="bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 group hover:shadow-xl transition-all duration-500">
                             <div class="flex-1">
                                 <div class="flex items-center gap-3 mb-4">
-                                    <span class="px-3 py-1 rounded-full text-[9px] font-black uppercase ${isOpen ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}">
+                                    <span class="px-3 py-1 rounded-full text-[11px] font-black uppercase ${isOpen ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}">
                                         ${isOpen ? 'Urna Abierta' : 'Escrutinio Cerrado'}
                                     </span>
-                                    <span class="text-[9px] font-bold text-gray-300 uppercase tracking-widest italic">ID: ${vote.id.split('-')[0]}</span>
+                                    <span class="text-[11px] font-bold text-gray-500 uppercase tracking-widest italic">ID: ${vote.id.split('-')[0]}</span>
                                 </div>
-                                <h2 class="text-2xl font-900 uppercase mb-1 ${!isOpen ? 'text-gray-400' : ''}">${vote.title}</h2>
-                                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-1">
+                                <h2 class="text-2xl font-900 uppercase mb-1 ${!isOpen ? 'text-gray-600' : ''}">${vote.title}</h2>
+                                <p class="text-[11px] font-bold text-gray-600 uppercase tracking-widest flex items-center gap-1">
                                     <span class="material-symbols-outlined text-xs">${isOpen ? 'timer' : 'event_available'}</span>
                                     ${isOpen ? 'Cierra el' : 'Finalizada el'}: ${deadline.toLocaleString()}
                                 </p>
                                 <div class="mt-6 flex flex-wrap gap-2">
-                                    ${vote.vote_options.map(opt => `<span class="bg-gray-50 text-[9px] font-bold px-3 py-1.5 rounded-xl uppercase border font-mono group-hover:border-[#fba931] transition-colors">${opt.option_text}</span>`).join('')}
+                                    ${vote.vote_options.map(opt => `<span class="bg-gray-50 text-[11px] font-bold px-3 py-1.5 rounded-xl uppercase border font-mono group-hover:border-[#fba931] transition-colors">${opt.option_text}</span>`).join('')}
                                 </div>
                             </div>
                             <div class="text-right flex flex-col items-end gap-3 min-w-[200px]">
                                 <div class="text-center bg-gray-50 p-6 rounded-3xl border border-gray-100 w-full mb-2 group-hover:bg-[#0f172a] transition-all duration-500">
                                     <div id="count-${vote.id}" class="text-4xl font-900 leading-none group-hover:text-white transition-colors">${totalVotos}</div>
-                                    <div class="text-[9px] font-black text-gray-400 uppercase tracking-widest mt-2 group-hover:text-[#fba931]">Votos Totales</div>
+                                    <div class="text-[11px] font-black text-gray-600 uppercase tracking-widest mt-2 group-hover:text-[#fba931]">Votos Totales</div>
                                 </div>
                                 <div class="flex flex-col w-full gap-2">
                                 <button onclick="showResults('${vote.id}', '${vote.title}')" class="w-full bg-white text-[#0f172a] border-2 border-gray-100 px-6 py-4 rounded-2xl font-900 text-xs uppercase shadow-sm flex items-center justify-center gap-2 hover:bg-gray-50 active:scale-95 transition-all">
                                     <span class="material-symbols-outlined text-lg">${isOpen ? 'monitoring' : 'analytics'}</span> ${isOpen ? 'Monitoreo en Vivo' : 'Ver Acta Final'}
                                 </button>
                                 ${isOpen ? `
-                                    <button onclick="closeVote('${vote.id}')" class="w-full bg-red-50 text-red-600 px-6 py-2 rounded-xl font-900 text-[10px] uppercase hover:bg-red-500 hover:text-white transition-all border border-red-100 flex items-center justify-center gap-2 group/btn">
+                                    <button onclick="closeVote('${vote.id}')" class="w-full bg-red-50 text-red-600 px-6 py-2 rounded-xl font-900 text-[11px] uppercase hover:bg-red-500 hover:text-white transition-all border border-red-100 flex items-center justify-center gap-2 group/btn">
                                         <span class="material-symbols-outlined text-sm">close</span> Cerrar Urna
                                     </button>
                                 ` : ''}

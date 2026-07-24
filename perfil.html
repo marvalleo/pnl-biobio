@@ -43,9 +43,9 @@
 
         <!-- Botón Volver -->
         <a href="javascript:history.back()"
-            class="flex items-center gap-2 text-gray-400 hover:text-[#0f172a] transition-colors mb-6 group w-fit">
+            class="flex items-center gap-2 text-gray-600 hover:text-[#0f172a] transition-colors mb-6 group w-fit">
             <span class="material-symbols-outlined text-lg group-hover:-translate-x-1 transition-transform">arrow_back</span>
-            <span class="text-[10px] font-black uppercase tracking-widest">Volver</span>
+            <span class="text-[11px] font-black uppercase tracking-widest">Volver</span>
         </a>
 
         <!-- Encabezado de Perfil -->
@@ -59,7 +59,7 @@
             </div>
 
             <div class="text-center md:text-left flex-grow">
-                <span class="text-[10px] font-black uppercase text-[#fba931] tracking-widest mb-2 block">Afiliado PNL
+                <span class="text-[11px] font-black uppercase text-[#fba931] tracking-widest mb-2 block">Afiliado PNL
                     Biobío</span>
                 <h1 id="profile-name" class="text-3xl sm:text-4xl font-900 uppercase tracking-tight mb-1">
                     <span class="inline-block w-48 h-8 md:h-10 bg-slate-200 rounded-lg animate-pulse"></span>
@@ -67,7 +67,7 @@
                 <p id="profile-email" class="text-gray-500 font-bold text-sm">
                     <span class="inline-block w-32 h-4 bg-gray-200 rounded animate-pulse"></span>
                 </p>
-                <p id="profile-phone" class="text-gray-400 font-bold text-xs mt-1">
+                <p id="profile-phone" class="text-gray-600 font-bold text-xs mt-1">
                     <span class="inline-block w-24 h-3 bg-gray-100 rounded animate-pulse"></span>
                 </p>
                 <div
@@ -97,10 +97,10 @@
                     <div>
                         <h3 class="font-bold uppercase text-sm mb-1 tracking-wide text-[#0f172a]">Portabilidad de Datos
                         </h3>
-                        <p class="text-xs text-gray-400">Descarga una copia de toda tu información almacenada.</p>
+                        <p class="text-xs text-gray-600">Descarga una copia de toda tu información almacenada.</p>
                     </div>
                     <button onclick="downloadMyData()"
-                        class="shrink-0 px-6 py-2.5 bg-white text-[#0f172a] border border-gray-200 rounded-xl font-900 text-[10px] uppercase tracking-widest hover:bg-gray-50 transition-colors flex items-center gap-2 shadow-sm">
+                        class="shrink-0 px-6 py-2.5 bg-white text-[#0f172a] border border-gray-200 rounded-xl font-900 text-[11px] uppercase tracking-widest hover:bg-gray-50 transition-colors flex items-center gap-2 shadow-sm">
                         <span class="material-symbols-outlined text-sm">download</span> Solicitar Copia
                     </button>
                 </div>
@@ -116,7 +116,7 @@
                     </div>
                     <button
                         onclick="document.getElementById('delete-modal').classList.remove('modal-inactive'); document.getElementById('delete-modal').classList.add('modal-active')"
-                        class="shrink-0 px-6 py-2.5 bg-red-600 text-white rounded-xl font-900 text-[10px] uppercase tracking-widest hover:bg-red-700 transition-colors flex items-center gap-2 shadow-md shadow-red-500/20">
+                        class="shrink-0 px-6 py-2.5 bg-red-600 text-white rounded-xl font-900 text-[11px] uppercase tracking-widest hover:bg-red-700 transition-colors flex items-center gap-2 shadow-md shadow-red-500/20">
                         <span class="material-symbols-outlined text-sm">delete_forever</span> Eliminar Cuenta
                     </button>
                 </div>
@@ -144,7 +144,7 @@
             </p>
 
             <div class="bg-slate-50 p-4 border border-slate-200 rounded-xl mb-6">
-                <label class="block text-[10px] font-black uppercase text-gray-500 mb-2 ml-1">Para confirmar, escribe
+                <label class="block text-[11px] font-black uppercase text-gray-500 mb-2 ml-1">Para confirmar, escribe
                     "Eliminar"</label>
                 <input type="text" id="delete-confirm-input" placeholder="Eliminar"
                     class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all font-bold text-center uppercase">
@@ -153,11 +153,11 @@
             <div class="flex gap-3">
                 <button
                     onclick="document.getElementById('delete-modal').classList.add('modal-inactive'); document.getElementById('delete-modal').classList.remove('modal-active')"
-                    class="flex-1 py-3 bg-gray-100 text-gray-600 rounded-xl font-900 text-[10px] uppercase tracking-widest hover:bg-gray-200 transition-colors">
+                    class="flex-1 py-3 bg-gray-100 text-gray-600 rounded-xl font-900 text-[11px] uppercase tracking-widest hover:bg-gray-200 transition-colors">
                     Cancelar
                 </button>
                 <button id="btn-execute-delete" onclick="executeDeletion()" disabled
-                    class="flex-1 py-3 bg-red-600 text-white rounded-xl font-900 text-[10px] uppercase tracking-widest disabled:opacity-50 disabled:cursor-not-allowed hover:bg-red-700 transition-colors shadow-md shadow-red-500/20">
+                    class="flex-1 py-3 bg-red-600 text-white rounded-xl font-900 text-[11px] uppercase tracking-widest disabled:opacity-50 disabled:cursor-not-allowed hover:bg-red-700 transition-colors shadow-md shadow-red-500/20">
                     Eliminar Definitivo
                 </button>
             </div>
