@@ -83,6 +83,23 @@ Proyecto Supabase: `pnl-BD` (`kjcwozzfzbizxurppxlf`). Sitio Netlify: `pnl-biobio
 
 ## 🎨 UX / UI
 
+### MFA / Doble Factor para admins
+- **Commit:** `10555f3`
+- **Qué:** Al cargar `admin-dashboard.html`, se llama `supabaseClient.auth.mfa.listFactors()`. Si el admin no tiene ningún factor TOTP verificado, aparece un banner ámbar con botón "Activar MFA". El flujo completo (enroll → QR code + clave manual → campo de código → verify) ocurre dentro del dashboard sin redirigir. Una vez verificado el código, el banner desaparece y se muestra toast de confirmación. Usa la API nativa `supabase.auth.mfa.*` de supabase-js v2.
+- **Archivos:** `admin-dashboard.html`.
+- **Rollback:** quitar el banner `#mfa-banner`, el modal `#mfa-modal`, la función `checkMfaStatus()` y la llamada en el init.
+
+### Prueba social en la portada
+- **Commit:** `10555f3`
+- **Qué:** Nueva sección entre la directiva regional y las actividades próximas. Fondo navy (`#182d56`) con tres métricas: **3.400+ Afiliados Registrados** (cifra del padrón regional), **Biobío — Sede Regional Oficial**, **100% Democracia Interna**. Fuente Playfair Display, cifras en dorado. Nota al pie indica que el número se actualiza periódicamente.
+- **Archivos:** `index.html`.
+- **Rollback:** quitar el bloque `<!-- PRUEBA SOCIAL -->` de `index.html`.
+
+### Fix URL Push en Admin Dashboard
+- **Commit:** `10555f3`
+- **Qué:** `sendPushNotification()` en `admin-dashboard.html` apuntaba a `/.netlify/functions/send-push` (endpoint inexistente). Corregido a `${window.supabaseClient.supabaseUrl}/functions/v1/send-push` con payload `{ title, message, url }`, igual al formato que usan `admin-anuncios.html` y `admin-votos.html`.
+- **Archivos:** `admin-dashboard.html`.
+
 ### Sistema de diseño unificado
 - **Commit:** (esta tanda — ver `git log`)
 - **Qué:**

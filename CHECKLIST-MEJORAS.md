@@ -23,7 +23,7 @@ Estado vivo del trabajo de seguridad, UX/UI y engagement.
 
 ### Pendiente
 - [ ] **S-07** — Quitar `unsafe-inline` / `unsafe-eval` de la CSP. *(Refactor grande — ver explicación abajo.)*
-- [ ] **MFA / 2FA** para cuentas administrativas.
+- [x] **MFA / 2FA** para cuentas administrativas — banner en admin-dashboard muestra aviso si no está activo; flujo completo de enroll TOTP integrado en el panel.
 - [~] **`check_email_exists`** — *riesgo aceptado y documentado*: es necesaria para la activación de cuenta (usuarios anónimos). Mitigación futura opcional (rate-limit).
 - [ ] **Protección de contraseñas filtradas** en Supabase Auth (HaveIBeenPwned) — requiere plan Pro.
 - [ ] **S-09** — Rate-limit de la edge function usa memoria (no compartida entre instancias) — usar store distribuido.
@@ -59,7 +59,7 @@ Estado vivo del trabajo de seguridad, UX/UI y engagement.
 - [ ] **Gamificar la Forja** — barra de progreso de nivel, insignias/logros, rachas, certificados descargables.
 - [x] **Notificaciones push de eventos y votaciones** — Edge Function `send-push` desplegada (VAPID nativo Deno, cifrado AES-GCM, limpieza automática de endpoints expirados). Botón de notificación en `admin-anuncios.html` y `admin-votos.html`. Tabla `push_notifications_log` creada y con RLS. **⚠️ Requiere paso manual:** configurar `VAPID_PRIVATE_KEY` y `VAPID_EMAIL` en Supabase Dashboard → Settings → Edge Functions → Secrets.
 - [ ] **Resumen semanal por correo** ("lo más comentado", "vota antes del viernes").
-- [ ] **Prueba social en la portada** — contador de militantes, testimonios.
+- [x] **Prueba social en la portada** — sección "3.400+ afiliados · Sede Regional · 100% democracia interna" entre directiva y actividades.
 
 ---
 
