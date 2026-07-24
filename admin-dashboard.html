@@ -79,6 +79,42 @@
             </div>
         </div>
 
+        <!-- Banner MFA: visible solo si el admin no tiene MFA configurado -->
+        <div id="mfa-banner" class="hidden mb-6 bg-amber-50 border border-amber-200 rounded-2xl px-6 py-4 flex items-start gap-4">
+            <span class="material-symbols-outlined text-amber-500 text-2xl mt-0.5 shrink-0">lock_open</span>
+            <div class="flex-1">
+                <p class="text-sm font-bold text-amber-800">Tu cuenta de administrador no tiene autenticación de dos factores (MFA) activada.</p>
+                <p class="text-xs text-amber-700 mt-1">Protege el panel ante accesos no autorizados. Solo toma 30 segundos con cualquier app de autenticación (Google Authenticator, Authy, etc.).</p>
+            </div>
+            <button onclick="startMfaEnroll()" class="shrink-0 bg-amber-500 hover:bg-amber-600 text-white text-xs font-black uppercase px-4 py-2 rounded-xl transition-colors">
+                Activar MFA
+            </button>
+        </div>
+
+        <!-- Modal MFA -->
+        <div id="mfa-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+            <div class="bg-white rounded-3xl shadow-2xl max-w-md w-full p-8">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-lg font-900 uppercase">Activar Doble Factor</h3>
+                    <button onclick="closeMfaModal()" class="text-gray-400 hover:text-gray-600">
+                        <span class="material-symbols-outlined">close</span>
+                    </button>
+                </div>
+                <div id="mfa-step-qr" class="">
+                    <p class="text-sm text-gray-600 mb-4">Escanea este código QR con tu app de autenticación:</p>
+                    <div id="mfa-qr" class="flex justify-center mb-4"></div>
+                    <p class="text-xs text-gray-500 mb-2 text-center">O ingresa este código manualmente:</p>
+                    <p id="mfa-secret" class="text-center font-mono text-sm bg-gray-50 rounded-xl px-4 py-2 mb-6 break-all"></p>
+                    <input id="mfa-totp-input" type="text" inputmode="numeric" maxlength="6" placeholder="Código de 6 dígitos"
+                        class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-center text-xl font-mono tracking-widest mb-4 focus:ring-2 focus:ring-[#fba931] outline-none">
+                    <button onclick="verifyMfa()" class="w-full bg-[#fba931] text-[#0f172a] font-900 uppercase text-sm py-3 rounded-xl hover:bg-yellow-400 transition-colors">
+                        Verificar y Activar
+                    </button>
+                    <p id="mfa-error" class="text-xs text-red-500 text-center mt-2 hidden"></p>
+                </div>
+            </div>
+        </div>
+
         <div class="grid md:grid-cols-3 gap-6">
             <!-- Módulo Forja -->
             <a href="admin-forja.html" id="mod-forja"
@@ -327,6 +363,7 @@
             initNavbar();
             loadDashboardStats();
             loadServerHealth();
+            checkMfaStatus();
         });
 
         async function loadServerHealth() {
@@ -424,6 +461,62 @@
             }
         }
 
+        // ── MFA / 2FA ─────────────────────────────────────────────────────
+        let _mfaFactorId = null;
+        let _mfaChallengeId = null;
+
+        async function checkMfaStatus() {
+            try {
+                const { data, error } = await supabaseClient.auth.mfa.listFactors();
+                if (error || !data) return;
+                const verified = data.totp?.filter(f => f.status === 'verified') ?? [];
+                if (verified.length === 0) {
+                    document.getElementById('mfa-banner').classList.remove('hidden');
+                }
+            } catch (_) {}
+        }
+
+        async function startMfaEnroll() {
+            document.getElementById('mfa-modal').classList.remove('hidden');
+            document.getElementById('mfa-error').classList.add('hidden');
+            document.getElementById('mfa-totp-input').value = '';
+            try {
+                const { data, error } = await supabaseClient.auth.mfa.enroll({ factorType: 'totp', issuer: 'PNL Biobío' });
+                if (error) throw error;
+                _mfaFactorId = data.id;
+                document.getElementById('mfa-secret').textContent = data.totp.secret;
+                const qrDiv = document.getElementById('mfa-qr');
+                qrDiv.innerHTML = `<img src="${data.totp.qr_code}" alt="QR MFA" style="width:180px;height:180px;border-radius:12px;">`;
+            } catch (err) {
+                document.getElementById('mfa-error').textContent = err.message;
+                document.getElementById('mfa-error').classList.remove('hidden');
+            }
+        }
+
+        async function verifyMfa() {
+            const code = document.getElementById('mfa-totp-input').value.trim();
+            const errEl = document.getElementById('mfa-error');
+            errEl.classList.add('hidden');
+            try {
+                const { data: ch, error: chErr } = await supabaseClient.auth.mfa.challenge({ factorId: _mfaFactorId });
+                if (chErr) throw chErr;
+                const { error: vErr } = await supabaseClient.auth.mfa.verify({ factorId: _mfaFactorId, challengeId: ch.id, code });
+                if (vErr) throw vErr;
+                closeMfaModal();
+                document.getElementById('mfa-banner').classList.add('hidden');
+                showToast('MFA activado correctamente. Tu cuenta está ahora protegida.', 'success');
+            } catch (err) {
+                errEl.textContent = err.message.includes('Invalid') ? 'Código incorrecto. Inténtalo de nuevo.' : err.message;
+                errEl.classList.remove('hidden');
+            }
+        }
+
+        function closeMfaModal() {
+            document.getElementById('mfa-modal').classList.add('hidden');
+            _mfaFactorId = null;
+        }
+        // ──────────────────────────────────────────────────────────────────
+
         async function sendPushNotification() {
             const title = document.getElementById('push-title').value.trim();
             const body = document.getElementById('push-body').value.trim();
@@ -443,26 +536,26 @@
                 const { data: { session } } = await supabaseClient.auth.getSession();
                 if (!session) throw new Error('Sesión no válida');
 
-                const response = await fetch('/.netlify/functions/send-push', {
+                const supabaseUrl = window.supabaseClient.supabaseUrl;
+                const response = await fetch(`${supabaseUrl}/functions/v1/send-push`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${session.access_token}`
                     },
-                    body: JSON.stringify({ title, body, url })
+                    body: JSON.stringify({ title, message: body, url })
                 });
 
                 const data = await response.json();
 
                 result.classList.remove('hidden');
-                if (data.success) {
-                    showToast(`✅ Despacho exitoso: ${data.sent} notificaciones enviadas.`, 'success');
-                    result.innerHTML = `<span class="text-green-600 uppercase tracking-widest">✅ Notificación enviada exitosamente a ${data.sent} dispositivos.</span>`;
-                    // Limpiar campos
+                if (response.ok && (data.sent !== undefined)) {
+                    showToast(`Despacho exitoso: ${data.sent} notificaciones enviadas.`, 'success');
+                    result.innerHTML = `<span class="text-green-600 uppercase tracking-widest">Notificación enviada a ${data.sent} dispositivos (${data.failed} fallidos).</span>`;
                     document.getElementById('push-title').value = '';
                     document.getElementById('push-body').value = '';
                 } else {
-                    result.innerHTML = `<span class="text-red-500 uppercase tracking-widest">❌ ERROR: ${data.error || 'Fallo en el servidor'}</span>`;
+                    result.innerHTML = `<span class="text-red-500 uppercase tracking-widest">ERROR: ${data.error || 'Fallo en el servidor'}</span>`;
                 }
             } catch (err) {
                 console.error("Error en Push:", err);
