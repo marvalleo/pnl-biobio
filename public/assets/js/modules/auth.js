@@ -48,6 +48,12 @@ export async function initNavbar() {
             if (profile) sessionStorage.setItem('pnl_profile', JSON.stringify(profile));
         }
 
+        // S-11: si el cambio de contraseña es obligatorio, forzar redirección desde cualquier página
+        if (profile?.must_change_password) {
+            window.location.href = 'forja-login.html?must_change=1';
+            return;
+        }
+
         const fullName = profile?.full_name || user.user_metadata?.full_name || user.email || 'Miembro';
         
         // Generación de iniciales mejorada

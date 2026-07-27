@@ -155,6 +155,28 @@
             }
         });
 
+        // S-11: si el usuario llega aquí desde otra página por must_change_password,
+        // esperar a que Supabase cargue y mostrar el modal de cambio obligatorio.
+        (async function checkMustChange() {
+            if (!new URLSearchParams(window.location.search).has('must_change')) return;
+            let tries = 0;
+            while (!window.isSupabaseInit && tries < 20) {
+                await new Promise(r => setTimeout(r, 250));
+                tries++;
+            }
+            if (!window.supabaseClient) return;
+            const { data: { user } } = await window.supabaseClient.auth.getUser();
+            if (!user) return;
+            const { data: profile } = await window.supabaseClient
+                .from('profiles')
+                .select('must_change_password, role')
+                .eq('auth_id', user.id)
+                .maybeSingle();
+            if (profile?.must_change_password) {
+                showPasswordChangeModal(user.id, profile.role);
+            }
+        })();
+
         // Mapeo de rutas por rol para redirección
         const ROLE_REDIRECTS = {
             'normal': 'forja-eventos.html',

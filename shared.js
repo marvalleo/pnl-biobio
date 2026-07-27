@@ -106,12 +106,18 @@ export async function verifyAdminAccess(allowedRoles = []) {
 
         const { data: profile, error: profErr } = await window.supabaseClient
             .from('profiles')
-            .select('role')
+            .select('role, must_change_password')
             .eq('auth_id', user.id)
             .maybeSingle();
 
         if (profErr) {
             console.error('[verifyAdminAccess] Error consultando rol:', profErr.message);
+            return { ok: false, role: null, user };
+        }
+
+        // S-11: bloquear acceso si la contraseña temporal no ha sido cambiada
+        if (profile?.must_change_password) {
+            window.location.href = 'forja-login.html?must_change=1';
             return { ok: false, role: null, user };
         }
 

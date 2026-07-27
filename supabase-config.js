@@ -60,9 +60,20 @@ async function startSupabase() {
         attempts++;
     }
 
+    // S-10: usar sessionStorage para los tokens de sesión.
+    // Los tokens no se persisten en disco entre reinicios del navegador,
+    // reduciendo la ventana de exposición si el equipo es comprometido.
+    const AUTH_OPTIONS = {
+        auth: {
+            storage: window.sessionStorage,
+            persistSession: true,
+            autoRefreshToken: true,
+        }
+    };
+
     if (typeof supabase !== 'undefined') {
         try {
-            window.supabaseClient = supabase.createClient(url, key);
+            window.supabaseClient = supabase.createClient(url, key, AUTH_OPTIONS);
             window.isSupabaseInit = true;
             console.log("✅ Supabase inicializado correctamente.");
             setupSessionManagement();
@@ -74,7 +85,7 @@ async function startSupabase() {
         console.warn("[Supabase] SDK no encontrado, intentando carga dinámica...");
         try {
             const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm');
-            window.supabaseClient = createClient(url, key);
+            window.supabaseClient = createClient(url, key, AUTH_OPTIONS);
             window.isSupabaseInit = true;
             console.log("✅ Supabase inicializado vía ESM.");
             setupSessionManagement();
