@@ -218,6 +218,19 @@ Proyecto Supabase: `pnl-BD` (`kjcwozzfzbizxurppxlf`). Sitio Netlify: `pnl-biobio
 - **Qué:** Panel superior en `forja-eventos.html` con saludo, rango + reputación, próximo evento, nº de inscripciones y accesos rápidos.
 - **Archivos:** `forja-eventos.html`.
 
+### Gamificación de la Forja
+- **Commit:** (esta tanda)
+- **Migración:** `supabase/migrations/20260727_gamification.sql` — añade `login_streak` + `last_activity_date` a `profiles`; crea `user_achievements` (UUID, profile_id FK, achievement_key, earned_at, UNIQUE por par) con RLS (SELECT/INSERT propio, SELECT admin).
+- **Qué:**
+  1. **Barra de nivel** — 5 rangos: Iniciado (0 pts) → Activista (100) → Militante (250) → Dirigente (500) → Fundador (1000+). Muestra nombre del rango actual, puntos restantes y porcentaje de progreso con barra animada.
+  2. **Racha de días** — Se registra `last_activity_date` en cada visita; si fue ayer, incrementa `login_streak`; si no, reinicia a 1. Badge dorado visible si racha ≥ 2 días.
+  3. **9 logros/insignias** — `bienvenido` (primera visita), `primer_evento` (inscripción a evento), `racha_7`, `racha_30`, `primer_curso` (primera lección completada), `forjador_bronce` (curso completo), `primer_diploma` (diploma descargado), `nivel_activista`, `nivel_militante`. Los ganados aparecen a color; los pendientes en gris desaturado.
+  4. **`forja-eventos.html`** — Dashboard rediseñado: barra de nivel + racha + grid de logros en el panel oscuro superior.
+  5. **`perfil.html`** — Nuevo panel "Mi Progreso en la Forja" antes del Centro de Privacidad: rango, racha, barra de nivel, grid completo de logros.
+  6. **`forja-player.html`** — `grantAchievementPlayer()` llamado en `toggleCompletion()` (primer_curso, forjador_bronce al completar todas) y en `generateCertificate()` (primer_diploma).
+- **Rollback DB:** `ALTER TABLE public.profiles DROP COLUMN IF EXISTS login_streak, DROP COLUMN IF EXISTS last_activity_date; DROP TABLE IF EXISTS public.user_achievements;`
+- **Rollback frontend:** `git revert <commit>`.
+
 ---
 
 ## 🧰 Objetos creados en la base de datos (referencia rápida)

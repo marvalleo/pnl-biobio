@@ -77,6 +77,23 @@
             </div>
         </div>
 
+        <!-- Panel de Gamificación: rango, racha y logros -->
+        <div class="bg-white rounded-3xl p-8 shadow-sm border border-gray-100 mb-8" id="gamification-panel">
+            <h2 class="text-xl font-900 uppercase flex items-center gap-3 mb-6 border-b border-gray-50 pb-4">
+                <span class="material-symbols-outlined text-[#fba931]">military_tech</span>
+                Mi Progreso en la Forja
+            </h2>
+            <div id="gamification-content" class="animate-pulse">
+                <div class="h-6 bg-gray-100 rounded-xl w-1/3 mb-4"></div>
+                <div class="h-3 bg-gray-100 rounded-full w-full mb-6"></div>
+                <div class="flex gap-4 flex-wrap">
+                    <div class="w-14 h-14 bg-gray-100 rounded-full"></div>
+                    <div class="w-14 h-14 bg-gray-100 rounded-full"></div>
+                    <div class="w-14 h-14 bg-gray-100 rounded-full"></div>
+                </div>
+            </div>
+        </div>
+
         <!-- Panel de Privacidad y Seguridad (Ley 21.719) -->
         <div class="bg-white rounded-3xl p-8 shadow-sm border border-gray-100 mb-8">
             <h2 class="text-xl font-900 uppercase flex items-center gap-3 mb-6 border-b border-gray-50 pb-4">
@@ -214,11 +231,102 @@
                     avatarEl.innerText = initials;
                 }
 
+                // Cargar sección de gamificación
+                renderGamification(profile);
+
             } catch (err) {
                 console.error("Error cargando perfil:", err);
                 window.showToast?.('Error al cargar información del perfil', 'error');
             }
         });
+
+        // ─── GAMIFICACIÓN (perfil.html) ──────────────────────────────────────────
+        const RANKS_P = [
+            { name: 'Iniciado',   min: 0    },
+            { name: 'Activista',  min: 100  },
+            { name: 'Militante',  min: 250  },
+            { name: 'Dirigente',  min: 500  },
+            { name: 'Fundador',   min: 1000 },
+        ];
+        const ACHIEVEMENT_DEFS_P = {
+            bienvenido:       { icon: '🎉', name: 'Primer Paso',      desc: 'Primera visita a la Forja' },
+            primer_evento:    { icon: '📅', name: 'Comprometido',     desc: 'Inscripción en tu primer evento' },
+            racha_7:          { icon: '🔥', name: 'En Racha',         desc: '7 días seguidos en la plataforma' },
+            racha_30:         { icon: '⚡', name: 'Imparable',        desc: '30 días seguidos en la plataforma' },
+            primer_curso:     { icon: '📖', name: 'Aprendiz',         desc: 'Primera lección completada' },
+            forjador_bronce:  { icon: '🏅', name: 'Forjador',         desc: 'Curso completo terminado' },
+            primer_diploma:   { icon: '🎓', name: 'Graduado',         desc: 'Primer diploma descargado' },
+            nivel_activista:  { icon: '🌟', name: 'Activista',        desc: 'Rango Activista alcanzado' },
+            nivel_militante:  { icon: '⭐', name: 'Militante',        desc: 'Rango Militante alcanzado' },
+        };
+
+        async function renderGamification(profile) {
+            const el = document.getElementById('gamification-content');
+            if (!el || !profile) return;
+
+            const rep = profile.reputation_score || 0;
+            const streak = profile.login_streak || 0;
+
+            // Calcular rango actual y progreso
+            let currentRank = RANKS_P[0], nextRank = RANKS_P[1];
+            for (let i = RANKS_P.length - 1; i >= 0; i--) {
+                if (rep >= RANKS_P[i].min) {
+                    currentRank = RANKS_P[i];
+                    nextRank = RANKS_P[i + 1] || null;
+                    break;
+                }
+            }
+            const pct = nextRank
+                ? Math.min(100, Math.round(((rep - currentRank.min) / (nextRank.min - currentRank.min)) * 100))
+                : 100;
+            const ptsNeeded = nextRank ? nextRank.min - rep : 0;
+
+            // Cargar logros
+            let earned = new Set();
+            try {
+                const { data: achievs } = await supabaseClient.from('user_achievements')
+                    .select('achievement_key').eq('profile_id', profile.id);
+                earned = new Set((achievs || []).map(a => a.achievement_key));
+            } catch (_) { }
+
+            const earnedCount = earned.size;
+            const totalCount = Object.keys(ACHIEVEMENT_DEFS_P).length;
+
+            const allKeys = Object.keys(ACHIEVEMENT_DEFS_P);
+            const sortedKeys = [...allKeys].sort((a, b) => (earned.has(b) ? 1 : 0) - (earned.has(a) ? 1 : 0));
+
+            const badgesHTML = sortedKeys.map(key => {
+                const def = ACHIEVEMENT_DEFS_P[key];
+                const isEarned = earned.has(key);
+                return `<div title="${def.name}: ${def.desc}"
+                             class="flex flex-col items-center gap-1.5 ${isEarned ? '' : 'opacity-25 grayscale'} transition-all cursor-default select-none group">
+                    <div class="w-14 h-14 rounded-full flex items-center justify-center text-2xl
+                                ${isEarned ? 'bg-[#fba931]/10 border-2 border-[#fba931]/40 shadow-md' : 'bg-gray-50 border-2 border-gray-200'}">
+                        ${def.icon}
+                    </div>
+                    <span class="text-[9px] font-black uppercase tracking-wide text-center leading-tight max-w-[60px] text-gray-600">${def.name}</span>
+                </div>`;
+            }).join('');
+
+            el.innerHTML = `
+                <div class="flex flex-wrap items-center gap-4 mb-6">
+                    <span class="px-4 py-1.5 rounded-full bg-[#0f172a] text-[#fba931] text-[11px] font-black uppercase tracking-widest">${profile.rank || currentRank.name}</span>
+                    <span class="text-sm font-bold text-gray-600">${rep} pts de reputación</span>
+                    ${streak >= 2 ? `<span class="flex items-center gap-1.5 px-3 py-1 rounded-full bg-orange-50 border border-orange-200 text-orange-600 text-[11px] font-black uppercase">🔥 Racha ${streak} días</span>` : ''}
+                    <span class="text-[11px] font-bold text-gray-400 ml-auto">${earnedCount}/${totalCount} logros</span>
+                </div>
+                ${nextRank ? `
+                <div class="mb-6">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-[10px] font-black uppercase tracking-widest text-gray-500">Progreso hacia ${nextRank.name}</span>
+                        <span class="text-[10px] font-black text-[#fba931]">${ptsNeeded} pts restantes · ${pct}%</span>
+                    </div>
+                    <div class="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden">
+                        <div class="bg-[#fba931] h-full rounded-full transition-all duration-1000" style="width:${pct}%"></div>
+                    </div>
+                </div>` : `<p class="text-[11px] font-black uppercase text-[#fba931] tracking-widest mb-6">🏆 Rango máximo alcanzado</p>`}
+                <div class="flex flex-wrap gap-5">${badgesHTML}</div>`;
+        }
 
         // ==========================================
         // FUNCIONES DE DERECHOS ARCO+ (LEY 21.719)

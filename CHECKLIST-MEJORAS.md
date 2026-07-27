@@ -56,7 +56,7 @@ Estado vivo del trabajo de seguridad, UX/UI y engagement.
 - [x] **Dashboard de bienvenida del militante** (saludo, rango + reputación, próximo evento, inscripciones, accesos rápidos).
 
 ### Pendiente
-- [ ] **Gamificar la Forja** — barra de progreso de nivel, insignias/logros, rachas, certificados descargables.
+- [x] **Gamificar la Forja** — barra de progreso de nivel (Iniciado→Fundador con pts restantes), racha de días consecutivos, 9 logros/insignias (bienvenido, primer_evento, racha_7, racha_30, primer_curso, forjador_bronce, primer_diploma, nivel_activista, nivel_militante). Tabla `user_achievements` con RLS en DB. Mostrado en dashboard de `forja-eventos.html` y en panel "Mi Progreso" de `perfil.html`. Los diplomas ya existentes en `forja-player.html` otorgan logro `primer_diploma` automáticamente al descargar.
 - [x] **Notificaciones push de eventos y votaciones** — Edge Function `send-push` desplegada (VAPID nativo Deno, cifrado AES-GCM, limpieza automática de endpoints expirados). Botón de notificación en `admin-anuncios.html` y `admin-votos.html`. Tabla `push_notifications_log` creada y con RLS. **⚠️ Requiere paso manual:** configurar `VAPID_PRIVATE_KEY` y `VAPID_EMAIL` en Supabase Dashboard → Settings → Edge Functions → Secrets.
 - [ ] **Resumen semanal por correo** ("lo más comentado", "vota antes del viernes").
 - [x] **Prueba social en la portada** — sección "3.400+ afiliados · Sede Regional · 100% democracia interna" entre directiva y actividades.

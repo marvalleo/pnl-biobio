@@ -775,11 +775,23 @@
                         await supabaseClient.from('user_progress').insert([{ profile_id: profileId, lesson_id: lesson.id, is_completed: true }]);
                     }
                     completedLessonIds.add(lesson.id);
+                    // Logros por completar lecciones
+                    await grantAchievementPlayer(profileId, 'primer_curso');
+                    // Si completó todas las lecciones del curso → logro forjador_bronce
+                    if (completedLessonIds.size === currentLessons.length && currentLessons.length > 0) {
+                        await grantAchievementPlayer(profileId, 'forjador_bronce');
+                    }
                 }
                 updateButtonUI(!isCompleted);
                 await updateProgress();
                 renderLessons();
             } catch (err) { console.error(err); }
+        }
+
+        async function grantAchievementPlayer(profileId, key) {
+            try {
+                await supabaseClient.from('user_achievements').insert({ profile_id: profileId, achievement_key: key });
+            } catch (_) { /* UNIQUE constraint — ya ganado */ }
         }
 
         function openMap() {
@@ -853,6 +865,8 @@
                 pdf.save(`DIPLOMA-PNL-${studentName.replace(/\s+/g, '-')}.pdf`);
 
                 showToast("¡Diploma descargado! Felicitaciones.", "success");
+                // Logro: primer diploma
+                await grantAchievementPlayer(profileId, 'primer_diploma');
             } catch (err) {
                 console.error("Error PDF:", err);
                 showToast("Error al generar el PDF.", "error");
