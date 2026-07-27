@@ -6,7 +6,6 @@ module.exports = {
         "./public/**/*.js",
         "./shared.js"
     ],
-    darkMode: 'media',
     theme: {
         extend: {
             fontFamily: {
