@@ -135,13 +135,6 @@ export async function verifyAdminAccess(allowedRoles = []) {
 }
 window.verifyAdminAccess = verifyAdminAccess;
 
-// Función para reiniciar el Wizard voluntariamente
-window.restartWizard = () => {
-    localStorage.removeItem('pnl_wizard_done');
-    const wizard = new PNLWizard();
-    wizard.start();
-};
-
 // Instanciar Push Manager (disponible globalmente para auth.js y el toggle)
 const pushManager = new PushNotificationManager();
 window.pushManager = pushManager;
@@ -288,8 +281,8 @@ function pnlInit() {
     checkAndShowAnnouncements();
     setupPushNotifications();
 
-    // Wizard: botón de ayuda flotante + guía opcional (reactivado).
-    // Para desactivarlo, comenta las dos líneas del wizard.
+    // Centro de ayuda: botón flotante con tips contextuales y accesos rápidos.
+    // Para desactivarlo, comenta las dos líneas siguientes.
     const wizard = new PNLWizard();
     wizard.start();
 
