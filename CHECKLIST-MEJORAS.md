@@ -26,9 +26,9 @@ Estado vivo del trabajo de seguridad, UX/UI y engagement.
 - [x] **MFA / 2FA** para cuentas administrativas — banner en admin-dashboard muestra aviso si no está activo; flujo completo de enroll TOTP integrado en el panel.
 - [~] **`check_email_exists`** — *riesgo aceptado y documentado*: es necesaria para la activación de cuenta (usuarios anónimos). Mitigación futura opcional (rate-limit).
 - [ ] **Protección de contraseñas filtradas** en Supabase Auth (HaveIBeenPwned) — requiere plan Pro.
-- [ ] **S-09** — Rate-limit de la edge function usa memoria (no compartida entre instancias) — usar store distribuido.
-- [ ] **S-10** — Tokens de sesión en `localStorage` — evaluar cookies `httpOnly` (depende de S-07).
-- [ ] **S-11** — Forzar cambio de contraseña obligatorio también en el servidor (hoy es solo cliente).
+- [x] **S-09** — Rate-limit ya era distribuido: `contact-email` usa la tabla `contact_rate_limit` en DB (no memoria compartida entre instancias). Resuelto sin cambios de código.
+- [x] **S-10** — Tokens de sesión movidos a `sessionStorage` (no persisten en disco entre reinicios del navegador). Implementado en `supabase-config.js` con `auth.storage = window.sessionStorage`. Tradeoff: el usuario debe volver a iniciar sesión al abrir una nueva pestaña/reiniciar el navegador.
+- [x] **S-11** — Cambio de contraseña forzado en toda la app (defensa en profundidad): `verifyAdminAccess()` redirige si `must_change_password = true`; `initNavbar()` hace lo mismo desde cualquier página; `forja-login.html` detecta el redireccionamiento y muestra el modal sin requerir nuevo login.
 
 ---
 

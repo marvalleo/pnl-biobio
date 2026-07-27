@@ -83,6 +83,26 @@ Proyecto Supabase: `pnl-BD` (`kjcwozzfzbizxurppxlf`). Sitio Netlify: `pnl-biobio
 
 ## 🎨 UX / UI
 
+### S-09 — Rate-limit ya distribuido (sin cambios de código)
+- **Commit:** (ninguno — solo documentación)
+- **Qué:** El checklist marcaba el rate-limit como "en memoria". Revisión del código confirmó que `contact-email` versión 5 ya usa la tabla `contact_rate_limit` en Postgres (no un `Map` en memoria). Es distribuida por naturaleza: todas las instancias de Deno consultan la misma tabla. Se cierra el ítem sin modificaciones.
+
+### S-10 — Tokens de sesión en sessionStorage
+- **Commit:** `4af30a9`
+- **Qué:** `supabase-config.js` pasa `{ auth: { storage: window.sessionStorage, persistSession: true, autoRefreshToken: true } }` a `createClient`. Los JWT ya no se escriben en `localStorage` (archivo en disco), sino en `sessionStorage` (solo en memoria del tab). Un atacante que robe el archivo `localStorage` del disco no obtendrá tokens válidos.
+- **Tradeoff:** El usuario debe volver a iniciar sesión al reiniciar el navegador o abrir una nueva pestaña. Para un intranet partidario esta es la opción correcta.
+- **Archivos:** `supabase-config.js`.
+- **Rollback:** en `supabase-config.js` quitar el bloque `AUTH_OPTIONS` y reemplazar por `supabase.createClient(url, key)` sin opciones.
+
+### S-11 — Forzar cambio de contraseña en toda la app
+- **Commit:** `4af30a9`
+- **Qué:** Antes solo `forja-login.html` verificaba `must_change_password` — un usuario que navega directamente a otra URL podía saltar el modal. Ahora:
+  1. `shared.js` `verifyAdminAccess()`: selecciona `must_change_password` desde `profiles`; si es `true`, redirige a `forja-login.html?must_change=1` y devuelve `ok: false` antes de mostrar el panel.
+  2. `public/assets/js/modules/auth.js` `initNavbar()`: después de cargar el perfil, si `must_change_password = true`, redirige. Esto cubre TODAS las páginas que incluyen `shared.js`.
+  3. `forja-login.html`: detecta `?must_change=1` en la URL, espera a que Supabase cargue, consulta el perfil desde la DB y muestra el modal de cambio sin pedir login de nuevo.
+- **Archivos:** `shared.js`, `public/assets/js/modules/auth.js`, `forja-login.html`.
+- **Rollback:** `git revert 4af30a9` (partial — ese commit también tiene S-09/S-10; se puede revertir manualmente quitando los tres bloques de código).
+
 ### MFA / Doble Factor para admins
 - **Commit:** `10555f3`
 - **Qué:** Al cargar `admin-dashboard.html`, se llama `supabaseClient.auth.mfa.listFactors()`. Si el admin no tiene ningún factor TOTP verificado, aparece un banner ámbar con botón "Activar MFA". El flujo completo (enroll → QR code + clave manual → campo de código → verify) ocurre dentro del dashboard sin redirigir. Una vez verificado el código, el banner desaparece y se muestra toast de confirmación. Usa la API nativa `supabase.auth.mfa.*` de supabase-js v2.
