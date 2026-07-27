@@ -36,3 +36,4 @@ admin-backup-scripts/
 
 # Local Netlify folder
 .netlify
+.code-graph/
