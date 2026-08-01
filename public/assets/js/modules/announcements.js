@@ -22,12 +22,12 @@ export function showImpactModal(config) {
     // Renderizado de bloque de imagen con log de depuración y fallback
     const imageBlock = image_url ? `
         <div class="relative w-full overflow-hidden bg-slate-50 flex items-center justify-center group" id="impact-modal-img-container">
-            <img src="${image_url}" 
+            <!-- Sin handlers inline: sanitizeHTML() (DOMPurify) elimina onclick/onload/onerror.
+                 Se enlazan con addEventListener despues de insertar el modal en el DOM. -->
+            <img src="${image_url}"
                  id="impact-modal-img"
-                 class="w-full h-auto max-h-[60vh] object-contain transition-all duration-700 opacity-0 cursor-zoom-in group-hover:scale-[1.01]" 
-                 onclick="openImageZoom('${image_url}')"
-                 onload="this.classList.remove('opacity-0');"
-                 onerror="handleModalImageError(this, '${image_url}')">
+                 class="w-full h-auto max-h-[60vh] object-contain transition-all duration-700 opacity-0 cursor-zoom-in group-hover:scale-[1.01]"
+                 alt="Imagen del anuncio">
             <div class="absolute inset-0 bg-gradient-to-t from-[#0f172a]/10 via-transparent to-transparent pointer-events-none"></div>
             
             <!-- Indicador de Zoom -->
@@ -70,8 +70,8 @@ export function showImpactModal(config) {
                 ${(config.contact_email || config.contact_whatsapp) ? `
                 <div class="flex flex-wrap items-center justify-center gap-4 border-t border-gray-100 pt-6 w-full mt-2">
                     ${config.contact_email ? `
-                    <button class="flex items-center gap-3 bg-slate-50 border border-slate-100 px-4 py-2 rounded-xl text-left hover:bg-slate-100 transition-colors active:scale-95 group" 
-                         onclick="copyToClipboard('${config.contact_email}', this)"
+                    <button type="button" id="impact-modal-copy-email"
+                         class="flex items-center gap-3 bg-slate-50 border border-slate-100 px-4 py-2 rounded-xl text-left hover:bg-slate-100 transition-colors active:scale-95 group"
                          title="Clic para copiar">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" class="text-gray-400 shrink-0 group-hover:text-[#fba931] transition-colors" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
                         <div>
@@ -88,7 +88,7 @@ export function showImpactModal(config) {
                     </a>` : ''}
                 </div>` : ''}
                 
-                <button onclick="closeImpactModal('${id}', true)" 
+                <button type="button" id="impact-modal-never-again"
                         class="text-[9px] font-black uppercase tracking-widest text-gray-300 hover:text-red-400 transition-colors">
                     No volver a ver este anuncio
                 </button>
@@ -131,19 +131,36 @@ export function showImpactModal(config) {
     };
     window.addEventListener('keydown', contactEscHandler);
 
-    // Ocultar loader si hay imagen
+    // Acciones del modal. sanitizeHTML() (DOMPurify) elimina cualquier handler
+    // inline del string, asi que todo se enlaza aca, ya con el modal en el DOM.
+    const neverAgainBtn = modal.querySelector('#impact-modal-never-again');
+    if (neverAgainBtn) {
+        neverAgainBtn.addEventListener('click', () => closeImpactModal(id, true));
+    }
+
+    const copyEmailBtn = modal.querySelector('#impact-modal-copy-email');
+    if (copyEmailBtn && config.contact_email) {
+        copyEmailBtn.addEventListener('click', () => copyToClipboard(config.contact_email, copyEmailBtn));
+    }
+
+    // Imagen: zoom al hacer clic, ocultar loader al cargar y fallback si falla
     if (image_url) {
-        const img = document.getElementById('impact-modal-img');
-        const loader = document.getElementById('img-loader');
+        const img = modal.querySelector('#impact-modal-img');
+        const loader = modal.querySelector('#img-loader');
         if (img) {
-            if (img.complete) {
+            const mostrarImagen = () => {
                 loader?.remove();
                 img.classList.remove('opacity-0');
-            } else {
-                img.onload = () => {
-                    loader?.remove();
-                    img.classList.remove('opacity-0');
-                };
+            };
+
+            img.addEventListener('click', () => openImageZoom(image_url));
+            img.addEventListener('load', mostrarImagen);
+            img.addEventListener('error', () => handleModalImageError(img, image_url));
+
+            // Si la imagen venia de cache los eventos ya ocurrieron: resolver a mano.
+            if (img.complete) {
+                if (img.naturalWidth > 0) mostrarImagen();
+                else handleModalImageError(img, image_url);
             }
         }
     }
@@ -233,15 +250,15 @@ export function openImageZoom(url) {
     document.body.appendChild(overlay);
     document.body.style.overflow = 'hidden';
 
-    // Animación de entrada
+    // Animación de entrada. La opacidad se maneja por estilo inline porque asi se
+    // declaro el overlay: alternar una clase de opacidad no tiene efecto, el estilo
+    // inline tiene mayor precedencia y el zoom nunca llegaba a verse.
     requestAnimationFrame(() => {
-        overlay.classList.remove('opacity-0');
-        overlay.firstElementChild.classList.remove('scale-95');
+        overlay.style.opacity = '1';
     });
 
     const close = () => {
-        overlay.classList.add('opacity-0');
-        overlay.firstElementChild.classList.add('scale-95');
+        overlay.style.opacity = '0';
         setTimeout(() => {
             overlay.remove();
             document.body.style.overflow = '';
@@ -292,24 +309,16 @@ export function closeImpactModal(id, permanent = false) {
         modal.style.transform = 'translateY(50px)';
         overlay.style.opacity = '0';
 
-        if (id) {
-            if (permanent) {
-                // Registrar permanentemente
-                const viewed = JSON.parse(localStorage.getItem('pnl_viewed_announcements') || '[]');
-                if (!viewed.includes(id)) {
-                    viewed.push(id);
-                    localStorage.setItem('pnl_viewed_announcements', JSON.stringify(viewed));
-                }
-                console.log("PNL Biobío: Anuncio descartado permanentemente.");
-            } else {
-                // Registrar solo para la sesión actual
-                const sessionDismissed = JSON.parse(sessionStorage.getItem('pnl_session_dismissed') || '[]');
-                if (!sessionDismissed.includes(id)) {
-                    sessionDismissed.push(id);
-                    sessionStorage.setItem('pnl_session_dismissed', JSON.stringify(sessionDismissed));
-                }
-                console.log("PNL Biobío: Anuncio cerrado por ahora (sesión).");
+        // Cerrar el anuncio (X, Escape o clic en el fondo) NO lo silencia: vuelve a
+        // mostrarse en la siguiente carga. Lo unico que lo oculta de forma definitiva
+        // es que el usuario pida expresamente "No volver a ver este anuncio".
+        if (id && permanent) {
+            const viewed = JSON.parse(localStorage.getItem('pnl_viewed_announcements') || '[]');
+            if (!viewed.includes(id)) {
+                viewed.push(id);
+                localStorage.setItem('pnl_viewed_announcements', JSON.stringify(viewed));
             }
+            console.log("PNL Biobío: Anuncio descartado permanentemente.");
         }
 
         setTimeout(() => overlay.remove(), 500);
@@ -353,13 +362,6 @@ export async function checkAndShowAnnouncements() {
         const viewed = JSON.parse(localStorage.getItem('pnl_viewed_announcements') || '[]');
         if (viewed.includes(announcement.id) && !isTestMode) {
             console.log("PNL Biobío: El usuario ya vio este anuncio (Permanente). No se muestra.");
-            return;
-        }
-
-        // Comprobar si se cerró en esta sesión
-        const sessionDismissed = JSON.parse(sessionStorage.getItem('pnl_session_dismissed') || '[]');
-        if (sessionDismissed.includes(announcement.id) && !isTestMode) {
-            console.log("PNL Biobío: El anuncio fue cerrado en esta sesión. No se muestra.");
             return;
         }
 
