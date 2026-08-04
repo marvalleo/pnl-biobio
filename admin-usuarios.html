@@ -137,6 +137,15 @@
                 <span class="text-[11px] font-black uppercase text-gray-600">Pendientes de Registro:</span>
                 <span id="stats-pending" class="text-2xl font-900 text-orange-600 italic">0</span>
             </div>
+            <!-- Progreso de carga por lotes. Se muestra solo mientras se trae el padrón.
+                 display se maneja por estilo inline: 'hidden' y 'flex' son ambas
+                 utilidades de display y el resultado dependeria del orden del CSS. -->
+            <div id="load-progress" style="display:none"
+                class="bg-white px-6 py-4 rounded-2xl border border-gray-100 shadow-sm items-center gap-3 border-l-4 border-[#fba931]">
+                <span class="material-symbols-outlined text-[#fba931] animate-spin text-lg">progress_activity</span>
+                <span id="load-progress-text" class="text-[11px] font-black uppercase text-gray-600">Cargando
+                    padrón…</span>
+            </div>
         </div>
 
         <div class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
@@ -395,17 +404,74 @@
             loadUsers();
         });
 
+        // PostgREST corta cada respuesta en `max_rows` (1.000 por defecto en Supabase),
+        // así que el padrón se trae por lotes con .range() hasta agotarlo. El buscador,
+        // el orden y la paginación de la tabla siguen operando del lado del cliente
+        // sobre allUsers, por lo que funcionan igual sobre el padrón completo.
+        const BATCH_SIZE = 1000;
+        const MAX_BATCHES = 100; // tope de seguridad: 100.000 militantes
+
+        function setLoadProgress(texto) {
+            const chip = document.getElementById('load-progress');
+            const label = document.getElementById('load-progress-text');
+            if (!chip || !label) return;
+            chip.style.display = texto === null ? 'none' : 'flex';
+            if (texto !== null) label.textContent = texto;
+        }
+
         async function loadUsers() {
-            console.log("🚀 Cargando padrón completo...");
+            console.log("🚀 Cargando padrón completo por lotes...");
+            setLoadProgress('Cargando padrón…');
+            tableBody.innerHTML = '<tr><td colspan="5" class="px-6 py-10 text-center text-gray-600 italic">Cargando padrón…</td></tr>';
 
-            // S-02: el padrón con PII se obtiene vía RPC SECURITY DEFINER gated a
-            // super_admin/admin_usuarios (el acceso directo a columnas sensibles
-            // de profiles está restringido para el rol authenticated).
-            const { data, error } = await supabaseClient.rpc('admin_list_profiles');
+            const acumulado = [];
+            const idsVistos = new Set();
+            let desde = 0;
+            let lotes = 0;
+            let errorDeLote = null;
+            let topeAlcanzado = false;
 
-            if (error) {
-                console.error("Error cargando padrón:", error);
-                if (window.showToast) showToast('No se pudo cargar el padrón: ' + error.message, 'error');
+            while (true) {
+                if (lotes >= MAX_BATCHES) { topeAlcanzado = true; break; }
+
+                // S-02: el padrón con PII se obtiene vía RPC SECURITY DEFINER gated a
+                // super_admin/admin_usuarios (el acceso directo a columnas sensibles
+                // de profiles está restringido para el rol authenticated).
+                const { data, error } = await supabaseClient
+                    .rpc('admin_list_profiles')
+                    .range(desde, desde + BATCH_SIZE - 1);
+
+                if (error) { errorDeLote = error; break; }
+
+                const filas = data || [];
+
+                // Dedupe por id: si el orden del servidor no fuese totalmente estable,
+                // un mismo militante podría venir repetido en dos lotes.
+                for (const fila of filas) {
+                    if (fila && !idsVistos.has(fila.id)) {
+                        idsVistos.add(fila.id);
+                        acumulado.push(fila);
+                    }
+                }
+
+                lotes++;
+                desde += BATCH_SIZE;
+
+                // Render progresivo: el primer lote ya es usable sin esperar el resto.
+                allUsers = acumulado;
+                aplicarFiltroActual();
+                updateStats();
+                applySortingAndRendering();
+                setLoadProgress(`Cargando padrón… ${acumulado.length.toLocaleString()}`);
+
+                if (filas.length < BATCH_SIZE) break; // último lote: vino incompleto
+            }
+
+            setLoadProgress(null);
+
+            if (errorDeLote && acumulado.length === 0) {
+                console.error("Error cargando padrón:", errorDeLote);
+                if (window.showToast) showToast('No se pudo cargar el padrón: ' + errorDeLote.message, 'error');
                 allUsers = [];
                 filteredUsers = [];
                 updateStats();
@@ -413,11 +479,20 @@
                 return;
             }
 
-            allUsers = data || [];
-            filteredUsers = [...allUsers];
+            allUsers = acumulado;
+            aplicarFiltroActual();
             updateStats();
             applySortingAndRendering();
-            console.log("✅ Total cargado:", allUsers.length);
+
+            // Nunca truncar en silencio: si la carga quedó incompleta, hay que decirlo.
+            if (errorDeLote) {
+                console.error("Padrón cargado parcialmente:", errorDeLote);
+                if (window.showToast) showToast(`Padrón incompleto: se cargaron ${allUsers.length} militantes y la carga se cortó (${errorDeLote.message}).`, 'error');
+            } else if (topeAlcanzado) {
+                if (window.showToast) showToast(`Se alcanzó el tope de carga (${allUsers.length} militantes). Puede haber registros sin mostrar.`, 'error');
+            }
+
+            console.log(`✅ Total cargado: ${allUsers.length} en ${lotes} lote(s)`);
         }
 
         function updateStats() {
@@ -591,13 +666,24 @@
             container.appendChild(nextBtn);
         }
 
-        function filterUsers() {
-            const q = document.getElementById('search-input').value.toLowerCase();
+        // Recalcula filteredUsers según el buscador SIN resetear la página actual, para
+        // poder reaplicarlo tras cada lote sin sacarle la vista de encima al admin.
+        function aplicarFiltroActual() {
+            const q = (document.getElementById('search-input')?.value || '').trim().toLowerCase();
+            if (!q) {
+                filteredUsers = [...allUsers];
+                return;
+            }
+            // Campos opcionales: un perfil importado puede traer nombre o correo vacíos.
             filteredUsers = allUsers.filter(u =>
-                u.full_name.toLowerCase().includes(q) ||
-                u.email.toLowerCase().includes(q) ||
-                (u.rut && u.rut.toLowerCase().includes(q))
+                (u.full_name || '').toLowerCase().includes(q) ||
+                (u.email || '').toLowerCase().includes(q) ||
+                (u.rut || '').toLowerCase().includes(q)
             );
+        }
+
+        function filterUsers() {
+            aplicarFiltroActual();
             currentPage = 1;
             applySortingAndRendering();
         }
