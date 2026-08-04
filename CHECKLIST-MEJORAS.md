@@ -2,7 +2,7 @@
 
 Estado vivo del trabajo de seguridad, UX/UI y engagement.
 `[x]` = hecho y desplegado en producción · `[ ]` = pendiente.
-Última actualización: 2026-07-24.
+Última actualización: 2026-08-04.
 
 ---
 
@@ -39,13 +39,15 @@ Estado vivo del trabajo de seguridad, UX/UI y engagement.
 - [x] **Correos** — conteo real de destinatarios en la confirmación, borradores automáticos, "Restaurar plantilla", validación de vacío, log de errores en modal.
 - [x] **Portada** — zoom rehabilitado (accesibilidad), login "fantasma" eliminado, `<title>` único, `canonical`/OG al dominio real, `robots.txt` + `sitemap.xml`.
 - [x] **Rendimiento** — `loading="lazy"` en imágenes (carga diferida).
-- [x] **Wizard de bienvenida reactivado** (botón de ayuda flotante + guía opcional).
+- [x] **Centro de ayuda** (FAB + panel con tips contextuales por página y accesos a Soporte/Academia). El tour guiado paso a paso se eliminó el 2026-08-04: estaba acoplado a selectores del markup y sus tres controles estaban rotos.
 - [x] **Accesibilidad** — foco de teclado visible (`:focus-visible`) + `aria-label` automático en botones-ícono.
 
 - [x] **Contraste y tamaños de fuente** — auditoría WCAG AA completada: `text-gray-400` → `text-gray-600` (308 casos, de 2.85:1 a 5.74:1), `text-[9/10px]` → `text-[11px]` (391 casos). Hover/focus sin tocar.
 - [x] **Unificar el sistema de diseño** — `tailwind.config.js` reescrito con fuentes y colores PNL; `input.css` con CSS vars + Playfair Display (Google Fonts) + Roboto; reemplazado `Sentient-Regular` por `Playfair Display` en `index.html` y `recursos.html`.
 - [x] **Rendimiento (imágenes a WebP)** — 19 imágenes convertidas (ahorro 14 %–96 %), refs actualizadas en 17 HTML + `sw.js`.
-- [x] **Modo oscuro** — `@media (prefers-color-scheme: dark)` completo en `input.css`: body, tarjetas, inputs, nav, tablas, modals, editor Quill.
+- [~] **Modo oscuro** — *implementado y luego revertido (2026-08-04)*. Aplicaba overrides genéricos con `!important` sobre clases de Tailwind, así que el resultado dependía de qué clases usara cada componente y quedaba inconsistente entre pantallas. El sitio es solo modo claro. Si se retoma, hacerlo con tokens de diseño y clases `dark:` explícitas, no con overrides globales.
+- [x] **Padrón completo en el admin de usuarios** — el listado mostraba solo los primeros 1.000 militantes por el `max_rows` de PostgREST. Ahora se trae por lotes de 1.000 con `.range()` y render progresivo; buscador, orden y paginación operan sobre el padrón completo. Requirió orden estable en `admin_list_profiles()` (desempate por `id`) para que la paginación por `OFFSET` no saltee registros.
+- [x] **`out.css` regenerado** — llevaba sin compilar desde marzo y faltaban clases de los componentes nuevos, lo que dejaba overlays interceptando clics sobre los botones de la portada. ⚠️ Se genera a mano: regenerar tras tocar `input.css`, `tailwind.config.js` o agregar clases nuevas.
 
 ---
 

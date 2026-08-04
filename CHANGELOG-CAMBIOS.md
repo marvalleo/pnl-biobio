@@ -130,11 +130,11 @@ Proyecto Supabase: `pnl-BD` (`kjcwozzfzbizxurppxlf`). Sitio Netlify: `pnl-biobio
 - **Archivos:** `tailwind.config.js`, `input.css`, `index.html`, `recursos.html`.
 - **Rollback:** `git revert <commit>` (restaura el `tailwind.config.js` y `input.css` anteriores; los títulos vuelven a caer en serif genérico).
 
-### Modo oscuro
-- **Commit:** (esta tanda)
-- **Qué:** Bloque `@media (prefers-color-scheme: dark)` completo en `input.css`. Cubre: `body`, `.bg-white` → `#1e293b`, `.bg-gray-50` / `.bg-gray-100` → colores oscuros, textos, bordes, inputs, sombras, nav, modals, tablas, editor Quill. Respeta la preferencia del sistema operativo sin botón manual.
-- **Archivos:** `input.css` (mismo commit que la unificación de diseño).
-- **Rollback:** quitar el bloque `@media (prefers-color-scheme: dark)` de `input.css` y reconstruir.
+### Modo oscuro — ⚠️ REVERTIDO (ya no está en producción)
+- **Commit original:** `5771435` · **Commit que lo elimina:** `fc78bd4` (2026-08-04).
+- **Qué era:** Bloque `@media (prefers-color-scheme: dark)` completo en `input.css`. Cubría `body`, `.bg-white` → `#1e293b`, `.bg-gray-50` / `.bg-gray-100`, textos, bordes, inputs, sombras, nav, modals, tablas y editor Quill, siguiendo la preferencia del sistema operativo sin botón manual.
+- **Por qué se quitó:** aplicaba overrides genéricos con `!important` sobre clases de Tailwind en todo el sitio, así que el resultado dependía de qué clases usara cada componente y quedaba inconsistente de una pantalla a otra. Ver §CORRECCIONES 2026-08-04.
+- **Estado actual:** el sitio es solo modo claro (`color-scheme: light`, sin `darkMode` en `tailwind.config.js`).
 
 ### Rendimiento — imágenes a WebP
 - **Commit:** (esta tanda)
@@ -180,11 +180,11 @@ Proyecto Supabase: `pnl-BD` (`kjcwozzfzbizxurppxlf`). Sitio Netlify: `pnl-biobio
 - **Qué:** `loading="lazy"` añadido a las imágenes de 22 páginas `.html`.
 - **Rollback:** `git revert` del commit correspondiente.
 
-### Wizard de bienvenida reactivado
-- **Commit:** (esta tanda)
-- **Qué:** Se reactivó el botón de ayuda flotante + guía opcional (estaba comentado en `shared.js`). Muestra un FAB abajo a la derecha en todas las páginas.
-- **Archivos:** `shared.js` (2 bloques al final).
-- **⚠️ Nota:** este wizard había sido desactivado antes "a pedido del usuario". Si se desea volver a quitar, **comentar de nuevo** las líneas `const wizard = new PNLWizard(); wizard.start();` en los dos bloques del final de `shared.js`.
+### Wizard de bienvenida reactivado — ⚠️ SUPERADO (simplificado el 2026-08-04)
+- **Commit original:** `209b6cc` · **Commit que lo simplifica:** `49f50fc`.
+- **Qué era:** se reactivó el botón de ayuda flotante + guía paso a paso (estaba comentado en `shared.js`). FAB abajo a la derecha en todas las páginas.
+- **Estado actual:** el tour guiado se eliminó y quedó solo el centro de ayuda (FAB + panel de tips contextuales + accesos a Soporte y Academia). Ver §CORRECCIONES 2026-08-04.
+- **⚠️ Nota:** para desactivarlo por completo, comentar `const wizard = new PNLWizard(); wizard.start();` al final de `shared.js`.
 
 ### Contraste y tamaños de fuente — WCAG AA
 - **Commit:** `0a48650`
@@ -233,13 +233,73 @@ Proyecto Supabase: `pnl-BD` (`kjcwozzfzbizxurppxlf`). Sitio Netlify: `pnl-biobio
 
 ---
 
+## 🩹 CORRECCIONES — 4 de agosto de 2026
+
+### Padrón completo por lotes en el admin de usuarios
+- **Commit:** `9b5c7ac`
+- **Migración:** `supabase/migrations/20260804_admin_list_profiles_stable_order.sql` (aplicada el 2026-08-04).
+- **Síntoma:** el padrón mostraba solo los primeros 1.000 militantes de 3.400+.
+- **Causa:** no era del código. PostgREST corta cada respuesta en `max_rows`, que Supabase fija en **1.000** por defecto, así que una sola llamada a `admin_list_profiles()` nunca podía devolver más.
+- **Frontend:** `loadUsers()` trae el padrón por lotes de 1.000 con `.range()` hasta agotarlo (supabase-js lo traduce a `?offset=N&limit=1000`), con render progresivo — el primer lote ya es usable mientras cargan los siguientes. Indicador de progreso con el acumulado. Dedupe por `id` al unir lotes. Sin truncado silencioso: si un lote falla se conserva lo cargado y se avisa que el padrón quedó incompleto; si falla el primero se muestra el error original; tope de seguridad de 100 lotes, también con aviso. El filtro del buscador se extrajo a `aplicarFiltroActual()` para reaplicarlo tras cada lote sin resetear la página que el admin está mirando, y dejó de romperse con perfiles sin nombre o sin correo.
+- **DB:** `admin_list_profiles()` ordenaba por `created_at DESC`, que **no es un orden total**: una importación masiva inserta todo el padrón en una transacción y `now()` da el mismo timestamp a todas las filas. Paginar con `OFFSET` sobre un orden con empates no solo duplica filas, también **saltea** militantes. Se agregó `id` como desempate y un índice sobre `(created_at DESC, id DESC)`.
+- **⚠️ Orden de despliegue:** la migración va **antes** del frontend. El dedupe del cliente atrapa duplicados pero no puede recuperar filas salteadas.
+- **Archivos:** `admin-usuarios.html`, `supabase/migrations/20260804_admin_list_profiles_stable_order.sql`.
+- **Rollback:** `git revert 9b5c7ac` (vuelve a la llamada única, con el tope de 1.000). El SQL de rollback de la función está en la cabecera de la migración; el índice se quita con `DROP INDEX IF EXISTS public.profiles_created_at_id_desc_idx;`.
+
+### `out.css` desactualizado — botones de la portada sin responder
+- **Commit:** `bfb7e31`
+- **Síntoma:** ningún botón del index respondía al clic (SERVEL, Foros, Votaciones, Forja).
+- **Causa:** `out.css` no se regeneraba desde el **4 de marzo**, mientras `input.css` y `tailwind.config.js` habían cambiado el 24 de julio. Faltaban clases que usaban los componentes nuevos, así que `#pnl-spotlight` (overlay del wizard) quedaba sin `pointer-events-none` e interceptaba los clics de toda la pantalla, y el contenedor `hidden lg:flex` del navbar hacía lo mismo sobre los botones.
+- **Fix:** regenerar con `npx tailwindcss -i input.css -o out.css`.
+- **⚠️ Trampa del repo:** `out.css` se genera **a mano** y no hay script de npm que lo recuerde. Después de tocar `input.css`, `tailwind.config.js` o de agregar clases nuevas en HTML/JS, hay que regenerarlo o el cambio no llega a producción.
+- **Rollback:** `git revert bfb7e31` (volvería a romper los botones — no recomendado).
+
+### Modo oscuro eliminado + overlap en el dashboard de la Forja
+- **Commit:** `fc78bd4`
+- **Modo oscuro:** se eliminó el bloque `@media (prefers-color-scheme: dark)` de `input.css`, `darkMode` de `tailwind.config.js` y `color-scheme` volvió a `light`. Motivo: overrides genéricos con `!important` sobre clases de Tailwind daban resultados inconsistentes según el componente. No había ninguna clase `dark:` en uso, así que la remoción no arrastró nada.
+- **Overlap:** en `forja-eventos.html` la tarjeta "Próximo evento" no tenía `max-width`, así que un título de evento largo estiraba su ancho intrínseco sin límite; al ser `shrink-0` dentro del flex row se quedaba con casi todo el ancho y colapsaba la columna izquierda (`flex-1 min-w-0`) a ~35 px, encimando "Tu Espacio Libertario" con el ícono. Se agregó `max-w-[220px]` y `break-words`.
+- **Archivos:** `input.css`, `tailwind.config.js`, `out.css`, `forja-eventos.html`.
+- **Rollback:** `git revert fc78bd4`.
+
+### Asistente simplificado a centro de ayuda
+- **Commit:** `49f50fc`
+- **Síntoma:** en el panel del asistente no funcionaba nada salvo el toggle "Guía Automática", que no producía ningún cambio visible.
+- **Causas (tres distintas):**
+  1. **Soporte y Academia** usaban `onclick` inline dentro de un string que pasa por `sanitizeHTML()`. DOMPurify no admite atributos de evento (`ALLOWED_ATTR` en `shared.js` no los incluye), así que los borraba y los botones quedaban sin handler.
+  2. **"Iniciar Guía Paso a Paso"** solo tenía pasos definidos para `index.html`; en el resto `steps` era `[]` y `showStep()` llamaba a `finish()` sin mostrar nada. Además 2 de los 4 pasos apuntaban a `#academia` y `#votaciones`, que no existen en `index.html`.
+  3. **El toggle "Guía Automática"** escribía `pnl_wizard_disabled` en `localStorage` pero nadie lo leía: `start()` nunca disparó un tour automático.
+- **Qué se eliminó:** todo el tour (overlay `#pnl-spotlight`, tarjeta `#pnl-guide-card`, `initSpotlight`/`showStep`/`updateSpotlight`/`createGuideCard`/`finish`, botón `#restart-tour`, toggle `#wizard-toggle`, claves `pnl_wizard_disabled` y `pnl_wizard_done`) y `window.restartWizard` de `shared.js`, que solo relanzaba el tour y no estaba referenciado en ningún lado. Motivo: el tour estaba acoplado a selectores del markup y se rompía en silencio cada vez que cambiaba el HTML.
+- **Qué quedó:** FAB + panel con tips contextuales para 14 rutas, accesos a Soporte y Academia funcionando, cierre con Escape y `aria-expanded`/`aria-label` dinámicos.
+- **Hallazgo extra:** el título del panel era un `<h4>` y `ALLOWED_TAGS` de `sanitizeHTML()` no permite encabezados; con `KEEP_CONTENT` el texto sobrevivía pero se perdían el tag y sus clases, así que se renderizaba sin estilo. Pasó a `<div>`.
+- **Archivos:** `public/assets/js/modules/wizard.js`, `shared.js`, `out.css`.
+- **Rollback:** `git revert 49f50fc` (restaura el tour roto — no recomendado).
+
+### Anuncios: zoom de imagen e reaparición en cada carga
+- **Commit:** `60e847b`
+- **Síntoma:** no se podía ver la imagen completa del anuncio, y una vez cerrado no volvía a mostrarse al refrescar.
+- **Causas (tres):**
+  1. **Mismo patrón que el asistente:** los `onclick` de la imagen (zoom), del botón "No volver a ver este anuncio" y del botón de copiar correo, más `onload`/`onerror` de la imagen, iban inline en el string que pasa por `sanitizeHTML()`. DOMPurify los eliminaba y los tres controles quedaban muertos.
+  2. **`openImageZoom()`** declaraba el overlay con `opacity:0` por **estilo inline** pero lo revelaba quitando la **clase** `opacity-0`, que nunca se agregaba. El estilo inline tiene mayor precedencia, así que el zoom se montaba en el DOM con opacidad 0 y no se veía nunca. Mismo caso con `scale-95`.
+  3. **Descarte por sesión:** cerrar con la X, Escape o clic en el fondo guardaba el ID en `sessionStorage` (`pnl_session_dismissed`) y el anuncio no volvía a aparecer en toda la sesión, ni al refrescar.
+- **Fix:** handlers con `addEventListener` después de insertar el modal en el DOM; transición del zoom por estilo inline en entrada y salida; eliminado el descarte por sesión — el anuncio reaparece en cada carga y lo único que lo silencia es "No volver a ver este anuncio", que persiste en `localStorage` como estaba previsto.
+- **Archivos:** `public/assets/js/modules/announcements.js`.
+- **Rollback:** `git revert 60e847b`.
+
+### 📌 Patrón transversal a vigilar
+Tres bugs distintos de esta tanda tuvieron la misma raíz: **`onclick` inline dentro de HTML que pasa por `sanitizeHTML()`**. DOMPurify elimina todo atributo de evento, así que cualquier handler escrito así queda mudo sin error en consola. Regla para el futuro: en HTML generado por JS y sanitizado, los eventos se enlazan **siempre** con `addEventListener` después de insertar el nodo en el DOM. Los `onclick` escritos directo en los archivos `.html` estáticos no pasan por el sanitizador y siguen siendo válidos.
+
+---
+
 ## 🧰 Objetos creados en la base de datos (referencia rápida)
 
 **Funciones (RPCs):** `get_my_profile`, `admin_list_profiles`, `get_dashboard_stats`,
 `admin_event_registrations`, `admin_lesson_registrations`, `admin_email_recipient_count`,
 `is_staff` (todas `SECURITY DEFINER`, con control de rol).
 
-**Tablas:** `contact_rate_limit`, `push_notifications_log`.
+**Tablas:** `contact_rate_limit`, `push_notifications_log`, `user_achievements`.
+
+**Índices:** `profiles_created_at_id_desc_idx` sobre `profiles (created_at DESC, id DESC)`
+— sostiene el orden estable que necesita la paginación por lotes del padrón.
 
 **Edge Functions:** `contact-email` (v5, rate-limit), `send-push` (v1, VAPID WebPush).
 
