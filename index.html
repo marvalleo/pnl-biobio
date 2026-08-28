@@ -159,10 +159,15 @@
         }
 
         .directiva-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
             gap: 32px;
             margin-top: 40px;
+        }
+
+        .directiva-grid .card {
+            flex: 0 1 calc(25% - 24px);
         }
 
         .card {
@@ -397,14 +402,17 @@
             }
 
             .directiva-grid {
-                grid-template-columns: repeat(2, 1fr);
                 gap: 20px;
+            }
+
+            .directiva-grid .card {
+                flex: 0 1 calc(50% - 10px);
             }
         }
 
         @media (max-width: 600px) {
-            .directiva-grid {
-                grid-template-columns: 1fr;
+            .directiva-grid .card {
+                flex: 0 1 100%;
             }
         }
         /* --- FIXES PARA UI AFECTADA POR TAILWIND --- */
@@ -468,7 +476,7 @@
                     <h3>Marina Aravena</h3>
                     <p>Apoyando la gestión y el crecimiento del partido en toda la zona del Biobío.</p>
                 </div>
-                <div class="card">
+                <div class="card" hidden>
                     <img loading="lazy" src="/assets/images/directiva/doris-arredondo.webp" alt="Secretaria Regional"
                         style="object-position: center 25%;">
                     <span>SECRETARIA REGIONAL</span>
