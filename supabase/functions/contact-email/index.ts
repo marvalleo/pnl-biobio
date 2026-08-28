@@ -99,8 +99,10 @@ serve(async (req) => {
         'Authorization': `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: 'PNL Biobío <onboarding@resend.dev>',
-        to: ['directivapnlbiobio.regional@gmail.com'],
+        from: 'PNL Biobío <directivaregional@nacionallibertariobiobio.cl>',
+        to: ['directivaregional@nacionallibertariobiobio.cl'],
+        cc: ['directivapnlbiobio.regional@gmail.com'],
+        reply_to: String(email),
         subject: `Nuevo mensaje de contacto: ${escapeHtml(String(name).substring(0, 100))}`,
         html: `
           <h1>Nuevo mensaje desde la web PNL Biobío</h1>
