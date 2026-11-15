@@ -108,6 +108,14 @@
                         oninput="filterUsers()"
                         class="bg-white border border-gray-200 pl-11 pr-6 py-3 rounded-xl font-medium text-xs outline-none focus:ring-2 focus:ring-[#fba931] w-[300px] transition-all">
                 </div>
+                <select id="status-filter" onchange="filterUsers()"
+                    class="bg-white border border-gray-200 px-4 py-3 rounded-xl font-medium text-xs outline-none focus:ring-2 focus:ring-[#fba931]">
+                    <option value="">Todos los estados</option>
+                    <option value="activo">Activo</option>
+                    <option value="inactivo">Inactivo</option>
+                    <option value="suspendido">Suspendido</option>
+                    <option value="baja">Baja</option>
+                </select>
                 <button onclick="document.getElementById('excel-input').click()"
                     class="bg-white border border-gray-200 px-6 py-3 rounded-xl font-800 text-xs uppercase tracking-widest flex items-center gap-2 hover:bg-gray-50 transition-all">
                     <span class="material-symbols-outlined text-lg">upload_file</span> Importar Excel
@@ -248,6 +256,16 @@
                         <label class="text-[11px] font-black uppercase text-gray-600">Teléfono Celular</label>
                         <input type="text" id="phone_number" placeholder="Ej: +569 1234 5678"
                             class="w-full bg-gray-50 border p-4 rounded-xl focus:ring-2 focus:ring-[#fba931] outline-none">
+                    </div>
+                    <div class="col-span-2" id="membership-status-field">
+                        <label class="text-[11px] font-black uppercase text-gray-600">Estado de militancia</label>
+                        <select id="membership_status"
+                            class="w-full bg-gray-50 border p-4 rounded-xl focus:ring-2 focus:ring-[#fba931] outline-none font-bold">
+                            <option value="activo">Activo</option>
+                            <option value="inactivo">Inactivo</option>
+                            <option value="suspendido">Suspendido</option>
+                            <option value="baja">Baja</option>
+                        </select>
                     </div>
                     <div class="col-span-2">
                         <label class="text-[11px] font-black uppercase text-gray-600">Rol asignado</label>
@@ -587,6 +605,9 @@
                     <td class="px-6 compact-td font-bold uppercase text-[11px]">
                         <div class="flex items-center gap-2">
                             ${u.full_name}
+                            ${(u.membership_status || 'activo') !== 'activo'
+                        ? `<span class="px-2 py-0.5 rounded-full text-[8px] font-black uppercase ${u.membership_status === 'baja' ? 'bg-red-100 text-red-700' : 'bg-gray-200 text-gray-600'}">${u.membership_status}</span>`
+                        : ''}
                             ${isBirthdayToday ? '<span class="animate-bounce" title="¡Hoy es su cumpleaños!">🎂</span>' : ''}
                         </div>
                     </td>
@@ -670,15 +691,14 @@
         // poder reaplicarlo tras cada lote sin sacarle la vista de encima al admin.
         function aplicarFiltroActual() {
             const q = (document.getElementById('search-input')?.value || '').trim().toLowerCase();
-            if (!q) {
-                filteredUsers = [...allUsers];
-                return;
-            }
+            const st = document.getElementById('status-filter')?.value || '';
             // Campos opcionales: un perfil importado puede traer nombre o correo vacíos.
             filteredUsers = allUsers.filter(u =>
-                (u.full_name || '').toLowerCase().includes(q) ||
-                (u.email || '').toLowerCase().includes(q) ||
-                (u.rut || '').toLowerCase().includes(q)
+                (!st || (u.membership_status || 'activo') === st) &&
+                (!q ||
+                    (u.full_name || '').toLowerCase().includes(q) ||
+                    (u.email || '').toLowerCase().includes(q) ||
+                    (u.rut || '').toLowerCase().includes(q))
             );
         }
 
@@ -692,6 +712,8 @@
             document.getElementById('user-form').reset();
             document.getElementById('profile-id').value = '';
             modal.dataset.mode = mode;
+            modal.dataset.originalStatus = 'activo';
+            document.getElementById('membership-status-field').classList.toggle('hidden', mode !== 'edit');
             modal.classList.remove('hidden');
         }
 
@@ -713,9 +735,33 @@
 
             const isEdit = modal.dataset.mode === 'edit';
             if (isEdit) {
-                const { error } = await supabaseClient.from('profiles').update(formData).eq('id', document.getElementById('profile-id').value);
+                const profileId = document.getElementById('profile-id').value;
+                const newStatus = document.getElementById('membership_status').value;
+                const statusChanged = newStatus !== (modal.dataset.originalStatus || 'activo');
+
+                if (statusChanged && newStatus === 'baja' &&
+                    !confirm(`¿Dar de baja a ${formData.full_name}? No podrá volver a entrar al portal.`)) {
+                    window.setButtonLoading(btn, false);
+                    return;
+                }
+
+                const { error } = await supabaseClient.from('profiles').update(formData).eq('id', profileId);
+                if (error) { window.setButtonLoading(btn, false); return; }
+
+                if (statusChanged) {
+                    const { data, error: statusError } = await supabaseClient.functions.invoke('set-membership-status', {
+                        body: { profile_id: profileId, status: newStatus }
+                    });
+                    if (statusError || !data?.ok) {
+                        let detail = data?.error || statusError?.message || 'error desconocido';
+                        try { detail = (await statusError.context.json()).error || detail; } catch (_) { /* sin cuerpo JSON */ }
+                        window.setButtonLoading(btn, false);
+                        showToast(`Datos guardados, pero el estado de militancia no se cambió: ${detail}`, 'error');
+                        return;
+                    }
+                }
                 window.setButtonLoading(btn, false);
-                if (!error) { showToast('Militante actualizado', 'success'); setTimeout(() => location.reload(), 1500); }
+                showToast('Militante actualizado', 'success'); setTimeout(() => location.reload(), 1500);
             } else {
                 document.body.style.cursor = 'wait';
                 const { data, error } = await supabaseClient.functions.invoke('create-user-temp', { body: formData });
@@ -746,6 +792,9 @@
             document.getElementById('comuna').value = u.comuna || '';
             document.getElementById('phone_number').value = u.phone_number || '';
             document.getElementById('role').value = u.role;
+            const status = u.membership_status || 'activo';
+            modal.dataset.originalStatus = status;
+            document.getElementById('membership_status').value = status;
         }
         async function deleteUser(id) {
             if (!confirm('¿Seguro que deseas eliminar a este militante definitivamente?')) return;
