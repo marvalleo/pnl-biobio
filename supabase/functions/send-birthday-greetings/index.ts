@@ -5,16 +5,22 @@ import {
     BIRTHDAY_IMAGE_URL,
     buildGreeting,
     celebrationsInWindow,
+    emailNeedsSend,
     GREETINGS_START_DATE,
     INBOX_PATH,
+    isGreetingComplete,
     localNow,
     monthDaysForWindow,
+    pushNeedsSend,
     SEND_HOUR,
     windowDates,
 } from "./greeting.ts"
 
 const EMAIL_FROM = "PNL Biobío <comunicaciones@nacionallibertariobiobio.cl>"
 const EMAIL_DELAY_MS = 600
+// A registry row touched less than this long ago belongs to a run still in progress.
+const CLAIM_LEASE_MS = 10 * 60 * 1000
+const REGISTRY_COLUMNS = "id, inbox_log_id, push_status, email_status"
 
 interface Person { profile_id: string; auth_id: string; full_name: string; email: string | null; birth_date: string }
 interface Registry {
@@ -24,6 +30,8 @@ interface Registry {
     email_status: string
 }
 interface Outcome { inbox: string; push: string; email: string; errors: string[] }
+/** Persists one channel's progress; throws if the registry could not be written. */
+type SaveProgress = (patch: Record<string, unknown>) => Promise<void>
 
 const json = (body: unknown, status = 200) =>
     new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } })
@@ -81,12 +89,21 @@ serve(async (req: Request) => {
     let quotaHit = false
     let emailsSent = 0
 
-    async function deliver(person: Person, reg: Registry): Promise<Outcome> {
+    /**
+     * Sends whatever channels are still pending. Each channel's result is saved right after it
+     * finishes, so a crash or timeout later in the run never makes the next run repeat it.
+     * A failed save throws and stops this person, to avoid sending further unrecorded channels.
+     */
+    async function deliver(person: Person, reg: Registry, save: SaveProgress): Promise<Outcome> {
         const g = buildGreeting(person.full_name)
         const out: Outcome = { inbox: "skipped", push: reg.push_status, email: reg.email_status, errors: [] }
+        // last_error is only overwritten when this run produced errors; skipped channels keep the old one.
+        const withErrors = (patch: Record<string, unknown>) =>
+            out.errors.length ? { ...patch, last_error: out.errors.join(" | ").slice(0, 1000) } : patch
 
         // Inbox
         if (!reg.inbox_log_id) {
+            let created = false
             try {
                 // A null recipient_id is a broadcast to every inbox: never allow it for a personal greeting.
                 if (!person.auth_id) throw new Error("missing recipient auth_id")
@@ -97,14 +114,16 @@ serve(async (req: Request) => {
                 if (error) throw new Error(error.message)
                 reg.inbox_log_id = data.id
                 out.inbox = "created"
+                created = true
             } catch (e: any) {
                 out.inbox = "failed"
                 out.errors.push(`inbox: ${e.message}`)
             }
+            await save(withErrors(created ? { inbox_log_id: reg.inbox_log_id } : {}))
         } else out.inbox = "existing"
 
         // Push
-        if (reg.push_status === "pending" || reg.push_status === "failed") {
+        if (pushNeedsSend(reg.push_status)) {
             try {
                 if (!vapidOk) {
                     out.push = "failed"
@@ -120,7 +139,11 @@ serve(async (req: Request) => {
                             title: g.title, body: g.pushBody, url: INBOX_PATH, tag: "pnl-birthday",
                         })
                         if (r.expiredIds.length > 0) {
-                            await supabase.from("push_subscriptions").update({ is_active: false }).in("id", r.expiredIds)
+                            const { error: deactivateErr } = await supabase.from("push_subscriptions")
+                                .update({ is_active: false }).in("id", r.expiredIds)
+                            if (deactivateErr) {
+                                console.error(`[birthday] could not deactivate ${r.expiredIds.length} expired subscriptions: ${deactivateErr.message}`)
+                            }
                         }
                         out.push = r.sent > 0 ? "sent" : "failed"
                         if (r.sent === 0) out.errors.push(`push: 0 of ${subs.length} delivered`)
@@ -130,10 +153,11 @@ serve(async (req: Request) => {
                 out.push = "failed"
                 out.errors.push(`push: ${e.message}`)
             }
+            await save(withErrors({ push_status: out.push }))
         }
 
         // Email
-        if (["pending", "failed", "skipped_quota"].includes(reg.email_status) && !quotaHit) {
+        if (emailNeedsSend(reg.email_status) && !quotaHit) {
             try {
                 if (!person.email) out.email = "no_email"
                 else if (!resendKey) {
@@ -163,8 +187,42 @@ serve(async (req: Request) => {
                 out.email = "failed"
                 out.errors.push(`email: ${e.message}`)
             }
+            await save(withErrors({ email_status: out.email }))
         }
         return out
+    }
+
+    /**
+     * Returns the registry row this run may work on, or null to skip the person.
+     * - A row this run just inserted is ours: (profile_id, greeting_year) is unique, so no other run created it.
+     * - A completed row is skipped untouched.
+     * - Any other row is claimed only if nobody touched it in the last CLAIM_LEASE_MS (every progress
+     *   save refreshes updated_at). The conditional update is atomic in Postgres, so when two runs
+     *   overlap only one of them gets the row back.
+     */
+    async function claimRegistry(profileId: string, year: number, date: string): Promise<Registry | null> {
+        const { data: inserted, error: insertErr } = await supabase.from("birthday_greetings")
+            .upsert(
+                { profile_id: profileId, greeting_year: year, celebration_date: date },
+                { onConflict: "profile_id,greeting_year", ignoreDuplicates: true },
+            )
+            .select(REGISTRY_COLUMNS)
+        if (insertErr) throw new Error(`registry insert: ${insertErr.message}`)
+        if (inserted && inserted.length > 0) return inserted[0]
+
+        const { data: current, error: readErr } = await supabase.from("birthday_greetings")
+            .select(REGISTRY_COLUMNS).eq("profile_id", profileId).eq("greeting_year", year).single()
+        if (readErr) throw new Error(`registry read: ${readErr.message}`)
+        if (isGreetingComplete(current)) return null
+
+        const cutoff = new Date(Date.now() - CLAIM_LEASE_MS).toISOString()
+        const { data: claimed, error: claimErr } = await supabase.from("birthday_greetings")
+            .update({ updated_at: new Date().toISOString() })
+            .eq("id", current.id).lt("updated_at", cutoff)
+            .select(REGISTRY_COLUMNS).maybeSingle()
+        if (claimErr) throw new Error(`registry claim: ${claimErr.message}`)
+        if (!claimed) console.warn(`[birthday] skipping profile=${profileId}: registry row in use by another run`)
+        return claimed
     }
 
     // --- Test modes: one profile, now, no registry --------------------------
@@ -175,7 +233,10 @@ serve(async (req: Request) => {
         const person: Person = {
             profile_id: p.id, auth_id: p.auth_id, full_name: p.full_name ?? "", email: p.email, birth_date: p.birth_date,
         }
-        const out = await deliver(person, { id: null, inbox_log_id: null, push_status: "pending", email_status: "pending" })
+        const noRegistry: SaveProgress = async () => {}
+        const out = await deliver(
+            person, { id: null, inbox_log_id: null, push_status: "pending", email_status: "pending" }, noRegistry,
+        )
         console.log(`[birthday] test profile=${person.profile_id} inbox=${out.inbox} push=${out.push} email=${out.email}`)
         return json({ test: true, ...out })
     }
@@ -203,34 +264,18 @@ serve(async (req: Request) => {
         }
         processed++
         try {
-            await supabase.from("birthday_greetings").upsert(
-                { profile_id: person.profile_id, greeting_year: cel.greetingYear, celebration_date: cel.celebrationDate },
-                { onConflict: "profile_id,greeting_year", ignoreDuplicates: true },
-            )
-            const { data: row, error } = await supabase.from("birthday_greetings")
-                .select("id, inbox_log_id, push_status, email_status")
-                .eq("profile_id", person.profile_id).eq("greeting_year", cel.greetingYear).single()
-            if (error) throw new Error(error.message)
+            const row = await claimRegistry(person.profile_id, cel.greetingYear, cel.celebrationDate)
+            if (!row) continue
 
-            const done = row.inbox_log_id &&
-                !["pending", "failed"].includes(row.push_status) &&
-                !["pending", "failed", "skipped_quota"].includes(row.email_status)
-            if (done) continue
-
-            const hadInbox = !!row.inbox_log_id
-            const out = await deliver(person, row)
-            if (!hadInbox && row.inbox_log_id) inbox++
+            const save: SaveProgress = async (patch) => {
+                const { error } = await supabase.from("birthday_greetings")
+                    .update({ ...patch, updated_at: new Date().toISOString() }).eq("id", row.id)
+                if (error) throw new Error(`registry update: ${error.message}`)
+            }
+            const out = await deliver(person, row, save)
+            if (out.inbox === "created") inbox++
             if (out.push === "sent") push++
             if (out.email === "sent") email++
-
-            const { error: upErr } = await supabase.from("birthday_greetings").update({
-                inbox_log_id: row.inbox_log_id,
-                push_status: out.push,
-                email_status: out.email,
-                last_error: out.errors.length ? out.errors.join(" | ").slice(0, 1000) : null,
-                updated_at: new Date().toISOString(),
-            }).eq("id", row.id)
-            if (upErr) throw new Error(upErr.message)
         } catch (e: any) {
             console.error(`[birthday] profile=${person.profile_id} failed: ${e.message}`)
         }

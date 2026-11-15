@@ -69,6 +69,28 @@ export function celebrationsInWindow(
   return null;
 }
 
+const PUSH_RETRY = new Set(["pending", "failed"]);
+const EMAIL_RETRY = new Set(["pending", "failed", "skipped_quota"]);
+
+/** True when a push in this status still has to be (re)sent. */
+export function pushNeedsSend(status: string): boolean {
+  return PUSH_RETRY.has(status);
+}
+
+/** True when an email in this status still has to be (re)sent. */
+export function emailNeedsSend(status: string): boolean {
+  return EMAIL_RETRY.has(status);
+}
+
+/** A person is done for the year once the inbox row exists and push and email reached a final status. */
+export function isGreetingComplete(row: {
+  inbox_log_id: string | null;
+  push_status: string;
+  email_status: string;
+}): boolean {
+  return !!row.inbox_log_id && !pushNeedsSend(row.push_status) && !emailNeedsSend(row.email_status);
+}
+
 function capitalize(word: string): string {
   const lower = word.toLocaleLowerCase("es");
   return lower.charAt(0).toLocaleUpperCase("es") + lower.slice(1);

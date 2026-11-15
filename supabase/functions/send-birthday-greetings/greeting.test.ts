@@ -3,9 +3,12 @@ import {
   buildGreeting,
   celebrationDate,
   celebrationsInWindow,
+  emailNeedsSend,
   firstName,
+  isGreetingComplete,
   localNow,
   monthDaysForWindow,
+  pushNeedsSend,
   windowDates,
 } from "./greeting.ts";
 
@@ -83,4 +86,31 @@ Deno.test("buildGreeting without a name has no dangling comma", () => {
   assertEquals(g.title, "¡Feliz cumpleaños!");
   assertEquals(g.emailSubject, "¡Feliz cumpleaños!");
   assert(g.emailHtml.includes("¡Feliz cumpleaños! 🎉"));
+});
+
+Deno.test("pushNeedsSend retries pending and failed only", () => {
+  assert(pushNeedsSend("pending"));
+  assert(pushNeedsSend("failed"));
+  assert(!pushNeedsSend("sent"));
+  assert(!pushNeedsSend("no_subscription"));
+});
+
+Deno.test("emailNeedsSend retries pending, failed and skipped_quota only", () => {
+  assert(emailNeedsSend("pending"));
+  assert(emailNeedsSend("failed"));
+  assert(emailNeedsSend("skipped_quota"));
+  assert(!emailNeedsSend("sent"));
+  assert(!emailNeedsSend("no_email"));
+});
+
+Deno.test("isGreetingComplete needs the inbox row plus final push and email statuses", () => {
+  const done = { inbox_log_id: "x", push_status: "sent", email_status: "sent" };
+  assert(isGreetingComplete(done));
+  assert(isGreetingComplete({ inbox_log_id: "x", push_status: "no_subscription", email_status: "no_email" }));
+  assert(!isGreetingComplete({ ...done, inbox_log_id: null }));
+  assert(!isGreetingComplete({ ...done, push_status: "pending" }));
+  assert(!isGreetingComplete({ ...done, push_status: "failed" }));
+  assert(!isGreetingComplete({ ...done, email_status: "pending" }));
+  assert(!isGreetingComplete({ ...done, email_status: "failed" }));
+  assert(!isGreetingComplete({ ...done, email_status: "skipped_quota" }));
 });
