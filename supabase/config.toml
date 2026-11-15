@@ -9,3 +9,8 @@ entrypoint = "./functions/invite-militante/index.ts"
 enabled = true
 verify_jwt = true
 entrypoint = "./functions/send-mass-email/index.ts"
+
+[functions.set-membership-status]
+enabled = true
+verify_jwt = true
+entrypoint = "./functions/set-membership-status/index.ts"

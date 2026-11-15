@@ -264,7 +264,9 @@
                 // Mensaje genérico: no revela si el correo existe (evita enumeración).
                 const m = (err && err.message ? String(err.message) : '').toLowerCase();
                 let userMsg = 'No se pudo iniciar sesión. Verifica tus datos o contacta a Soporte Regional.';
-                if (m.includes('invalid login') || m.includes('credentials') || m.includes('password')) {
+                if (err && (err.code === 'user_banned' || m.includes('banned'))) {
+                    userMsg = 'Tu militancia se encuentra dada de baja. Si crees que es un error, comunícate con la directiva.';
+                } else if (m.includes('invalid login') || m.includes('credentials') || m.includes('password')) {
                     userMsg = 'Correo o contraseña incorrectos.';
                 } else if (m.includes('email not confirmed')) {
                     userMsg = 'Tu cuenta aún no está confirmada. Revisa tu correo electrónico.';
