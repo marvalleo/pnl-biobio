@@ -252,6 +252,15 @@ export async function initNavbar() {
             });
         }
 
+        // Enlace profundo: ?inbox=1 abre la bandeja una vez que hay sesion
+        const deepLinkParams = new URLSearchParams(location.search);
+        if (deepLinkParams.get('inbox') === '1') {
+            deepLinkParams.delete('inbox');
+            const query = deepLinkParams.toString();
+            history.replaceState(null, '', location.pathname + (query ? '?' + query : '') + location.hash);
+            if (window.showNotificationHistory) window.showNotificationHistory();
+        }
+
         // Vincular botón de logs
         const logsBtn = document.getElementById('show-pwa-logs-btn');
         if (logsBtn) {
@@ -471,6 +480,13 @@ function bindPushToggle(isCurrentlyOn, permStatus, isSupported = true) {
     }, 0);
 }
 
+const escapeHtml = (value) => String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+
 window.showNotificationHistory = async () => {
     // 1. Quitar modal si ya existe
     const existingModal = document.getElementById('notif-history-modal');
@@ -561,22 +577,23 @@ window.showNotificationHistory = async () => {
 
             htmlList += `
                 <div class="notif-history-item p-4 md:p-5 hover:bg-slate-50 transition-colors cursor-pointer ${bgColor} group" 
-                     data-id="${notif.id}" data-url="${notif.url || ''}">
+                     data-id="${escapeHtml(notif.id)}" data-url="${escapeHtml(notif.url || '')}">
                      
                     <div class="flex items-start justify-between gap-3 mb-2">
-                        <h4 class="text-sm font-bold leading-tight ${titleColor} transition-colors group-hover:text-blue-600 flex-1">${notif.title}</h4>
+                        <h4 class="text-sm font-bold leading-tight ${titleColor} transition-colors group-hover:text-blue-600 flex-1">${escapeHtml(notif.title)}</h4>
                         <div class="flex flex-col items-end gap-1 shrink-0">
                             ${badgeHTML}
                             <span class="text-[10px] font-medium text-slate-400 whitespace-nowrap">${dateStr}</span>
                         </div>
                     </div>
-                    <p class="text-xs text-slate-500 leading-relaxed line-clamp-2">${notif.body}</p>
+                    <p class="text-xs text-slate-500 leading-relaxed line-clamp-2">${escapeHtml(notif.body)}</p>
                 </div>
             `;
         });
 
         htmlList += '</div>';
-        contentContainer.innerHTML = htmlList;
+        const sanitizeList = (html) => (window.sanitizeHTML ? window.sanitizeHTML(html) : html);
+        contentContainer.innerHTML = sanitizeList(htmlList);
 
         // Agregar eventos de click a cada item
         const items = contentContainer.querySelectorAll('.notif-history-item');
@@ -621,12 +638,17 @@ window.showNotificationHistory = async () => {
 
                 const hasUrl = (url && url !== 'undefined' && url !== 'null' && url !== '');
                 const urlBtnHTML = hasUrl
-                    ? `<a href="${url}" class="w-full py-3 bg-blue-500 hover:bg-blue-600 text-white font-black text-xs tracking-wider uppercase rounded-xl transition-all flex items-center justify-center gap-2 mt-6 shadow-lg shadow-blue-500/30"><span class="material-symbols-outlined text-base">link</span> Ir al Enlace Adjunto</a>`
+                    ? `<a href="${escapeHtml(url)}" class="w-full py-3 bg-blue-500 hover:bg-blue-600 text-white font-black text-xs tracking-wider uppercase rounded-xl transition-all flex items-center justify-center gap-2 mt-6 shadow-lg shadow-blue-500/30"><span class="material-symbols-outlined text-base">link</span> Ir al Enlace Adjunto</a>`
+                    : '';
+
+                const hasImage = typeof notif.image_url === 'string' && /^https:\/\//i.test(notif.image_url);
+                const imageHTML = hasImage
+                    ? `<img src="${escapeHtml(notif.image_url)}" alt="" class="w-full rounded-xl mb-4">`
                     : '';
 
                 const dateStr = new Date(notif.created_at).toLocaleString('es-CL', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
 
-                const sanitize = (html) => (window.sanitizeHTML ? window.sanitizeHTML(html) : html);
+                const sanitize =(html) => (window.sanitizeHTML ? window.sanitizeHTML(html) : html);
                 readModal.innerHTML = sanitize(`
                     <div class="bg-white rounded-2xl md:rounded-3xl shadow-2xl w-full max-w-sm md:max-w-md overflow-hidden transform transition-all duration-300 border border-slate-100/50 flex flex-col animation-scale-up">
                         <div class="relative bg-slate-50 border-b border-slate-100 px-6 py-4 flex items-center justify-between shrink-0">
@@ -641,8 +663,9 @@ window.showNotificationHistory = async () => {
                         
                         <div class="p-6 md:p-8 bg-white flex-1 overflow-y-auto">
                             <p class="text-[10px] font-medium text-slate-400 mb-2 uppercase tracking-wide">${dateStr}</p>
-                            <h2 class="text-xl font-black text-slate-900 leading-tight mb-4">${notif.title}</h2>
-                            <p class="text-sm text-slate-600 leading-relaxed whitespace-pre-wrap">${notif.body}</p>
+                            <h2 class="text-xl font-black text-slate-900 leading-tight mb-4">${escapeHtml(notif.title)}</h2>
+                            ${imageHTML}
+                            <p class="text-sm text-slate-600 leading-relaxed">${escapeHtml(notif.body).replace(/\n/g, '<br>')}</p>
                             ${urlBtnHTML}
                         </div>
                     </div>
