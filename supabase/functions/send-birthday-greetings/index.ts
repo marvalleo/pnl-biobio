@@ -88,6 +88,8 @@ serve(async (req: Request) => {
         // Inbox
         if (!reg.inbox_log_id) {
             try {
+                // A null recipient_id is a broadcast to every inbox: never allow it for a personal greeting.
+                if (!person.auth_id) throw new Error("missing recipient auth_id")
                 const { data, error } = await supabase.from("push_notifications_log").insert({
                     title: g.title, body: g.inboxBody, url: INBOX_PATH, recipient_id: person.auth_id,
                     image_url: BIRTHDAY_IMAGE_URL, target_audience: "all", total_sent: 0, total_failed: 0,
@@ -195,6 +197,10 @@ serve(async (req: Request) => {
     for (const person of (rows ?? []) as Person[]) {
         const cel = celebrationsInWindow(person.birth_date, window, GREETINGS_START_DATE)
         if (!cel) continue
+        if (!person.auth_id) {
+            console.warn(`[birthday] skipping profile=${person.profile_id}: no auth account`)
+            continue
+        }
         processed++
         try {
             await supabase.from("birthday_greetings").upsert(
