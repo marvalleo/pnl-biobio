@@ -380,27 +380,112 @@ export async function checkAndShowAnnouncements() {
             }
         }
 
-        // Comprobar contexto de página: anuncios de militantes solo en la Forja (plataforma privada)
-        const currentPage = window.location.pathname.split('/').pop() || 'index.html';
-        const publicPages = ['index.html', 'nosotros.html', 'contacto.html', 'publicaciones-oficiales.html', 'forja-login.html', ''];
-        const isPublicPage = publicPages.includes(currentPage);
-
-        if (isPublicPage && announcement.target_audience !== 'all') {
-            console.log("PNL Biobío: Anuncio omitido en página pública/login (solo aplica dentro de la Forja).");
+        // Contexto de página: el anuncio solo se muestra en el Inicio y en el portal de militantes.
+        const context = getAnnouncementContext();
+        if (!context) {
+            console.log("PNL Biobío: Página fuera del Inicio y del portal. No se muestra el anuncio.");
             return;
         }
+
+        if (context === 'home' && announcement.target_audience !== 'all') {
+            console.log("PNL Biobío: Anuncio de militantes omitido en el Inicio (solo aplica dentro de la Forja).");
+            return;
+        }
+
+        // Una sola vez por sesión: en el Inicio, por sesión del navegador; en el portal, por sesión de login.
+        const seenKey = await getSeenKey(context, announcement.id);
+        if (!seenKey) return;
+        if (isSeen(context, seenKey) && !isTestMode) {
+            console.log("PNL Biobío: El anuncio ya se mostró en esta sesión. No se repite.");
+            return;
+        }
+
         // Dentro de la Forja: esperar 5s para no interrumpir la carga
-        const isForjaPage = currentPage.startsWith('forja-') && currentPage !== 'forja-login.html';
-        const displayDelay = isForjaPage ? 5000 : 1500;
+        const displayDelay = context === 'portal' ? 5000 : 1500;
 
         // Config de renderizado
         const configForModal = { ...announcement };
 
-        // Mostrar con delay
+        // Mostrar con delay. Se marca como visto recien al mostrarse: si el usuario
+        // cambia de pagina antes de que termine el delay, no pierde el anuncio.
         console.log(`PNL Biobío: Disparando modal de impacto en ${displayDelay}ms...`);
-        setTimeout(() => showImpactModal(configForModal), displayDelay);
+        setTimeout(() => {
+            markSeen(context, seenKey);
+            showImpactModal(configForModal);
+        }, displayDelay);
 
     } catch (err) {
         console.warn("Error al comprobar anuncios:", err);
+    }
+}
+
+// --- Control de "una sola vez por sesión" ---
+
+const PORTAL_SEEN_STORAGE_KEY = 'pnl_announcements_seen_portal';
+const HOME_SEEN_STORAGE_PREFIX = 'pnl_announcement_seen_home_';
+
+// Paginas del portal que no forman parte de la experiencia de militante logueado.
+const PORTAL_EXCLUDED_PAGES = ['forja-login', 'forja-activar', 'forja-reset-password'];
+
+/**
+ * Devuelve 'home' en el Inicio, 'portal' dentro del portal de militantes
+ * y null en cualquier otra pagina (alli no se muestra el anuncio).
+ */
+function getAnnouncementContext() {
+    const page = (window.location.pathname.split('/').pop() || 'index').replace(/\.html$/, '');
+    if (page === '' || page === 'index') return 'home';
+    if (page === 'perfil') return 'portal';
+    if ((page === 'forja' || page.startsWith('forja-')) && !PORTAL_EXCLUDED_PAGES.includes(page)) return 'portal';
+    return null;
+}
+
+/**
+ * Clave que identifica "este anuncio en esta sesion".
+ * En el portal se ata a la sesion de login (claim session_id del JWT de Supabase):
+ * sobrevive a pestanas nuevas y se renueva al cerrar sesion y volver a entrar.
+ */
+async function getSeenKey(context, announcementId) {
+    if (context === 'home') return `${HOME_SEEN_STORAGE_PREFIX}${announcementId}`;
+
+    const { data: { session } } = await window.supabaseClient.auth.getSession();
+    if (!session) return null;
+    const sessionId = readJwtClaim(session.access_token, 'session_id') || session.user?.id;
+    if (!sessionId) return null;
+    return `${sessionId}:${announcementId}`;
+}
+
+function readJwtClaim(token, claim) {
+    try {
+        const payload = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+        return JSON.parse(atob(payload))[claim] || null;
+    } catch (_) {
+        return null;
+    }
+}
+
+function isSeen(context, seenKey) {
+    try {
+        if (context === 'home') return sessionStorage.getItem(seenKey) === '1';
+        const seen = JSON.parse(localStorage.getItem(PORTAL_SEEN_STORAGE_KEY) || '[]');
+        return seen.includes(seenKey);
+    } catch (_) {
+        return false;
+    }
+}
+
+function markSeen(context, seenKey) {
+    try {
+        if (context === 'home') {
+            sessionStorage.setItem(seenKey, '1');
+            return;
+        }
+        // Conservar solo las marcas de la sesion de login actual para que no crezca sin limite.
+        const sessionPrefix = seenKey.split(':')[0] + ':';
+        const seen = JSON.parse(localStorage.getItem(PORTAL_SEEN_STORAGE_KEY) || '[]')
+            .filter((key) => key.startsWith(sessionPrefix));
+        if (!seen.includes(seenKey)) seen.push(seenKey);
+        localStorage.setItem(PORTAL_SEEN_STORAGE_KEY, JSON.stringify(seen));
+    } catch (_) {
+        /* almacenamiento no disponible (modo privado): se muestra igual */
     }
 }
