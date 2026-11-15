@@ -49,6 +49,8 @@ CREATE POLICY "Militantes leen sus notificaciones"
   USING (recipient_id IS NULL OR recipient_id = auth.uid());
 
 -- ROLLBACK
+-- Primero borrar los mensajes personales: si no, los saludos (target_audience 'all') pasarian a ser difusiones para todos.
+-- DELETE FROM public.push_notifications_log WHERE recipient_id IS NOT NULL;
 -- DROP POLICY IF EXISTS "Militantes leen sus notificaciones" ON public.push_notifications_log;
 -- CREATE POLICY "Militantes leen push_log" ON public.push_notifications_log
 --   FOR SELECT TO public USING (auth.uid() IS NOT NULL);
