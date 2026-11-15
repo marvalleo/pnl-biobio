@@ -3,7 +3,7 @@
 export const TIME_ZONE = "America/Santiago";
 export const SEND_HOUR = 9;
 export const RECOVERY_DAYS = 3;
-export const GREETINGS_START_DATE = "2026-11-14"; // placeholder: Task 7 sets the go-live date
+export const GREETINGS_START_DATE = "2026-11-15"; // go-live date (first greetings run)
 export const BIRTHDAY_IMAGE_URL: string | null = null;
 
 export const INBOX_PATH = "/forja-eventos.html?inbox=1";

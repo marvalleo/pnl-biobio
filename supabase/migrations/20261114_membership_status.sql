@@ -1,4 +1,4 @@
--- Pendiente: aplicar manualmente en SQL Editor
+-- APLICADA manualmente en SQL Editor el 2026-11-14 (verificada por el controlador)
 -- Estado de militancia (altas y bajas). Solo 'baja' bloquea el acceso (ban en Supabase Auth,
 -- aplicado por la edge function set-membership-status). Los saludos solo van a 'activo'.
 

@@ -231,6 +231,18 @@ Proyecto Supabase: `pnl-BD` (`kjcwozzfzbizxurppxlf`). Sitio Netlify: `pnl-biobio
 - **Rollback DB:** `ALTER TABLE public.profiles DROP COLUMN IF EXISTS login_streak, DROP COLUMN IF EXISTS last_activity_date; DROP TABLE IF EXISTS public.user_achievements;`
 - **Rollback frontend:** `git revert <commit>`.
 
+### Saludos de cumpleaños automáticos (bandeja + push + correo)
+- **Commits:** rama `feat/saludos-cumpleanos` (`413c0ce` … `feat(cumpleanos): programar el envio diario a las 9:00`).
+- **Qué:** Cada día a las 9:00 (America/Santiago) se saluda a los militantes `activo` con `birth_date`: mensaje en la bandeja (con enlace `/forja-eventos.html?inbox=1`), push y correo (Resend, remitente `PNL Biobío <comunicaciones@nacionallibertariobiobio.cl>`). Ventana de recuperación: hoy + 3 días previos; quien nace el 29-feb se saluda el 1-mar en años no bisiestos. Idempotente por persona y año (tabla `birthday_greetings`). Fecha de inicio `GREETINGS_START_DATE = 2026-11-15` (no se saluda hacia atrás).
+- **Estado de militancia:** nueva columna `profiles.membership_status` (`activo`/`inactivo`/`suspendido`/`baja`). Solo `baja` bloquea el login (ban en Supabase Auth) mediante la edge function `set-membership-status`. Los saludos van solo a `activo`.
+- **Edge Function:** `send-birthday-greetings` (verify_jwt desactivado; autentica con header `x-cron-secret` o JWT de super_admin). Código compartido de push en `supabase/functions/_shared/web-push.ts`.
+- **Secrets requeridos:** Edge Function secrets `BIRTHDAY_CRON_SECRET`, `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_EMAIL` (más el `RESEND_API_KEY` existente); Vault de Postgres `birthday_cron_secret` (mismo valor que `BIRTHDAY_CRON_SECRET`). Los valores nunca van en el repo.
+- **⚠️ Hallazgo:** en producción faltaban `VAPID_PRIVATE_KEY` y `VAPID_EMAIL`, por lo que el push **nunca había funcionado** antes de este cambio.
+- **Migraciones (aplicadas a mano en el SQL Editor, porque el conector MCP de Supabase bloquea escrituras):** `20261114_membership_status.sql`, `20261114_birthday_greetings.sql`, `20261114_inbox_recipient.sql` y `20261114_birthday_cron.sql` (job `birthday-greetings-hourly`, cada hora en punto; la función decide si ya son las 9:00). La de cron es re-ejecutable.
+- **Cambiar texto o imagen:** editar `supabase/functions/send-birthday-greetings/greeting.ts` (textos, `BIRTHDAY_IMAGE_URL`) y volver a desplegar la función.
+- **Probar:** `POST .../functions/v1/send-birthday-greetings` con header `x-cron-secret: <secreto>` y cuerpo `{"test_profile_id": "<uuid>"}` (envía a ese perfil sin tocar el registro); un super_admin puede usar `{"test_self": true}` con su JWT.
+- **Rollback:** `select cron.unschedule('birthday-greetings-hourly');` (bloques ROLLBACK en cada migración); `git revert` de la rama.
+
 ---
 
 ## 🩹 CORRECCIONES — 4 de agosto de 2026
