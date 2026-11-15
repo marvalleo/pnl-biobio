@@ -27,7 +27,9 @@ select cron.schedule(
       'Content-Type', 'application/json',
       'x-cron-secret', (select decrypted_secret from vault.decrypted_secrets where name = 'birthday_cron_secret')
     ),
-    body := '{}'::jsonb
+    body := '{}'::jsonb,
+    -- El timeout por defecto de pg_net es de pocos segundos; una corrida real (correos con pausa) tarda mas.
+    timeout_milliseconds := 120000
   )
   $job$
 );
