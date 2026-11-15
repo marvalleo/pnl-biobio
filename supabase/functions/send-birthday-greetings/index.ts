@@ -5,6 +5,7 @@ import {
     BIRTHDAY_IMAGE_URL,
     buildGreeting,
     celebrationsInWindow,
+    EMAIL_REPLY_TO,
     emailNeedsSend,
     GREETINGS_START_DATE,
     INBOX_PATH,
@@ -170,7 +171,7 @@ serve(async (req: Request) => {
                         method: "POST",
                         headers: { Authorization: `Bearer ${resendKey}`, "Content-Type": "application/json" },
                         body: JSON.stringify({
-                            from: EMAIL_FROM, to: [person.email], subject: g.emailSubject,
+                            from: EMAIL_FROM, reply_to: EMAIL_REPLY_TO, to: [person.email], subject: g.emailSubject,
                             html: g.emailHtml, text: g.emailText,
                         }),
                     })

@@ -6,6 +6,7 @@ export const RECOVERY_DAYS = 3;
 export const GREETINGS_START_DATE = "2026-11-15"; // go-live date (first greetings run)
 export const BIRTHDAY_IMAGE_URL: string | null = null;
 
+export const EMAIL_REPLY_TO = "directivaregional@nacionallibertariobiobio.cl";
 export const INBOX_PATH = "/forja-eventos.html?inbox=1";
 const INBOX_URL = `https://nacionallibertariobiobio.cl${INBOX_PATH}`;
 const SIGNATURE = "Directiva Regional PNL Biobío";
