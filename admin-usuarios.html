@@ -753,8 +753,10 @@
                         body: { profile_id: profileId, status: newStatus }
                     });
                     if (statusError || !data?.ok) {
+                        let detail = data?.error || statusError?.message || 'error desconocido';
+                        try { detail = (await statusError.context.json()).error || detail; } catch (_) { /* sin cuerpo JSON */ }
                         window.setButtonLoading(btn, false);
-                        showToast('Datos guardados, pero no se pudo cambiar el estado de militancia', 'error');
+                        showToast(`Datos guardados, pero el estado de militancia no se cambió: ${detail}`, 'error');
                         return;
                     }
                 }

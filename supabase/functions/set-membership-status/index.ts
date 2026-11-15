@@ -70,21 +70,34 @@ serve(async (req: Request) => {
             return json({ error: 'No puedes cambiar tu propio estado' }, 403)
         }
 
-        const { error: updErr } = await supabaseAdmin
-            .from('profiles')
-            .update({ membership_status: status })
-            .eq('id', profileId)
-        if (updErr) return json({ error: 'No se pudo actualizar el estado' }, 500)
+        // Una baja sin cuenta de acceso no se puede bloquear: si luego se vinculara una cuenta,
+        // entraria sin ban. Se rechaza en vez de guardar un estado que no se cumple.
+        if (!target.auth_id && status === 'baja') {
+            return json({ error: 'El perfil no tiene cuenta de acceso; no se puede dar de baja' }, 400)
+        }
 
-        // Perfil sin cuenta de acceso (importado, aun sin invitar): nada que bloquear.
+        // Primero el bloqueo de acceso y solo si resulta se guarda el estado: si falla, el estado
+        // anterior queda intacto y reintentar es seguro (ban/unban es idempotente).
         if (target.auth_id) {
             const { error: banErr } = await supabaseAdmin.auth.admin.updateUserById(target.auth_id, {
                 ban_duration: status === 'baja' ? BAN_DURATION : 'none',
             })
             if (banErr) {
                 console.error('set-membership-status ban error:', banErr.message)
-                return json({ error: 'Estado guardado, pero no se pudo actualizar el bloqueo de acceso' }, 500)
+                return json({ error: 'No se pudo actualizar el bloqueo de acceso; el estado no cambió' }, 500)
             }
+        }
+
+        const { error: updErr } = await supabaseAdmin
+            .from('profiles')
+            .update({ membership_status: status })
+            .eq('id', profileId)
+        if (updErr) {
+            console.error('set-membership-status update error:', updErr.message)
+            const detail = status === 'baja'
+                ? 'el acceso ya quedó bloqueado, reintenta para guardar la baja'
+                : 'el acceso ya quedó habilitado, reintenta para guardar el estado'
+            return json({ error: `No se pudo guardar el estado (${detail})` }, 500)
         }
 
         return json({ ok: true, status })
