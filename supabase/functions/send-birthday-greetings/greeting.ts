@@ -4,15 +4,15 @@ export const TIME_ZONE = "America/Santiago";
 export const SEND_HOUR = 9;
 export const RECOVERY_DAYS = 3;
 export const GREETINGS_START_DATE = "2026-11-15"; // go-live date (first greetings run)
-export const BIRTHDAY_IMAGE_URL: string | null = null;
+export const BIRTHDAY_IMAGE_URL: string | null = "https://nacionallibertariobiobio.cl/assets/images/cumpleanos/feliz-cumpleanos.jpg";
 
 export const EMAIL_REPLY_TO = "directivaregional@nacionallibertariobiobio.cl";
 export const INBOX_PATH = "/forja-eventos.html?inbox=1";
 const INBOX_URL = `https://nacionallibertariobiobio.cl${INBOX_PATH}`;
 const SIGNATURE = "Directiva Regional PNL Biobío";
-const PUSH_BODY = "La familia del Partido Nacional Libertario Biobío te saluda en tu día.";
+const PUSH_BODY = "Hoy queremos saludarte de corazón y agradecerte por creer en la libertad.";
 const BODY =
-  "La familia del Partido Nacional Libertario Biobío te saluda en tu día. Gracias por ser parte de esta causa. ¡Que tengas un gran año!";
+  "Hoy queremos saludarte de corazón. Personas como tú, que creen en la libertad y la defienden cada día en el Biobío, son quienes hacen grande a este partido y mantienen viva la esperanza de un Chile mejor. Gracias por tu compromiso y por no bajar los brazos. Que este nuevo año te llene de salud, alegría y fuerza para seguir construyendo juntos el país que soñamos.";
 
 const PARTICLES = new Set(["DE", "DEL", "LA", "LAS", "LOS", "SAN", "SANTA", "VAN", "VON", "DA", "DI", "MC"]);
 
@@ -140,7 +140,7 @@ export function buildGreeting(fullName: string): {
   const title = name ? `¡Feliz cumpleaños, ${name}!` : "¡Feliz cumpleaños!";
   const heading = `${title} 🎉`;
   const image = BIRTHDAY_IMAGE_URL
-    ? `<tr><td style="padding:0 0 20px 0;"><img src="${escapeHtml(BIRTHDAY_IMAGE_URL)}" alt="" width="520" style="display:block;width:100%;max-width:520px;height:auto;border-radius:8px;"></td></tr>`
+    ? `<tr><td style="padding:0 0 20px 0;"><img src="${escapeHtml(BIRTHDAY_IMAGE_URL)}" alt="Feliz cumpleaños" width="520" style="display:block;width:100%;max-width:520px;height:auto;border-radius:8px;"></td></tr>`
     : "";
 
   const emailHtml = `<!DOCTYPE html>

@@ -109,7 +109,7 @@ serve(async (req: Request) => {
                 // A null recipient_id is a broadcast to every inbox: never allow it for a personal greeting.
                 if (!person.auth_id) throw new Error("missing recipient auth_id")
                 const { data, error } = await supabase.from("push_notifications_log").insert({
-                    title: g.title, body: g.inboxBody, url: INBOX_PATH, recipient_id: person.auth_id,
+                    title: g.title, body: g.inboxBody, url: null, recipient_id: person.auth_id,
                     image_url: BIRTHDAY_IMAGE_URL, target_audience: "all", total_sent: 0, total_failed: 0,
                 }).select("id").single()
                 if (error) throw new Error(error.message)

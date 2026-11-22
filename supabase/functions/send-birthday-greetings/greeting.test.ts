@@ -68,11 +68,11 @@ Deno.test("buildGreeting copy", () => {
   const g = buildGreeting("PEREZ SOTO JUAN ANDRES");
   assertEquals(g.title, "¡Feliz cumpleaños, Juan!");
   assertEquals(g.emailSubject, "¡Feliz cumpleaños, Juan!");
-  assertEquals(g.pushBody, "La familia del Partido Nacional Libertario Biobío te saluda en tu día.");
+  assertEquals(g.pushBody, "Hoy queremos saludarte de corazón y agradecerte por creer en la libertad.");
   assert(g.inboxBody.endsWith("\n\nDirectiva Regional PNL Biobío"));
   assert(g.emailHtml.includes("¡Feliz cumpleaños, Juan! 🎉"));
   assert(g.emailHtml.includes("https://nacionallibertariobiobio.cl/forja-eventos.html?inbox=1"));
-  assert(!g.emailHtml.includes("<img"));
+  assert(g.emailHtml.includes("/assets/images/cumpleanos/feliz-cumpleanos.jpg"));
   assert(g.emailText.includes("Directiva Regional PNL Biobío"));
 });
 
